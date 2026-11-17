@@ -624,7 +624,9 @@ export function eventFields(v: unknown, partial: boolean): Partial<EventRecord> 
   if (times.length) {
     if (times.length !== 3 || typeof b.allDay !== 'boolean' || typeof b.start !== 'string' || typeof b.end !== 'string')
       return null;
-    if (b.allDay ? !isDay(b.start) || !isDay(b.end) : isNaN(Date.parse(b.start)) || isNaN(Date.parse(b.end)))
+    if (
+      b.allDay ? !isDay(b.start) || !isDay(b.end) : Number.isNaN(Date.parse(b.start)) || Number.isNaN(Date.parse(b.end))
+    )
       return null;
     if (b.allDay ? b.end <= b.start : Date.parse(b.end) < Date.parse(b.start)) return null;
     out.allDay = b.allDay;
@@ -691,7 +693,7 @@ export async function addEvent(req: Request, env: Env): Promise<Response> {
   if (!b || !f || typeof b.id !== 'string' || !NEW_GID.test(b.id) || typeof b.calendar !== 'string')
     return bad('Expected an event');
   const at = await calendarFor(env, b.calendar);
-  if (!at || !at.c.writable) return bad('Can’t add to that calendar', 403);
+  if (!at?.c.writable) return bad('Can’t add to that calendar', 403);
   try {
     const e = await gapi<GEvent>(env, at.a, `/calendars/${enc(at.c.google_id)}/events`, {
       method: 'POST',
@@ -714,12 +716,12 @@ export async function editEvent(req: Request, env: Env, calId: string, gid: stri
   const f = eventFields(b, true);
   if (!b || !f) return bad('Expected event fields');
   let at = await calendarFor(env, calId);
-  if (!at || !at.c.writable) return bad('Can’t change that calendar', 403);
+  if (!at?.c.writable) return bad('Can’t change that calendar', 403);
   try {
     // Moving to another calendar (same Google account only; Google can't move between accounts)
     if (typeof b.calendar === 'string' && b.calendar !== calId) {
       const to = await calendarFor(env, b.calendar);
-      if (!to || !to.c.writable || to.a.id !== at.a.id) return bad('Can’t move it to that calendar', 403);
+      if (!to?.c.writable || to.a.id !== at.a.id) return bad('Can’t move it to that calendar', 403);
       await gapi(
         env,
         at.a,
@@ -746,7 +748,7 @@ export async function editEvent(req: Request, env: Env, calId: string, gid: stri
 export async function deleteEvent(env: Env, calId: string, gid: string): Promise<Response> {
   if (!GID.test(gid)) return bad('Bad event');
   const at = await calendarFor(env, calId);
-  if (!at || !at.c.writable) return bad('Can’t change that calendar', 403);
+  if (!at?.c.writable) return bad('Can’t change that calendar', 403);
   try {
     await gapi(env, at.a, `/calendars/${enc(at.c.google_id)}/events/${enc(gid)}`, { method: 'DELETE' });
   } catch (e) {
@@ -768,7 +770,7 @@ export async function restoreEvent(req: Request, env: Env, calId: string, gid: s
   const f = eventFields(b, false);
   if (!b || !f) return bad('Expected an event');
   const at = await calendarFor(env, calId);
-  if (!at || !at.c.writable) return bad('Can’t change that calendar', 403);
+  if (!at?.c.writable) return bad('Can’t change that calendar', 403);
   let e: GEvent;
   try {
     e = await gapi<GEvent>(env, at.a, `/calendars/${enc(at.c.google_id)}/events/${enc(gid)}`, {

@@ -120,8 +120,9 @@ function fields(v: unknown, partial: boolean): Partial<Task> | null {
     out.who = b.who;
   }
   if (has('repeat')) {
-    if (b.repeat === null) out.repeat = null;
-    else if (!(out.repeat = parseRepeat(b.repeat))) return null;
+    const repeat = b.repeat === null ? null : parseRepeat(b.repeat);
+    if (b.repeat !== null && !repeat) return null;
+    out.repeat = repeat;
   }
   if (has('due')) {
     if (b.due !== null && !isDay(b.due)) return null;
@@ -161,7 +162,7 @@ function fields(v: unknown, partial: boolean): Partial<Task> | null {
 /** A completion from the app, checked */
 function doneRow(v: unknown): Pick<TaskDone, 'day' | 'at' | 'by'> | null {
   const d = v as Partial<TaskDone> | null;
-  if (!d || !isDay(d.day) || typeof d.at !== 'string' || isNaN(Date.parse(d.at))) return null;
+  if (!d || !isDay(d.day) || typeof d.at !== 'string' || Number.isNaN(Date.parse(d.at))) return null;
   if (d.by != null && !(typeof d.by === 'string' && PERSON.test(d.by))) return null;
   return { day: d.day, at: new Date(d.at).toISOString(), by: d.by ?? null };
 }
@@ -207,7 +208,7 @@ export async function addTask(req: Request, env: Env): Promise<Response> {
         JSON.stringify(f.notify ?? []),
         f.listId ?? null,
         f.listItemId ?? null,
-        typeof b.created === 'string' && !isNaN(Date.parse(b.created)) ? new Date(b.created).toISOString() : at,
+        typeof b.created === 'string' && !Number.isNaN(Date.parse(b.created)) ? new Date(b.created).toISOString() : at,
         at,
         f.position ?? null,
       ),

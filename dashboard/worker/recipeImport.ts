@@ -104,10 +104,7 @@ export function readSteps(v: Json): string[] {
     if (typeof x === 'string') {
       // One block of text: split into its lines (or sentences, if it's all one line)
       const parts = x.includes('\n') ? x.split(/\n+/) : [x];
-      parts
-        .map(plain)
-        .filter(Boolean)
-        .forEach((p) => out.push(p.replace(/^(?:step\s*)?\d+[.):]\s*/i, '')));
+      for (const p of parts.map(plain).filter(Boolean)) out.push(p.replace(/^(?:step\s*)?\d+[.):]\s*/i, ''));
       return;
     }
     if (!x || typeof x !== 'object') return;
