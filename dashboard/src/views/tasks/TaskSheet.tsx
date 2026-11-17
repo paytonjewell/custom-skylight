@@ -8,7 +8,7 @@ import type { Slot, Task } from '../../data/types';
 import { useData } from '../../data/store';
 import { addTask, deleteTask, editTask, restoreTask, type TaskFields } from '../../data/actions';
 import { SLOTS } from '../../data/tasks';
-import { dayOf, describeRepeat, shiftDay, weekdayOf, type Repeat, type Unit, type Weekday } from '../../lib/repeat';
+import { dayOf, describeRepeat, shiftDay } from '../../lib/repeat';
 import { now as clockNow } from '../../lib/clock';
 import { fmtDateShort } from '../../lib/days';
 import { peopleWithPhones, usePush } from '../../data/push';
@@ -17,48 +17,11 @@ import { openList } from '../lists/Lists';
 import { PersonPicker } from '../../ui/PersonPicker';
 import { EmojiPicker } from '../../ui/EmojiPicker';
 import { Icon } from '../../ui/Icon';
+import { RepeatPicker } from './RepeatPicker';
+import { toControls, toRepeat } from './repeatControls';
 import css from './TaskSheet.module.css';
 import { phonePeople, taskPeople } from '../../data/select';
 
-type Often = 'once' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'custom';
-type Custom = 'days' | 'weeks' | 'months' | 'nth';
-type Basis = 'due' | 'done';
-
-const OFTEN: [Often, string][] = [
-  ['once', 'Once'],
-  ['daily', 'Daily'],
-  ['weekdays', 'Weekdays'],
-  ['weekly', 'Weekly'],
-  ['monthly', 'Monthly'],
-  ['custom', 'Custom…'],
-];
-const CUSTOM: [Custom, string][] = [
-  ['days', 'Every few days'],
-  ['weeks', 'Every few weeks'],
-  ['months', 'Every few months'],
-  ['nth', 'A weekday of the month'],
-];
-const WEEK: [Weekday, string][] = [
-  [1, 'Mon'],
-  [2, 'Tue'],
-  [3, 'Wed'],
-  [4, 'Thu'],
-  [5, 'Fri'],
-  [6, 'Sat'],
-  [0, 'Sun'],
-];
-const NTHS: [1 | 2 | 3 | 4 | -1, string][] = [
-  [1, '1st'],
-  [2, '2nd'],
-  [3, '3rd'],
-  [4, '4th'],
-  [-1, 'Last'],
-];
-const OFFSETS: [number, string][] = [
-  [-1, 'Day before'],
-  [0, 'On the day'],
-  [1, 'Day after'],
-];
 /** A reminder's time when it's first turned on, by part of the day */
 const REMIND_AT: Record<Slot, string> = { morning: '08:00', afternoon: '13:00', evening: '18:00', anytime: '09:00' };
 
@@ -67,49 +30,14 @@ export function openTaskSheet(task?: Task, defaults?: Partial<TaskFields>, back?
   openSheet(() => <TaskSheet task={task} defaults={defaults} />, { cls: 'sheet--wide', onClose: back });
 }
 
-/** The controls that describe an existing rule */
-function controls(r: Repeat | null): { mode: Often; custom: Custom; basis: Basis } {
-  const out = (mode: Often, custom: Custom = 'days', basis: Basis = 'due') => ({ mode, custom, basis });
-  if (!r) return out('once');
-  switch (r.kind) {
-    case 'afterDone': {
-      const custom: Custom = r.unit === 'day' ? 'days' : r.unit === 'week' ? 'weeks' : 'months';
-      if (r.every > 1) return out('custom', custom, 'done');
-      return out(r.unit === 'day' ? 'daily' : r.unit === 'week' ? 'weekly' : 'monthly', custom, 'done');
-    }
-    case 'monthlyNth':
-      return out('custom', 'nth');
-    case 'daily':
-      return (r.every ?? 1) > 1 ? out('custom', 'days') : out('daily');
-    case 'monthly':
-      return (r.every ?? 1) > 1 ? out('custom', 'months') : out('monthly');
-    case 'weekly':
-      if ((r.every ?? 1) > 1) return out('custom', 'weeks');
-      return out(
-        r.days.length === 5 && [1, 2, 3, 4, 5].every((d) => r.days.includes(d as Weekday)) ? 'weekdays' : 'weekly',
-      );
-  }
-}
-
 function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFields> }) {
   const data = useData('family', 'lists', 'people');
   const [today] = useState(() => dayOf(clockNow()));
-  const r = task?.repeat ?? null;
-  const start = r?.start ?? today;
-  const init = controls(r);
 
   const [title, setTitle] = useState(task?.title ?? defaults?.title ?? '');
   const [who, setWho] = useState(task?.who ?? defaults?.who ?? 'any');
-  const [mode, setMode] = useState<Often>(init.mode);
-  const [custom, setCustom] = useState<Custom>(init.custom);
-  const [basis, setBasis] = useState<Basis>(init.basis);
   const [due, setDue] = useState<string | null>(task?.due ?? defaults?.due ?? null);
-  const [days, setDays] = useState<Weekday[]>(r?.kind === 'weekly' ? r.days : [weekdayOf(today)]);
-  const [monthDay, setMonthDay] = useState(r?.kind === 'monthly' ? r.day : Number(today.slice(8)));
-  const [every, setEvery] = useState(r && 'every' in r && r.every && r.every > 1 ? r.every : 2);
-  const [nth, setNth] = useState<1 | 2 | 3 | 4 | -1>(r?.kind === 'monthlyNth' ? r.nth : 1);
-  const [nthDay, setNthDay] = useState<Weekday>(r?.kind === 'monthlyNth' ? r.weekday : weekdayOf(today));
-  const [offset, setOffset] = useState(r?.offset ?? 0);
+  const [often, setOften] = useState(() => toControls(task?.repeat ?? null, today));
   const [slot, setSlot] = useState<Slot>(task?.slot ?? defaults?.slot ?? 'anytime');
   const [habit, setHabit] = useState(task?.habit ?? defaults?.habit ?? false);
   const [emoji, setEmoji] = useState(task?.emoji ?? defaults?.emoji ?? '');
@@ -134,45 +62,7 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
   /** The list this is a reminder from (if it still exists) */
   const fromList = data.lists.find((l) => l.id === (task?.listId ?? defaults?.listId));
 
-  /** Can this choice count from when it's done? (Not weekdays, or the Nth weekday of a month.) */
-  const canBasis =
-    mode === 'daily' || mode === 'weekly' || mode === 'monthly' || (mode === 'custom' && custom !== 'nth');
-  const fromDone = canBasis && basis === 'done';
-  const weekDays = days.length ? days : [weekdayOf(today)];
-
-  /** The rule the controls describe */
-  function rule(): Repeat | null {
-    const base = { start };
-    if (fromDone) {
-      const unit: Unit =
-        mode === 'daily' || custom === 'days' ? 'day' : mode === 'weekly' || custom === 'weeks' ? 'week' : 'month';
-      return { kind: 'afterDone', every: mode === 'custom' ? every : 1, unit, ...base };
-    }
-    switch (mode) {
-      case 'once':
-        return null;
-      case 'daily':
-        return { kind: 'daily', ...base };
-      case 'weekdays':
-        return { kind: 'weekly', days: [1, 2, 3, 4, 5], ...base };
-      case 'weekly':
-        return { kind: 'weekly', days: weekDays, ...base };
-      case 'monthly':
-        return { kind: 'monthly', day: monthDay, ...base };
-      case 'custom':
-        switch (custom) {
-          case 'days':
-            return { kind: 'daily', every, ...base };
-          case 'weeks':
-            return { kind: 'weekly', days: weekDays, every, ...base };
-          case 'months':
-            return { kind: 'monthly', day: monthDay, every, ...base };
-          case 'nth':
-            return { kind: 'monthlyNth', nth, weekday: nthDay, ...(offset ? { offset } : {}), ...base };
-        }
-    }
-  }
-  const repeat = rule();
+  const repeat = toRepeat(often, today);
 
   const save = () => {
     const f: TaskFields = {
@@ -217,28 +107,6 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
       );
   };
 
-  const toggleDay = (d: Weekday) => setDays((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
-  const step = (label: string, value: number, set: (n: number) => void, min = 1, max = 365) => (
-    <div className={css.stepper}>
-      <button className="icon-btn" aria-label="Fewer" onClick={() => set(Math.max(min, value - 1))}>
-        −
-      </button>
-      <b className="num">{value}</b>
-      <button className="icon-btn" aria-label="More" onClick={() => set(Math.min(max, value + 1))}>
-        +
-      </button>
-      <span>{label}</span>
-    </div>
-  );
-  const weekdays = (
-    <div className="chips">
-      {WEEK.map(([d, label]) => (
-        <Chip key={d} on={days.includes(d)} onClick={() => toggleDay(d)}>
-          {label}
-        </Chip>
-      ))}
-    </div>
-  );
   const tomorrow = shiftDay(today, 1);
 
   return (
@@ -317,16 +185,9 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
         onPick={(id) => setWho(id === 'family' ? 'any' : id)}
       />
 
-      <div className="label">How often</div>
-      <div className="chips">
-        {OFTEN.map(([id, label]) => (
-          <Chip key={id} on={mode === id} onClick={() => setMode(id)}>
-            {label}
-          </Chip>
-        ))}
-      </div>
-
-      {mode === 'once' && (
+      <RepeatPicker value={often} onChange={setOften} />
+      {/* A one-off's due day */}
+      {!repeat && (
         <div className={css.more}>
           <div className="chips">
             <Chip on={!due} onClick={() => setDue(null)}>
@@ -347,84 +208,6 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
               {due && due !== today && due !== tomorrow ? fmtDateShort(due) : 'Pick a day'}
             </DateChip>
           </div>
-        </div>
-      )}
-      {canBasis && (
-        <div className={css.basis}>
-          <span>Repeat from</span>
-          <div className="chips">
-            <Chip on={basis === 'due'} onClick={() => setBasis('due')}>
-              The due date
-            </Chip>
-            <Chip on={basis === 'done'} onClick={() => setBasis('done')}>
-              When it’s done
-            </Chip>
-          </div>
-        </div>
-      )}
-      {mode === 'weekly' && !fromDone && <div className={css.more}>{weekdays}</div>}
-      {mode === 'monthly' && !fromDone && (
-        <div className={css.more}>{step('day of the month', monthDay, setMonthDay, 1, 31)}</div>
-      )}
-      {mode === 'custom' && (
-        <div className={css.more}>
-          <div className="chips">
-            {CUSTOM.map(([id, label]) => (
-              <Chip key={id} on={custom === id} className="chip--ghost" onClick={() => setCustom(id)}>
-                {label}
-              </Chip>
-            ))}
-          </div>
-          {custom === 'days' && step(every === 1 ? 'day' : 'days', every, setEvery)}
-          {custom === 'weeks' && (
-            <>
-              {step(
-                fromDone ? (every === 1 ? 'week' : 'weeks') : every === 1 ? 'week, on' : 'weeks, on',
-                every,
-                setEvery,
-                1,
-                52,
-              )}
-              {!fromDone && weekdays}
-            </>
-          )}
-          {custom === 'months' && (
-            <>
-              {step(
-                fromDone ? (every === 1 ? 'month' : 'months') : every === 1 ? 'month, on' : 'months, on',
-                every,
-                setEvery,
-                1,
-                24,
-              )}
-              {!fromDone && step('day of the month', monthDay, setMonthDay, 1, 31)}
-            </>
-          )}
-          {custom === 'nth' && (
-            <>
-              <div className="chips">
-                {NTHS.map(([n, label]) => (
-                  <Chip key={n} on={nth === n} onClick={() => setNth(n)}>
-                    {label}
-                  </Chip>
-                ))}
-              </div>
-              <div className="chips">
-                {WEEK.map(([d, label]) => (
-                  <Chip key={d} on={nthDay === d} onClick={() => setNthDay(d)}>
-                    {label}
-                  </Chip>
-                ))}
-              </div>
-              <div className="chips">
-                {OFFSETS.map(([o, label]) => (
-                  <Chip key={o} on={offset === o} className="chip--ghost" onClick={() => setOffset(o)}>
-                    {label}
-                  </Chip>
-                ))}
-              </div>
-            </>
-          )}
         </div>
       )}
       {repeat && <p className={css.summary}>{describeRepeat(repeat)}</p>}
