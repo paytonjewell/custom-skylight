@@ -16,7 +16,11 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('push', (e) => {
   let m = {};
-  try { m = e.data ? e.data.json() : {}; } catch { /* not JSON: show a plain reminder */ }
+  try {
+    m = e.data ? e.data.json() : {};
+  } catch {
+    /* not JSON: show a plain reminder */
+  }
   e.waitUntil(
     self.registration.showNotification(m.title || 'Reminder', {
       body: m.body || '',

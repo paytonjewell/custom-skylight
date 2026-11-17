@@ -50,7 +50,11 @@ export function eventStyle(d: Data, e: CalEvent, extra?: CSSProperties): CSSProp
   const base = toneStyle(ps[0] ?? evColor(d, e), extra);
   if (!ps.length) return base;
   const s = ps.map(shades);
-  return { ...base, '--c-fill': bands(s.map((x) => x[0])), '--c-tint-fill': bands(s.map((x) => x[1])) } as CSSProperties;
+  return {
+    ...base,
+    '--c-fill': bands(s.map((x) => x[0])),
+    '--c-tint-fill': bands(s.map((x) => x[1])),
+  } as CSSProperties;
 }
 
 export function Avatar({ p, size = 48, className }: { p: Person; size?: number; className?: string }) {
@@ -59,7 +63,13 @@ export function Avatar({ p, size = 48, className }: { p: Person; size?: number; 
       className={'avatar' + (className ? ' ' + className : '')}
       style={toneStyle(p, { width: size, height: size, fontSize: Math.round(size * 0.46) })}
     >
-      {p.id === 'family' ? <Icon name="asterisk" size={Math.round(size * 0.5)} className="avatar-asterisk" /> : p.pet ? <Icon name="paw" size={Math.round(size * 0.5)} className="i--fill" /> : p.name[0]}
+      {p.id === 'family' ? (
+        <Icon name="asterisk" size={Math.round(size * 0.5)} className="avatar-asterisk" />
+      ) : p.pet ? (
+        <Icon name="paw" size={Math.round(size * 0.5)} className="i--fill" />
+      ) : (
+        p.name[0]
+      )}
     </span>
   );
 }
@@ -78,7 +88,10 @@ export function Dots({ ids, size }: { ids: string[]; size?: number }) {
 
 /** The same variables as toneStyle, for a colour of its own ('#rrggbb'); text is dark or white to suit */
 function ownColor(hex: string): Record<string, string> {
-  const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  const n = parseInt(hex.slice(1), 16),
+    r = n >> 16,
+    g = (n >> 8) & 255,
+    b = n & 255;
   const light = 0.299 * r + 0.587 * g + 0.114 * b > 160;
   return {
     '--c': hex,

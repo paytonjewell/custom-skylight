@@ -26,7 +26,12 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
   return (
     <div className={'seg' + (className ? ' ' + className : '')} ref={boxRef}>
       {options.map(([v, label]) => (
-        <button key={v} {...move?.(v)} className={(v === value ? 'is-on' : '') + (v === lifted ? ' is-lifted' : '')} onClick={() => onChange(v)}>
+        <button
+          key={v}
+          {...move?.(v)}
+          className={(v === value ? 'is-on' : '') + (v === lifted ? ' is-lifted' : '')}
+          onClick={() => onChange(v)}
+        >
           {label}
         </button>
       ))}

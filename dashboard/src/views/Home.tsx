@@ -52,7 +52,11 @@ export function Home({ active }: { active: boolean }) {
         <div className={css.mid}>
           <Countdowns list={countdowns(events, now)} active={active} />
           <div className={css.date} onClick={() => go('calendar')}>
-            <b>{fmt.day(now)}<span className={css.dateComma}>,</span></b> {fmt.month(now)} {now.getDate()}
+            <b>
+              {fmt.day(now)}
+              <span className={css.dateComma}>,</span>
+            </b>{' '}
+            {fmt.month(now)} {now.getDate()}
           </div>
         </div>
         <Weather events={events} now={now} />
@@ -127,7 +131,8 @@ function TasksCard({ now }: { now: Date }) {
     <div className={css.chores + ' card'}>
       {/* The heading opens Tasks; each ring opens that person's tasks for today */}
       <button className={css.choresHead + ' label'} onClick={() => go('tasks')}>
-        Tasks · {due.length ? (left ? `${left} left today` : 'all done') : 'nothing today'} <Icon name="right" size={14} />
+        Tasks · {due.length ? (left ? `${left} left today` : 'all done') : 'nothing today'}{' '}
+        <Icon name="right" size={14} />
       </button>
       <div className={css.rings} ref={rings}>
         {who.map((id) => {
@@ -136,7 +141,12 @@ function TasksCard({ now }: { now: Date }) {
           const done = list.filter((x) => x.done).length;
           const all = list.length > 0 && done === list.length;
           return (
-            <button key={id} className={css.ring + (all ? ' ' + css.isDone : '')} style={toneStyle(person(data, id))} onClick={() => openPersonTasks(id)}>
+            <button
+              key={id}
+              className={css.ring + (all ? ' ' + css.isDone : '')}
+              style={toneStyle(person(data, id))}
+              onClick={() => openPersonTasks(id)}
+            >
               <Ring done={done} total={list.length || 1} size={64} />
               <b className="num">{all ? '✓' : list.length ? done + '/' + list.length : '–'}</b>
               <span>{id === 'any' ? 'Anyone' : person(data, id).name}</span>
@@ -161,13 +171,19 @@ function DinnerCard({ now }: { now: Date }) {
           <span className="label">Tonight’s dinner</span>
           <b>Nothing planned</b>
         </span>
-        <span className={css.dinnerGo}>Plan <Icon name="right" size={16} /></span>
+        <span className={css.dinnerGo}>
+          Plan <Icon name="right" size={16} />
+        </span>
       </button>
     );
   }
   const missing = data.inventory.length ? readiness(r, data.inventory).missing : null;
   return (
-    <button className={css.dinner + ' card'} style={toneStyle({ tone: r.tone })} onClick={() => openRecipe(r.id, today)}>
+    <button
+      className={css.dinner + ' card'}
+      style={toneStyle({ tone: r.tone })}
+      onClick={() => openRecipe(r.id, today)}
+    >
       <span className={css.dinnerArt}>{r.emoji}</span>
       <span className={css.dinnerText}>
         <span className="label">Tonight’s dinner</span>
@@ -202,7 +218,15 @@ function GroceriesCard() {
     const have = haveNote(data.inventory, item.name);
     toast(
       <>
-        {kind === 'more' ? <>Already on the list · now <b>×{item.qty}</b> {item.name}</> : <>Added <b>{item.name}</b></>}
+        {kind === 'more' ? (
+          <>
+            Already on the list · now <b>×{item.qty}</b> {item.name}
+          </>
+        ) : (
+          <>
+            Added <b>{item.name}</b>
+          </>
+        )}
         {have && <> · you have {have}</>}
       </>,
       { icon: 'cart', ms: have ? 5000 : 2500 },
@@ -211,13 +235,29 @@ function GroceriesCard() {
   const check = (g: Grocery) => {
     if (pending.cancel(g.id)) return;
     pending.start(g.id, () => setGroceryDone(g.id, true));
-    toast(<><b>{g.name}</b> checked off</>, { icon: 'check', undo: () => { if (!pending.cancel(g.id)) setGroceryDone(g.id, false); } });
+    toast(
+      <>
+        <b>{g.name}</b> checked off
+      </>,
+      {
+        icon: 'check',
+        undo: () => {
+          if (!pending.cancel(g.id)) setGroceryDone(g.id, false);
+        },
+      },
+    );
   };
 
   return (
     <div className={css.shop + ' card'}>
       <div className={css.shopHead}>
-        <button className="label" onClick={() => { openList(GROCERY); go('lists'); }}>
+        <button
+          className="label"
+          onClick={() => {
+            openList(GROCERY);
+            go('lists');
+          }}
+        >
           Groceries <Icon name="right" size={14} />
         </button>
         <span className={css.count}>
@@ -233,8 +273,17 @@ function GroceriesCard() {
             enterKeyHint="done"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') add(); if (e.key === 'Escape') { setName(''); setAdding(false); } }}
-            onBlur={() => { if (name.trim()) add(); setAdding(false); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') add();
+              if (e.key === 'Escape') {
+                setName('');
+                setAdding(false);
+              }
+            }}
+            onBlur={() => {
+              if (name.trim()) add();
+              setAdding(false);
+            }}
           />
         ) : (
           <button className={css.addRow} onClick={() => setAdding(true)}>
@@ -263,7 +312,10 @@ function VerseCard({ now }: { now: Date }) {
   const size = v.text.length > 180 ? ' ' + css.isVeryLong : v.text.length > 100 ? ' ' + css.isLong : '';
   // Tap for the whole verse (a long one can be cut short here)
   return (
-    <button className={css.verse + ' card'} onClick={() => openSheet(() => <VerseSheet text={v.text} ref_={v.ref} version={v.version} />)}>
+    <button
+      className={css.verse + ' card'}
+      onClick={() => openSheet(() => <VerseSheet text={v.text} ref_={v.ref} version={v.version} />)}
+    >
       <div className="label">Verse of the day</div>
       <p className={css.verseText + ' serif' + size}>
         <VerseText text={v.text} />
@@ -302,7 +354,9 @@ function VerseSheet({ text, ref_, version }: { text: string; ref_: string; versi
         {ref_} <span>{version}</span>
       </div>
       <div className="sheet-actions">
-        <button className="btn btn--solid" onClick={closeSheet}>Done</button>
+        <button className="btn btn--solid" onClick={closeSheet}>
+          Done
+        </button>
       </div>
     </div>
   );

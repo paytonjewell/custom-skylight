@@ -74,7 +74,9 @@ export function App() {
   useEffect(checkGoogleReturn, []);
   useEffect(checkSharedRecipe, []);
   // Photos shared to the installed app from another app (public/sw.js)
-  useEffect(() => { if (!IS_KIOSK) void receiveSharedPhotos(); }, []);
+  useEffect(() => {
+    if (!IS_KIOSK) void receiveSharedPhotos();
+  }, []);
 
   useDragTips(view);
 
@@ -95,7 +97,12 @@ export function App() {
         {VIEWS.map((v) => {
           const Screen = SCREENS[v].component;
           return (
-            <section key={v} className={css.view + (v === 'photos' ? ' ' + css.bleed : '') + (v === view ? ' ' + css.isActive : '')} id={'view-' + v} data-view={v}>
+            <section
+              key={v}
+              className={css.view + (v === 'photos' ? ' ' + css.bleed : '') + (v === view ? ' ' + css.isActive : '')}
+              id={'view-' + v}
+              data-view={v}
+            >
               <Screen active={v === view} />
             </section>
           );
@@ -127,8 +134,12 @@ function Rail({ view }: { view: ViewName }) {
           key={v}
           className={css.item + (v === view ? ' ' + css.isActive : '')}
           // Switch the instant a finger lands, not on release; keyboard "clicks" (detail 0) still work
-          onPointerDown={(e) => { if (e.button === 0) go(v); }}
-          onClick={(e) => { if (e.detail === 0) go(v); }}
+          onPointerDown={(e) => {
+            if (e.button === 0) go(v);
+          }}
+          onClick={(e) => {
+            if (e.detail === 0) go(v);
+          }}
         >
           <Icon name={SCREENS[v].icon} size={26} />
           <span>{SCREENS[v].label}</span>
@@ -158,18 +169,27 @@ function TabBar({ view }: { view: ViewName }) {
     setMenu(false);
     if (v !== view) return go(v);
     // Tapping the current tab again scrolls it back to the top
-    document.querySelectorAll<HTMLElement>(`#view-${v}, #view-${v} [data-scroll-top]`).forEach((el) => el.scrollTo({ top: 0, behavior: 'smooth' }));
+    document
+      .querySelectorAll<HTMLElement>(`#view-${v}, #view-${v} [data-scroll-top]`)
+      .forEach((el) => el.scrollTo({ top: 0, behavior: 'smooth' }));
   };
 
   useEffect(() => {
     if (!menu) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenu(false);
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [menu]);
 
   const tab = (v: ViewName) => (
-    <button key={v} className={css.tab + (v === view ? ' ' + css.isActive : '')} aria-current={v === view ? 'page' : undefined} onClick={() => tap(v)}>
+    <button
+      key={v}
+      className={css.tab + (v === view ? ' ' + css.isActive : '')}
+      aria-current={v === view ? 'page' : undefined}
+      onClick={() => tap(v)}
+    >
       <span className={css.tabInd}>
         <Icon name={SCREENS[v].icon} size={24} />
       </span>
@@ -183,7 +203,12 @@ function TabBar({ view }: { view: ViewName }) {
         <div className={css.menuLayer} onClick={() => setMenu(false)}>
           <div className={css.menu} role="menu" onClick={(e) => e.stopPropagation()}>
             {PHONE_MORE.map((v) => (
-              <button key={v} role="menuitem" className={css.menuItem + (v === view ? ' ' + css.isActive : '')} onClick={() => tap(v)}>
+              <button
+                key={v}
+                role="menuitem"
+                className={css.menuItem + (v === view ? ' ' + css.isActive : '')}
+                onClick={() => tap(v)}
+              >
                 <Icon name={SCREENS[v].icon} size={22} />
                 {SCREENS[v].label}
                 {v === view && <Icon name="check" size={18} className={css.menuCheck} />}
@@ -222,7 +247,9 @@ function usePullToRefresh(enabled: boolean, indicator: RefObject<HTMLDivElement 
     if (!views || !ind) return;
 
     const PULL = 80; // px of (dampened) pull that triggers a refresh
-    let start: { x: number; y: number } | null = null, pull = 0, active = false;
+    let start: { x: number; y: number } | null = null,
+      pull = 0,
+      active = false;
 
     /** The scrolled element the touch is in: it must be at its top for a pull to start */
     const scrollerAt = (el: Element | null): HTMLElement | null => {
@@ -238,25 +265,36 @@ function usePullToRefresh(enabled: boolean, indicator: RefObject<HTMLDivElement 
       ind.classList.toggle(css.isReady, d >= PULL);
     };
     const reset = () => {
-      start = null; pull = 0; active = false;
+      start = null;
+      pull = 0;
+      active = false;
       ind.style.transition = 'transform .2s, opacity .2s';
       show(0);
-      setTimeout(() => { ind.style.transition = ''; }, 200);
+      setTimeout(() => {
+        ind.style.transition = '';
+      }, 200);
     };
 
     const onStart = (e: TouchEvent) => {
       const sc = scrollerAt(e.target as Element);
-      start = e.touches.length === 1 && (!sc || sc.scrollTop <= 0) ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+      start =
+        e.touches.length === 1 && (!sc || sc.scrollTop <= 0)
+          ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+          : null;
     };
     const onMove = (e: TouchEvent) => {
       if (!start) return;
       // A photo being dragged to a new spot isn't a pull
       if (document.querySelector('[data-dragging]')) return reset();
-      const dx = e.touches[0].clientX - start.x, dy = e.touches[0].clientY - start.y;
+      const dx = e.touches[0].clientX - start.x,
+        dy = e.touches[0].clientY - start.y;
       if (!active) {
         if (Math.abs(dy) < 8 && Math.abs(dx) < 8) return;
         // Only a downward, mostly vertical pull; anything else is left to scrolling and swiping
-        if (dy <= 0 || Math.abs(dx) > dy) { start = null; return; }
+        if (dy <= 0 || Math.abs(dx) > dy) {
+          start = null;
+          return;
+        }
         active = true;
       }
       if (e.cancelable) e.preventDefault();
@@ -269,7 +307,8 @@ function usePullToRefresh(enabled: boolean, indicator: RefObject<HTMLDivElement 
         location.reload();
         return;
       }
-      if (active) reset(); else start = null;
+      if (active) reset();
+      else start = null;
     };
 
     views.addEventListener('touchstart', onStart, { passive: true });
@@ -298,7 +337,8 @@ function useStageFit(ref: RefObject<HTMLDivElement | null>, phone: boolean) {
       if (ref.current) ref.current.style.transform = '';
       return;
     }
-    const STAGE_H = 800, STAGE_MIN_W = 1280;
+    const STAGE_H = 800,
+      STAGE_MIN_W = 1280;
     const fit = () => {
       const el = ref.current;
       if (!el) return;
@@ -341,7 +381,12 @@ function useDragTips(view: ViewName) {
     if (!tip || stored('tip.drag.' + view, '') === '1') return;
     const t = setTimeout(() => {
       store('tip.drag.' + view, '1');
-      toast(<><b>Tip:</b> {tip}</>, { icon: 'bolt', ms: 7000 });
+      toast(
+        <>
+          <b>Tip:</b> {tip}
+        </>,
+        { icon: 'bolt', ms: 7000 },
+      );
     }, 900);
     return () => clearTimeout(t);
   }, [view]);

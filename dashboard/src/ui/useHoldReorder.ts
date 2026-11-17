@@ -1,6 +1,13 @@
 // Press-and-hold, then drag to reorder items in a (scrollable) grid. A quick swipe still scrolls:
 // the drag only starts once the finger has stayed put for `holdMs`. Items glide to new slots (FLIP).
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from 'react';
 
 /** The lifted item, positioned in `container`'s (unscaled) coordinates */
 export interface Ghost {
@@ -30,7 +37,13 @@ function scrollingBox(el: HTMLElement): HTMLElement {
   return el;
 }
 
-export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 400 }: {
+export function useHoldReorder({
+  ids,
+  onCommit,
+  container,
+  scroller,
+  holdMs = 400,
+}: {
   ids: string[];
   onCommit: (ids: string[]) => void;
   /** Positioned ancestor the ghost is drawn in (must not scroll) */
@@ -72,7 +85,8 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
 
   const snapshot = () => {
     if (reducedMotion()) return;
-    for (const [id, el] of items.current) if (!before.current.has(id)) before.current.set(id, el.getBoundingClientRect());
+    for (const [id, el] of items.current)
+      if (!before.current.has(id)) before.current.set(id, el.getBoundingClientRect());
   };
 
   // After a reorder renders: start each moved item where it was, then let it glide to its new slot
@@ -86,8 +100,10 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
       if (!el) continue;
       el.style.transition = 'none';
       el.style.transform = '';
-      const now = el.getBoundingClientRect(), s = scaleOf(el);
-      const dx = (was.left - now.left) / s, dy = (was.top - now.top) / s;
+      const now = el.getBoundingClientRect(),
+        s = scaleOf(el);
+      const dx = (was.left - now.left) / s,
+        dy = (was.top - now.top) / s;
       if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) moved.push([el, dx, dy]);
     }
     for (const [el, dx, dy] of moved) el.style.transform = `translate(${dx}px, ${dy}px)`;
@@ -99,19 +115,28 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
   });
 
   const place = () => {
-    const d = drag.current, box = container.current;
+    const d = drag.current,
+      box = container.current;
     if (!d || !box) return;
-    const r = box.getBoundingClientRect(), s = scaleOf(box);
+    const r = box.getBoundingClientRect(),
+      s = scaleOf(box);
     setGhost((g) => g && { ...g, x: (d.cx - r.left) / s - d.gx, y: (d.cy - r.top) / s - d.gy });
     // Move the lifted item into the slot under the finger. Slots are tested by layout position
     // (offsetLeft/Top), not on-screen position, so items mid-glide don't cause flip-flopping.
     const sc = scroller.current;
     if (!sc) return;
-    const sr = sc.getBoundingClientRect(), ss = scaleOf(sc);
-    const px = (d.cx - sr.left) / ss + sc.scrollLeft, py = (d.cy - sr.top) / ss + sc.scrollTop;
+    const sr = sc.getBoundingClientRect(),
+      ss = scaleOf(sc);
+    const px = (d.cx - sr.left) / ss + sc.scrollLeft,
+      py = (d.cy - sr.top) / ss + sc.scrollTop;
     for (const [id, el] of items.current) {
       if (id === d.id) continue;
-      if (px >= el.offsetLeft && px <= el.offsetLeft + el.offsetWidth && py >= el.offsetTop && py <= el.offsetTop + el.offsetHeight) {
+      if (
+        px >= el.offsetLeft &&
+        px <= el.offsetLeft + el.offsetWidth &&
+        py >= el.offsetTop &&
+        py <= el.offsetTop + el.offsetHeight
+      ) {
         const next = d.order.filter((x) => x !== d.id);
         next.splice(d.order.indexOf(id), 0, d.id);
         d.order = next;
@@ -127,8 +152,10 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
     const d = drag.current;
     if (!d) return;
     const sc = d.sc;
-    const r = sc.getBoundingClientRect(), edge = EDGE * scaleOf(sc);
-    const up = r.top + edge - d.cy, down = d.cy - (r.bottom - edge);
+    const r = sc.getBoundingClientRect(),
+      edge = EDGE * scaleOf(sc);
+    const up = r.top + edge - d.cy,
+      down = d.cy - (r.bottom - edge);
     const v = up > 0 ? -up / edge : down > 0 ? down / edge : 0;
     const next = Math.max(0, Math.min(d.max, sc.scrollTop + v * SCROLL_SPEED));
     if (v && next !== sc.scrollTop) {
@@ -146,7 +173,9 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
     if (d) {
       cancelAnimationFrame(d.raf);
       justDragged.current = true;
-      setTimeout(() => { justDragged.current = false; }, 0);
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 0);
       // The dropped item settles from under the finger into its slot
       const box = container.current;
       if (box && !reducedMotion()) {
@@ -161,14 +190,31 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
 
   const start = (id: string, e: ReactPointerEvent) => {
     if (e.button !== 0 || drag.current || cleanup.current) return;
-    const x0 = e.clientX, y0 = e.clientY;
-    let cx = x0, cy = y0;
+    const x0 = e.clientX,
+      y0 = e.clientY;
+    let cx = x0,
+      cy = y0;
     const lift = () => {
-      const el = items.current.get(id), box = container.current;
+      const el = items.current.get(id),
+        box = container.current;
       if (!el || !box) return end(false);
-      const b = el.getBoundingClientRect(), r = box.getBoundingClientRect(), s = scaleOf(box);
+      const b = el.getBoundingClientRect(),
+        r = box.getBoundingClientRect(),
+        s = scaleOf(box);
       const sc = scrollingBox(scroller.current ?? box);
-      drag.current = { id, order: ids, gx: (x0 - b.left) / s, gy: (y0 - b.top) / s, cx, cy, w: b.width / s, h: b.height / s, raf: 0, sc, max: sc.scrollHeight - sc.clientHeight };
+      drag.current = {
+        id,
+        order: ids,
+        gx: (x0 - b.left) / s,
+        gy: (y0 - b.top) / s,
+        cx,
+        cy,
+        w: b.width / s,
+        h: b.height / s,
+        raf: 0,
+        sc,
+        max: sc.scrollHeight - sc.clientHeight,
+      };
       setOrder(ids);
       setGhost({ id, x: (b.left - r.left) / s, y: (b.top - r.top) / s, w: b.width / s, h: b.height / s });
       drag.current.raf = requestAnimationFrame(autoScroll);
@@ -191,7 +237,9 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
     const up = () => end(true);
     const cancel = () => end(false);
     // Once lifted, stop the finger from scrolling the grid (needs a non-passive listener)
-    const noScroll = (ev: TouchEvent) => { if (drag.current && ev.cancelable) ev.preventDefault(); };
+    const noScroll = (ev: TouchEvent) => {
+      if (drag.current && ev.cancelable) ev.preventDefault();
+    };
 
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -214,7 +262,10 @@ export function useHoldReorder({ ids, onCommit, container, scroller, holdMs = 40
     ghost,
     /** Spread on each item */
     itemProps: (id: string) => ({
-      ref: (el: HTMLElement | null) => { if (el) items.current.set(id, el); else items.current.delete(id); },
+      ref: (el: HTMLElement | null) => {
+        if (el) items.current.set(id, el);
+        else items.current.delete(id);
+      },
       onPointerDown: (e: ReactPointerEvent) => start(id, e),
       onContextMenu: (e: { preventDefault(): void }) => e.preventDefault(),
       onClickCapture: (e: { preventDefault(): void; stopPropagation(): void }) => {

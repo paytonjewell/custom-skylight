@@ -23,8 +23,24 @@ const isQty = (v: unknown): v is number => Number.isInteger(v) && (v as number) 
 const isName = (v: unknown): v is string => typeof v === 'string' && !!v.trim() && v.length <= MAX_NAME;
 const isNote = (v: unknown): v is string => typeof v === 'string' && v.length <= MAX_NOTE;
 
-interface Row { id: string; name: string; cat: string; qty: number; store: string; done: number; note: string }
-const toGrocery = (r: Row): Grocery => ({ id: r.id, name: r.name, cat: r.cat, qty: r.qty, store: r.store, done: !!r.done, note: r.note });
+interface Row {
+  id: string;
+  name: string;
+  cat: string;
+  qty: number;
+  store: string;
+  done: number;
+  note: string;
+}
+const toGrocery = (r: Row): Grocery => ({
+  id: r.id,
+  name: r.name,
+  cat: r.cat,
+  qty: r.qty,
+  store: r.store,
+  done: !!r.done,
+  note: r.note,
+});
 
 /** grocery_names key: one entry per name, whatever its case or spacing */
 const nameKey = (name: string) => name.trim().replace(/\s+/g, ' ').toLowerCase();
@@ -58,7 +74,15 @@ function item(v: unknown): Grocery | null {
   const g = v as Partial<Grocery> | null;
   if (!g || typeof g.id !== 'string' || !LIST_ID.test(g.id) || !isName(g.name) || !CATS.has(g.cat ?? '')) return null;
   if (!isQty(g.qty) || !STORE_IDS.has(g.store ?? '') || (g.note !== undefined && !isNote(g.note))) return null;
-  return { id: g.id, name: g.name.trim(), cat: g.cat!, qty: g.qty, store: g.store!, done: g.done === true, note: g.note ?? '' };
+  return {
+    id: g.id,
+    name: g.name.trim(),
+    cat: g.cat!,
+    qty: g.qty,
+    store: g.store!,
+    done: g.done === true,
+    note: g.note ?? '',
+  };
 }
 
 /**
@@ -87,12 +111,21 @@ export async function addGrocery(req: Request, env: Env): Promise<Response> {
 export async function editGrocery(req: Request, env: Env, id: string): Promise<Response> {
   const b = await body<Partial<Grocery> & { used?: unknown }>(req);
   if (!b) return bad('Expected a change');
-  if ((b.qty !== undefined && !isQty(b.qty)) || (b.done !== undefined && typeof b.done !== 'boolean')
-    || (b.cat !== undefined && !CATS.has(b.cat)) || (b.name !== undefined && !isName(b.name))
-    || (b.note !== undefined && !isNote(b.note)) || (b.store !== undefined && !STORE_IDS.has(b.store))) return bad('Bad change');
-  const cur = await env.DB.prepare('SELECT name, cat FROM groceries WHERE id = ?').bind(id).first<{ name: string; cat: string }>();
+  if (
+    (b.qty !== undefined && !isQty(b.qty)) ||
+    (b.done !== undefined && typeof b.done !== 'boolean') ||
+    (b.cat !== undefined && !CATS.has(b.cat)) ||
+    (b.name !== undefined && !isName(b.name)) ||
+    (b.note !== undefined && !isNote(b.note)) ||
+    (b.store !== undefined && !STORE_IDS.has(b.store))
+  )
+    return bad('Bad change');
+  const cur = await env.DB.prepare('SELECT name, cat FROM groceries WHERE id = ?')
+    .bind(id)
+    .first<{ name: string; cat: string }>();
   if (!cur) return bad('No such item', 404);
-  const name = b.name?.trim() ?? cur.name, cat = b.cat ?? cur.cat;
+  const name = b.name?.trim() ?? cur.name,
+    cat = b.cat ?? cur.cat;
   await env.DB.batch([
     env.DB.prepare(
       `UPDATE groceries SET qty = COALESCE(?, qty), done = COALESCE(?, done), cat = ?, name = ?,
@@ -100,13 +133,22 @@ export async function editGrocery(req: Request, env: Env, id: string): Promise<R
          done_at = CASE WHEN ? IS NULL THEN done_at WHEN ? = 1 THEN ? ELSE NULL END
        WHERE id = ?`,
     ).bind(
-      b.qty ?? null, typeof b.done === 'boolean' ? (b.done ? 1 : 0) : null, cat, name, b.note ?? null, b.store ?? null,
+      b.qty ?? null,
+      typeof b.done === 'boolean' ? (b.done ? 1 : 0) : null,
+      cat,
+      name,
+      b.note ?? null,
+      b.store ?? null,
       // checking off records when; unchecking clears it
-      typeof b.done === 'boolean' ? 1 : null, b.done ? 1 : 0, now(),
+      typeof b.done === 'boolean' ? 1 : null,
+      b.done ? 1 : 0,
+      now(),
       id,
     ),
     // Remember the aisle when it (or the name) changed, or when the item was added again ("used")
-    ...(b.cat !== undefined || b.name !== undefined || b.used === true ? [remember(env, name, cat, b.used === true)] : []),
+    ...(b.cat !== undefined || b.name !== undefined || b.used === true
+      ? [remember(env, name, cat, b.used === true)]
+      : []),
   ]);
   return done();
 }
@@ -120,7 +162,9 @@ export async function deleteGrocery(env: Env, id: string): Promise<Response> {
 /** Parse { ids: [...] } */
 async function idsFrom(req: Request): Promise<string[] | null> {
   const ids = (await body<{ ids?: unknown }>(req))?.ids;
-  return Array.isArray(ids) && ids.length <= MAX_ITEMS && ids.every((x) => typeof x === 'string' && LIST_ID.test(x)) ? ids : null;
+  return Array.isArray(ids) && ids.length <= MAX_ITEMS && ids.every((x) => typeof x === 'string' && LIST_ID.test(x))
+    ? ids
+    : null;
 }
 
 /** POST /api/groceries/clear ({ ids }): remove checked-off items in one go */

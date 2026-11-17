@@ -14,7 +14,13 @@ const REFRESH_MS = 5 * 60 * 1000;
 
 export type SyncStatus = 'loading' | 'ready' | 'error';
 
-export function createSync<T>({ load, apply, failMessage, busy = () => false, keep }: {
+export function createSync<T>({
+  load,
+  apply,
+  failMessage,
+  busy = () => false,
+  keep,
+}: {
   /** Fetch the current data from the Worker */
   load: () => Promise<T>;
   /** Put it into the data store */
@@ -98,7 +104,9 @@ export function createSync<T>({ load, apply, failMessage, busy = () => false, ke
     refresh,
     start,
     /** A local change that isn't saved through `save` yet (holds back refreshes) */
-    touch: () => { version++; },
+    touch: () => {
+      version++;
+    },
     useStatus: () => useStore(status, (s) => s),
   };
 }

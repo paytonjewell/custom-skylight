@@ -45,7 +45,19 @@ export function checkGoogleReturn(): void {
 /** Who a calendar can belong to */
 const owners = (d: Data) => [...calendarPeople(d.people), d.family];
 /** Colours for calendars that are no one's */
-const COLORS = ['#D9534F', '#F0883E', '#FFCD00', '#7FB069', '#203731', '#3FA7B5', '#4A7BD0', '#8E6CCF', '#D96BA8', '#8D6E63', '#5F6B73'];
+const COLORS = [
+  '#D9534F',
+  '#F0883E',
+  '#FFCD00',
+  '#7FB069',
+  '#203731',
+  '#3FA7B5',
+  '#4A7BD0',
+  '#8E6CCF',
+  '#D96BA8',
+  '#8D6E63',
+  '#5F6B73',
+];
 
 function CalendarSettings() {
   const data = useData();
@@ -55,10 +67,15 @@ function CalendarSettings() {
   const [picking, setPicking] = useState<string | null>(null);
   const run = (f: () => Promise<unknown>, done?: string) => {
     setBusy(true);
-    f().then(
-      () => { void refreshEvents(); if (done) toast(done, { icon: 'calendar' }); },
-      (e: Error) => toast(e.message || 'Something went wrong', { icon: 'x' }),
-    ).finally(() => setBusy(false));
+    f()
+      .then(
+        () => {
+          void refreshEvents();
+          if (done) toast(done, { icon: 'calendar' });
+        },
+        (e: Error) => toast(e.message || 'Something went wrong', { icon: 'x' }),
+      )
+      .finally(() => setBusy(false));
   };
   const connectButton = (label: string) =>
     IS_KIOSK ? null : (
@@ -71,7 +88,9 @@ function CalendarSettings() {
     <div className="sheet-pad">
       <SheetHeader kicker="Calendar" title="Google Calendar" />
       {data.googleConfigured === false && (
-        <p className={css.note}>Google Calendar isn’t set up on the server yet (the Google OAuth client id and secret).</p>
+        <p className={css.note}>
+          Google Calendar isn’t set up on the server yet (the Google OAuth client id and secret).
+        </p>
       )}
       {data.googleConfigured && !data.googleAccounts.length && (
         <p className={css.note}>
@@ -99,111 +118,155 @@ function CalendarSettings() {
           </header>
           {a.error && connectButton('Connect again')}
           <ul className={css.calendars}>
-            {data.calendars.filter((c) => c.account === a.id).map((c) => (
-              <li key={c.id} className={css.cal + (c.shown ? ' ' + css.isShown : '')}>
-                <label className={css.calName}>
-                  <input type="checkbox" checked={c.shown} onChange={(e) => setCalendar(c.id, { shown: e.target.checked })} />
-                  <i style={{ background: c.color }} />
-                  <span>
-                    {c.name}
-                    {!c.writable && <small>View only</small>}
-                  </span>
-                </label>
-                {c.shown && (
-                  <div className={css.settings}>
-                    <small className={css.ask}>{c.person !== 'none' && c.byName ? 'Events that name no one are for' : 'Whose is it?'}</small>
-                    <div className={css.owners} role="group" aria-label={'Whose is ' + c.name + '?'}>
-                      {owners(data).map((p) => (
+            {data.calendars
+              .filter((c) => c.account === a.id)
+              .map((c) => (
+                <li key={c.id} className={css.cal + (c.shown ? ' ' + css.isShown : '')}>
+                  <label className={css.calName}>
+                    <input
+                      type="checkbox"
+                      checked={c.shown}
+                      onChange={(e) => setCalendar(c.id, { shown: e.target.checked })}
+                    />
+                    <i style={{ background: c.color }} />
+                    <span>
+                      {c.name}
+                      {!c.writable && <small>View only</small>}
+                    </span>
+                  </label>
+                  {c.shown && (
+                    <div className={css.settings}>
+                      <small className={css.ask}>
+                        {c.person !== 'none' && c.byName ? 'Events that name no one are for' : 'Whose is it?'}
+                      </small>
+                      <div className={css.owners} role="group" aria-label={'Whose is ' + c.name + '?'}>
+                        {owners(data).map((p) => (
+                          <button
+                            key={p.id}
+                            className={css.owner + (c.person === p.id ? ' ' + css.isOn : '')}
+                            style={toneStyle(p)}
+                            onClick={() => setCalendar(c.id, { person: p.id })}
+                          >
+                            <Avatar p={p} size={30} />
+                            <span>{p.id === 'family' ? 'Everyone' : p.name}</span>
+                          </button>
+                        ))}
                         <button
-                          key={p.id}
-                          className={css.owner + (c.person === p.id ? ' ' + css.isOn : '')}
-                          style={toneStyle(p)}
-                          onClick={() => setCalendar(c.id, { person: p.id })}
+                          className={css.owner + (c.person === 'none' ? ' ' + css.isOn : '')}
+                          style={toneStyle({ tone: 0, color: c.color })}
+                          onClick={() => setCalendar(c.id, { person: 'none' })}
                         >
-                          <Avatar p={p} size={30} />
-                          <span>{p.id === 'family' ? 'Everyone' : p.name}</span>
+                          <i className={css.swatch} style={{ background: c.color }} />
+                          <span>No one</span>
                         </button>
-                      ))}
-                      <button
-                        className={css.owner + (c.person === 'none' ? ' ' + css.isOn : '')}
-                        style={toneStyle({ tone: 0, color: c.color })}
-                        onClick={() => setCalendar(c.id, { person: 'none' })}
-                      >
-                        <i className={css.swatch} style={{ background: c.color }} />
-                        <span>No one</span>
-                      </button>
-                    </div>
-                    {c.person === 'none' ? (
-                      <>
-                        <small className={css.ask}>Shown for everyone in its own colour</small>
-                        <div className={css.colors} role="group" aria-label={'Colour for ' + c.name}>
-                          {COLORS.map((hex) => (
-                            <button
-                              key={hex}
-                              className={css.color + (c.color.toLowerCase() === hex.toLowerCase() ? ' ' + css.isOn : '')}
-                              style={{ background: hex }}
-                              aria-label={'Colour ' + hex}
-                              onClick={() => setCalendar(c.id, { color: hex })}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <label className={css.toggle}>
-                        <input type="checkbox" checked={c.byName} onChange={(e) => setCalendar(c.id, { byName: e.target.checked })} />
-                        <span>
-                          Names in titles pick who it’s for
-                          <small>“{(data.people[0]?.name ?? 'Sam') + ' dentist'}” is {(data.people[0]?.name ?? 'Sam') + '’s'}</small>
-                        </span>
-                      </label>
-                    )}
-                    <div className={css.emojiRow}>
-                      <button
-                        className={css.emojiBtn + (picking === c.id ? ' ' + css.isOn : '')}
-                        aria-label={'Emoji for ' + c.name}
-                        onClick={() => setPicking(picking === c.id ? null : c.id)}
-                      >
-                        {c.emoji || <Icon name="smile" size={24} />}
-                      </button>
-                      <span>
-                        {c.emoji ? 'On its events' : 'Emoji for its events'}
-                        <small>
-                          {c.holidays ? 'Each holiday already gets its own; this is for the rest' : 'Unless an event has its own'}
-                        </small>
-                      </span>
-                    </div>
-                    {picking === c.id && (
-                      <div className={css.picker}>
-                        <EmojiPicker onPick={(e) => { setCalendar(c.id, { emoji: e }); setPicking(null); }} />
-                        {c.emoji && (
-                          <button className="btn btn--ghost" onClick={() => { setCalendar(c.id, { emoji: '' }); setPicking(null); }}>No emoji</button>
-                        )}
                       </div>
-                    )}
-                    {c.writable && (
-                      <label className={css.toggle}>
-                        <input type="radio" name="default-calendar" checked={c.isDefault} onChange={() => setCalendar(c.id, { isDefault: true })} />
-                        <span>New events go here</span>
-                      </label>
-                    )}
-                  </div>
-                )}
-              </li>
-            ))}
+                      {c.person === 'none' ? (
+                        <>
+                          <small className={css.ask}>Shown for everyone in its own colour</small>
+                          <div className={css.colors} role="group" aria-label={'Colour for ' + c.name}>
+                            {COLORS.map((hex) => (
+                              <button
+                                key={hex}
+                                className={
+                                  css.color + (c.color.toLowerCase() === hex.toLowerCase() ? ' ' + css.isOn : '')
+                                }
+                                style={{ background: hex }}
+                                aria-label={'Colour ' + hex}
+                                onClick={() => setCalendar(c.id, { color: hex })}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <label className={css.toggle}>
+                          <input
+                            type="checkbox"
+                            checked={c.byName}
+                            onChange={(e) => setCalendar(c.id, { byName: e.target.checked })}
+                          />
+                          <span>
+                            Names in titles pick who it’s for
+                            <small>
+                              “{(data.people[0]?.name ?? 'Sam') + ' dentist'}” is{' '}
+                              {(data.people[0]?.name ?? 'Sam') + '’s'}
+                            </small>
+                          </span>
+                        </label>
+                      )}
+                      <div className={css.emojiRow}>
+                        <button
+                          className={css.emojiBtn + (picking === c.id ? ' ' + css.isOn : '')}
+                          aria-label={'Emoji for ' + c.name}
+                          onClick={() => setPicking(picking === c.id ? null : c.id)}
+                        >
+                          {c.emoji || <Icon name="smile" size={24} />}
+                        </button>
+                        <span>
+                          {c.emoji ? 'On its events' : 'Emoji for its events'}
+                          <small>
+                            {c.holidays
+                              ? 'Each holiday already gets its own; this is for the rest'
+                              : 'Unless an event has its own'}
+                          </small>
+                        </span>
+                      </div>
+                      {picking === c.id && (
+                        <div className={css.picker}>
+                          <EmojiPicker
+                            onPick={(e) => {
+                              setCalendar(c.id, { emoji: e });
+                              setPicking(null);
+                            }}
+                          />
+                          {c.emoji && (
+                            <button
+                              className="btn btn--ghost"
+                              onClick={() => {
+                                setCalendar(c.id, { emoji: '' });
+                                setPicking(null);
+                              }}
+                            >
+                              No emoji
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {c.writable && (
+                        <label className={css.toggle}>
+                          <input
+                            type="radio"
+                            name="default-calendar"
+                            checked={c.isDefault}
+                            onChange={() => setCalendar(c.id, { isDefault: true })}
+                          />
+                          <span>New events go here</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
+                </li>
+              ))}
           </ul>
         </section>
       ))}
 
       <div className={css.actions}>
-        {data.googleConfigured && connectButton(data.googleAccounts.length ? 'Connect another account' : 'Connect Google Calendar')}
+        {data.googleConfigured &&
+          connectButton(data.googleAccounts.length ? 'Connect another account' : 'Connect Google Calendar')}
         {data.googleAccounts.length > 0 && (
-          <button className="btn btn--ghost" disabled={busy} onClick={() => run(api.refreshCalendars, 'Calendars refreshed')}>
+          <button
+            className="btn btn--ghost"
+            disabled={busy}
+            onClick={() => run(api.refreshCalendars, 'Calendars refreshed')}
+          >
             <Icon name="refresh" size={20} /> Refresh from Google
           </button>
         )}
       </div>
       <div className="sheet-actions">
-        <button className="btn btn--solid" onClick={closeSheet}>Done</button>
+        <button className="btn btn--solid" onClick={closeSheet}>
+          Done
+        </button>
       </div>
     </div>
   );

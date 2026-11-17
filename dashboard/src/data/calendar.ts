@@ -6,7 +6,8 @@ import type { Calendar, CalEvent, Data, EventRecord, Person } from './types';
 import { calendarPeople } from './select';
 
 /** 'YYYY-MM-DD' → local midnight that day */
-const localDay = (day: string) => new Date(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10)));
+const localDay = (day: string) =>
+  new Date(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10)));
 
 /** People named in a title, as whole words ("Jacob dentist", "John & Mary dinner", "Jacob's game") */
 function namesIn(title: string, people: Person[]): string[] {
@@ -22,11 +23,16 @@ function namesIn(title: string, people: Person[]): string[] {
 export function whoFor(r: Pick<EventRecord, 'title' | 'people'>, c: Calendar, people: Person[]): string[] {
   if (c.person === 'none') return [];
   const all = people.map((p) => p.id);
-  const pick = r.people?.length ? r.people : c.byName && namesIn(r.title, people).length ? namesIn(r.title, people) : [c.person];
+  const pick = r.people?.length
+    ? r.people
+    : c.byName && namesIn(r.title, people).length
+      ? namesIn(r.title, people)
+      : [c.person];
   return pick.includes('family') ? all : pick.filter((id) => all.includes(id));
 }
 
-const LEADING_EMOJI = /^\s*(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
+const LEADING_EMOJI =
+  /^\s*(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
 
 /** An event's emoji and the title to show beside it: the emoji chosen on the dashboard, or one the title starts with */
 export function splitEmoji(title: string, emoji?: string): { emoji?: string; title: string } {
@@ -74,7 +80,10 @@ export function withEvents(d: Data): Data {
     const had = best.get(r.id);
     if (!had || (had.guest && !r.guest)) best.set(r.id, r);
   }
-  return { ...d, events: [...best.values()].map((r) => toCalEvent(r, shown.get(r.calendar)!, calendarPeople(d.people))) };
+  return {
+    ...d,
+    events: [...best.values()].map((r) => toCalEvent(r, shown.get(r.calendar)!, calendarPeople(d.people))),
+  };
 }
 
 /** The Worker's copy of a CalEvent from Google */

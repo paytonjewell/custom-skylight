@@ -89,7 +89,12 @@ const flagDragging = (on: boolean) => document.documentElement.toggleAttribute('
 /** What `bind` puts on something that can be picked up */
 export type DragProps = ReturnType<ReturnType<typeof useDragDrop>['bind']>;
 
-export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }: {
+export function useDragDrop<T>({
+  onDrop,
+  ghost,
+  holdMs = 350,
+  compact = false,
+}: {
   onDrop: (item: T, target: string, at: DropAt) => void;
   /** What follows the finger (`at`: where it is now, or null when it's over no target) */
   ghost: (item: T, at: DropAt | null) => ReactNode;
@@ -136,7 +141,10 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
       mark(targetAt(e.clientX, e.clientY)?.el ?? null, e.clientY);
     };
     const end = (e: PointerEvent) => {
-      if (pending.current) { clearTimeout(pending.current.timer); pending.current = null; }
+      if (pending.current) {
+        clearTimeout(pending.current.timer);
+        pending.current = null;
+      }
       const d = live.current;
       if (!d) return;
       d.x = e.clientX;
@@ -148,11 +156,15 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
       setDrag(null);
       mark(null);
       justDragged.current = true;
-      setTimeout(() => { justDragged.current = false; }, 50);
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 50);
       if (at) drop.current(d.item, at.value, at);
     };
     // While dragging, a finger moving mustn't scroll the page
-    const noScroll = (ev: TouchEvent) => { if (live.current && ev.cancelable) ev.preventDefault(); };
+    const noScroll = (ev: TouchEvent) => {
+      if (live.current && ev.cancelable) ev.preventDefault();
+    };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', end);
     window.addEventListener('pointercancel', end);
@@ -170,9 +182,11 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
     onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
       if (e.button !== 0) return;
       const el = e.currentTarget;
-      const x = e.clientX, y = e.clientY;
+      const x = e.clientX,
+        y = e.clientY;
       pending.current = {
-        x, y,
+        x,
+        y,
         timer: window.setTimeout(() => {
           pending.current = null;
           const r = el.getBoundingClientRect();
@@ -187,7 +201,12 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
             const cur = live.current;
             if (!cur) return;
             const { top, bottom } = visibleBox(cur.sc);
-            const v = cur.y < top + EDGE ? -(top + EDGE - cur.y) / EDGE : cur.y > bottom - EDGE ? (cur.y - (bottom - EDGE)) / EDGE : 0;
+            const v =
+              cur.y < top + EDGE
+                ? -(top + EDGE - cur.y) / EDGE
+                : cur.y > bottom - EDGE
+                  ? (cur.y - (bottom - EDGE)) / EDGE
+                  : 0;
             if (v) {
               const before = cur.sc.scrollTop;
               cur.sc.scrollTop += Math.max(-1, Math.min(1, v)) * SCROLL_SPEED;
@@ -205,7 +224,10 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
     // A hold mustn't bring up the phone's long-press menu; a drag's release isn't a tap
     onContextMenu: (e: { preventDefault(): void }) => e.preventDefault(),
     onClickCapture: (e: { preventDefault(): void; stopPropagation(): void }) => {
-      if (justDragged.current) { e.preventDefault(); e.stopPropagation(); }
+      if (justDragged.current) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     },
     style: { WebkitTouchCallout: 'none', userSelect: 'none' } as const,
   });
@@ -214,7 +236,11 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
     ? createPortal(
         <div
           className={'drag-ghost' + (compact ? ' drag-ghost--compact' : '')}
-          style={compact ? { left: drag.x - 24, top: drag.y - 24 } : { left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.w }}
+          style={
+            compact
+              ? { left: drag.x - 24, top: drag.y - 24 }
+              : { left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.w }
+          }
         >
           {ghost(drag.item, atOf(drag))}
         </div>,

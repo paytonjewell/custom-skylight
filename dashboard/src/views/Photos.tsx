@@ -1,26 +1,26 @@
 // Photos: a grid of every photo (tap to view or delete, hold and drag to reorder), with a preview of
 // the idle photo frame. Photos are added from a phone; the frame only views, reorders and deletes.
-import { useEffect, useRef, useState } from "react";
-import type { Photo } from "../data/types";
-import { useData } from "../data/store";
-import { addPhotos, deletePhoto, reorderPhotos } from "../data/actions";
-import { usePhotoStatus } from "../data/photoSync";
-import { photoSrc } from "../data/select";
-import { fmt, pluralize } from "../lib/fmt";
-import { go, openSheet, toast, useUI } from "../app/ui";
-import { createStore, useStore } from "../lib/store";
-import { IS_KIOSK, useLayout } from "../app/layout";
-import { EmptyNote } from "../ui/EmptyNote";
-import { Icon } from "../ui/Icon";
-import { PageHeader } from "../ui/headers";
-import { useHoldReorder } from "../ui/useHoldReorder";
-import { PhotoFrame } from "./PhotoFrame";
-import { useSwipeNav, type SlideshowHandle } from "./Slideshow";
-import css from "./Photos.module.css";
+import { useEffect, useRef, useState } from 'react';
+import type { Photo } from '../data/types';
+import { useData } from '../data/store';
+import { addPhotos, deletePhoto, reorderPhotos } from '../data/actions';
+import { usePhotoStatus } from '../data/photoSync';
+import { photoSrc } from '../data/select';
+import { fmt, pluralize } from '../lib/fmt';
+import { go, openSheet, toast, useUI } from '../app/ui';
+import { createStore, useStore } from '../lib/store';
+import { IS_KIOSK, useLayout } from '../app/layout';
+import { EmptyNote } from '../ui/EmptyNote';
+import { Icon } from '../ui/Icon';
+import { PageHeader } from '../ui/headers';
+import { useHoldReorder } from '../ui/useHoldReorder';
+import { PhotoFrame } from './PhotoFrame';
+import { useSwipeNav, type SlideshowHandle } from './Slideshow';
+import css from './Photos.module.css';
 
 export function Photos({ active }: { active: boolean }) {
   const [previewing, setPreviewing] = useState(false);
-  const idle = useUI((s) => s.mode !== "day");
+  const idle = useUI((s) => s.mode !== 'day');
 
   // Leaving the screen, or the real photo frame taking over, ends the preview,
   // so coming back always starts at the grid
@@ -48,14 +48,14 @@ function Grid({ onPreview }: { onPreview: () => void }) {
   });
   const byId = new Map(photos.map((p) => [p.id, p]));
   // The slideshow preview shows how the wall frame will look, so it's only offered there
-  const phone = useLayout() === "phone";
+  const phone = useLayout() === 'phone';
 
   const kicker =
-    status === "loading"
-      ? "Loading photos…"
-      : status === "error"
-        ? "Couldn’t load photos"
-        : `${photos.length} ${pluralize(photos.length, "photo")}`;
+    status === 'loading'
+      ? 'Loading photos…'
+      : status === 'error'
+        ? 'Couldn’t load photos'
+        : `${photos.length} ${pluralize(photos.length, 'photo')}`;
 
   return (
     <div className={css.gridView} ref={view}>
@@ -63,40 +63,24 @@ function Grid({ onPreview }: { onPreview: () => void }) {
         {/* Adding happens from a phone (or a computer), not on the frame itself */}
         {!IS_KIOSK && <AddButton primary={phone} />}
         {!phone && (
-          <button
-            className="btn btn--solid"
-            onClick={onPreview}
-            disabled={!photos.length}
-          >
+          <button className="btn btn--solid" onClick={onPreview} disabled={!photos.length}>
             <Icon name="photo" size={22} />
             Preview slideshow
           </button>
         )}
       </PageHeader>
-      {status === "ready" && !photos.length ? (
+      {status === 'ready' && !photos.length ? (
         <EmptyNote large className={css.empty}>
-          No photos yet.{" "}
-          <i>
-            {IS_KIOSK
-              ? "Add some from your phone."
-              : "Add some with the button above."}
-          </i>
+          No photos yet. <i>{IS_KIOSK ? 'Add some from your phone.' : 'Add some with the button above.'}</i>
         </EmptyNote>
       ) : (
-        <div
-          className={css.grid}
-          data-dragging={ghost ? "" : undefined}
-          ref={grid}
-          data-scroll-top
-        >
+        <div className={css.grid} data-dragging={ghost ? '' : undefined} ref={grid} data-scroll-top>
           {order.map((id) => {
             const p = byId.get(id);
             return p ? (
               <div
                 key={id}
-                className={
-                  css.tile + (ghost?.id === id ? " " + css.isLifted : "")
-                }
+                className={css.tile + (ghost?.id === id ? ' ' + css.isLifted : '')}
                 {...itemProps(id)}
                 onClick={() => openPhotoSheet(p)}
               >
@@ -108,7 +92,7 @@ function Grid({ onPreview }: { onPreview: () => void }) {
       )}
       {ghost && (
         <div
-          className={css.tile + " " + css.ghost}
+          className={css.tile + ' ' + css.ghost}
           style={{
             left: ghost.x,
             top: ghost.y,
@@ -125,11 +109,11 @@ function Grid({ onPreview }: { onPreview: () => void }) {
 
 const Thumb = ({ id }: { id: string }) => (
   <img
-    src={photoSrc(id, "thumb")}
+    src={photoSrc(id, 'thumb')}
     alt=""
     draggable={false}
     loading="lazy"
-    onError={(e) => e.currentTarget.classList.add("is-broken")}
+    onError={(e) => e.currentTarget.classList.add('is-broken')}
   />
 );
 
@@ -143,18 +127,14 @@ function importPhotos(files: File[]): Promise<void> {
   if (!files.length) return queue;
   queue = queue.then(async () => {
     uploads.set([0, files.length]);
-    const { added, failed, skipped } = await addPhotos(files, (done, total) =>
-      uploads.set([done, total]),
-    );
+    const { added, failed, skipped } = await addPhotos(files, (done, total) => uploads.set([done, total]));
     uploads.set(null);
     const parts = [
-      added || (!failed && !skipped)
-        ? `Added ${added} ${pluralize(added, "photo")}`
-        : "",
-      skipped ? `${skipped} already added` : "",
-      failed ? `${failed} couldn’t be added` : "",
+      added || (!failed && !skipped) ? `Added ${added} ${pluralize(added, 'photo')}` : '',
+      skipped ? `${skipped} already added` : '',
+      failed ? `${failed} couldn’t be added` : '',
     ].filter(Boolean);
-    toast(parts.join(" · "), { icon: failed ? "x" : "check" });
+    toast(parts.join(' · '), { icon: failed ? 'x' : 'check' });
   });
   return queue;
 }
@@ -166,7 +146,7 @@ function importPhotos(files: File[]): Promise<void> {
  */
 let receiving = false;
 export async function receiveSharedPhotos(): Promise<void> {
-  if (receiving || !("caches" in window)) return;
+  if (receiving || !('caches' in window)) return;
   receiving = true;
   try {
     await receiveInbox();
@@ -176,7 +156,7 @@ export async function receiveSharedPhotos(): Promise<void> {
 }
 
 async function receiveInbox(): Promise<void> {
-  const inbox = await caches.open("share-inbox");
+  const inbox = await caches.open('share-inbox');
   const keys = await inbox.keys();
   if (!keys.length) return;
   const files: File[] = [];
@@ -185,19 +165,15 @@ async function receiveInbox(): Promise<void> {
     if (!res) continue;
     const blob = await res.blob();
     files.push(
-      new File(
-        [blob],
-        decodeURIComponent(res.headers.get("X-Name") ?? "photo"),
-        {
-          type: blob.type,
-          lastModified: Number(res.headers.get("X-Modified")) || Date.now(),
-        },
-      ),
+      new File([blob], decodeURIComponent(res.headers.get('X-Name') ?? 'photo'), {
+        type: blob.type,
+        lastModified: Number(res.headers.get('X-Modified')) || Date.now(),
+      }),
     );
   }
-  go("photos");
-  toast(`Adding ${files.length} shared ${pluralize(files.length, "photo")}…`, {
-    icon: "photo",
+  go('photos');
+  toast(`Adding ${files.length} shared ${pluralize(files.length, 'photo')}…`, {
+    icon: 'photo',
     ms: 3000,
   });
   await importPhotos(files);
@@ -211,28 +187,19 @@ function AddButton({ primary }: { primary?: boolean }) {
   const pick = (files: FileList | null) => {
     if (!files?.length) return;
     const list = [...files];
-    if (input.current) input.current.value = "";
+    if (input.current) input.current.value = '';
     void importPhotos(list);
   };
   return (
     <>
-      <input
-        ref={input}
-        type="file"
-        accept="image/*"
-        multiple
-        hidden
-        onChange={(e) => pick(e.currentTarget.files)}
-      />
+      <input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => pick(e.currentTarget.files)} />
       <button
-        className={"btn" + (primary ? " btn--solid" : "")}
+        className={'btn' + (primary ? ' btn--solid' : '')}
         onClick={() => input.current?.click()}
         disabled={!!progress}
       >
         <Icon name="plus" size={22} />
-        {progress
-          ? `Adding ${Math.min(progress[0] + 1, progress[1])} of ${progress[1]}…`
-          : "Add photos"}
+        {progress ? `Adding ${Math.min(progress[0] + 1, progress[1])} of ${progress[1]}…` : 'Add photos'}
       </button>
     </>
   );
@@ -240,7 +207,7 @@ function AddButton({ primary }: { primary?: boolean }) {
 
 function openPhotoSheet(p: Photo): void {
   openSheet((close) => <PhotoSheet p={p} close={close} />, {
-    cls: "sheet--wide " + css.sheet,
+    cls: 'sheet--wide ' + css.sheet,
   });
 }
 
@@ -253,11 +220,7 @@ function PhotoSheet({ p, close }: { p: Photo; close: () => void }) {
       </div>
       <div className={css.sheetFoot}>
         <div className={css.sheetMeta}>
-          <b>
-            {taken
-              ? `${fmt.month(taken)} ${taken.getDate()}, ${taken.getFullYear()}`
-              : "Date unknown"}
-          </b>
+          <b>{taken ? `${fmt.month(taken)} ${taken.getDate()}, ${taken.getFullYear()}` : 'Date unknown'}</b>
           {p.by && <span>Added by {p.by}</span>}
         </div>
         <button
@@ -295,14 +258,14 @@ function Preview({ active, onExit }: { active: boolean; onExit: () => void }) {
       <PhotoFrame active={active} slideshowRef={show} />
       <div className={css.surface} {...swipe} />
       <button
-        className={css.btn + " " + css.arrow + " " + css.arrowLeft}
+        className={css.btn + ' ' + css.arrow + ' ' + css.arrowLeft}
         aria-label="Previous"
         onClick={() => show.current?.prev()}
       >
         <Icon name="left" size={30} />
       </button>
       <button
-        className={css.btn + " " + css.arrow + " " + css.arrowRight}
+        className={css.btn + ' ' + css.arrow + ' ' + css.arrowRight}
         aria-label="Next"
         onClick={() => show.current?.next()}
       >

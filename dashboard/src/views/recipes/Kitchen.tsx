@@ -15,7 +15,11 @@ import { Inventory } from './Inventory';
 import css from './Kitchen.module.css';
 
 type Tab = 'recipes' | 'inventory' | 'shopping';
-const TABS = [['recipes', 'Recipes'], ['inventory', 'Inventory'], ['shopping', 'Shopping List']] as const;
+const TABS = [
+  ['recipes', 'Recipes'],
+  ['inventory', 'Inventory'],
+  ['shopping', 'Shopping List'],
+] as const;
 const KEY = 'kitchen.tab';
 
 export function Kitchen() {
@@ -23,7 +27,10 @@ export function Kitchen() {
     const t = stored(KEY, 'recipes');
     return t === 'inventory' || t === 'shopping' ? t : 'recipes';
   });
-  const pick = (t: Tab) => { setTab(t); store(KEY, t); };
+  const pick = (t: Tab) => {
+    setTab(t);
+    store(KEY, t);
+  };
   return (
     <div className={css.kitchen}>
       <Segmented className={css.tabs} options={TABS} value={tab} onChange={pick} />

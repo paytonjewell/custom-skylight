@@ -52,7 +52,10 @@ export function addToGroceries(names: string[]): () => void {
   for (const name of names) {
     const before = dataStore.get().groceries.find((g) => g.name.toLowerCase() === name.toLowerCase() && !g.done);
     const { item, kind } = addGrocery(name, 'all');
-    if (kind === 'new') undo.push(() => { removeGrocery(item.id); });
+    if (kind === 'new')
+      undo.push(() => {
+        removeGrocery(item.id);
+      });
     else if (kind === 'more' && before) undo.push(() => setQty(item.id, before.qty));
     else if (kind === 'revived') undo.push(() => setGroceryDone(item.id, true));
   }
@@ -67,7 +70,13 @@ export function placeFor(name: string): Place {
 }
 
 const learn = (name: string, place: string) =>
-  set((d) => ({ ...d, inventoryNames: [[name.toLowerCase(), place] as [string, string], ...d.inventoryNames.filter(([n]) => n !== name.toLowerCase())] }));
+  set((d) => ({
+    ...d,
+    inventoryNames: [
+      [name.toLowerCase(), place] as [string, string],
+      ...d.inventoryNames.filter(([n]) => n !== name.toLowerCase()),
+    ],
+  }));
 
 /**
  * Put something in the kitchen. If it's already there (by name), it goes up by one instead.
@@ -119,13 +128,19 @@ const setAliases = (pairs: [string, string][]) => {
 
 /** From now on, `name` (a recipe's) counts as the on-hand `item`'s food, for everyone. Returns Undo. */
 export function teachMatch(name: string, item: InventoryItem): () => void {
-  const from = core(name), to = foodKey(item.name);
+  const from = core(name),
+    to = foodKey(item.name);
   const before = dataStore.get().foodAliases;
   const had = before.find(([n]) => n === from);
   setAliases([...before.filter(([n]) => n !== from), [from, to]]);
   saveKitchen(() => api.teach(from, to));
   return () => {
-    setAliases(dataStore.get().foodAliases.filter(([n]) => n !== from).concat(had ? [had] : []));
+    setAliases(
+      dataStore
+        .get()
+        .foodAliases.filter(([n]) => n !== from)
+        .concat(had ? [had] : []),
+    );
     saveKitchen(() => (had ? api.teach(had[0], had[1]) : api.unteach(from)));
   };
 }

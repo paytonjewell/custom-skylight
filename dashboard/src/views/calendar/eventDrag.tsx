@@ -72,10 +72,15 @@ function moveEvent(r: EventRecord, e: CalEvent, to: Date): void {
     : { allDay: false, start: to.toISOString(), end: new Date(+to + len).toISOString() };
   editCalEvent(r, change);
   const when = fmt.rel(to, clockNow()) + (e.allDay ? '' : ' ' + fmt.time(to));
-  toast(<>Moved <b>{evLabel(e)}</b> to {sameDay(to, clockNow()) && !e.allDay ? fmt.time(to) : when}</>, {
-    icon: 'calendar',
-    undo: () => editCalEvent({ ...r, ...change }, { allDay: r.allDay, start: r.start, end: r.end }),
-  });
+  toast(
+    <>
+      Moved <b>{evLabel(e)}</b> to {sameDay(to, clockNow()) && !e.allDay ? fmt.time(to) : when}
+    </>,
+    {
+      icon: 'calendar',
+      undo: () => editCalEvent({ ...r, ...change }, { allDay: r.allDay, start: r.start, end: r.end }),
+    },
+  );
 }
 
 interface EventDrag {
@@ -90,7 +95,13 @@ const Ctx = createContext<EventDrag>(NONE);
 export const useEventDrag = () => useContext(Ctx);
 
 /** The Calendar screen's dragging: wrap the views in it */
-export function EventDragProvider({ hourGrid, children }: { hourGrid: { px: number; start: number }; children: ReactNode }) {
+export function EventDragProvider({
+  hourGrid,
+  children,
+}: {
+  hourGrid: { px: number; start: number };
+  children: ReactNode;
+}) {
   const data = useData();
   const dnd = useDragDrop<CalEvent>({
     onDrop: (e, _target, at) => {
@@ -103,7 +114,11 @@ export function EventDragProvider({ hourGrid, children }: { hourGrid: { px: numb
       return (
         <div className={css.dragEv} style={eventStyle(data, e)}>
           <b>{evLabel(e)}</b>
-          {to && <small>{e.allDay ? fmt.rel(to, clockNow()) + ' · all day' : fmt.rel(to, clockNow()) + ' ' + fmt.time(to)}</small>}
+          {to && (
+            <small>
+              {e.allDay ? fmt.rel(to, clockNow()) + ' · all day' : fmt.rel(to, clockNow()) + ' ' + fmt.time(to)}
+            </small>
+          )}
         </div>
       );
     },

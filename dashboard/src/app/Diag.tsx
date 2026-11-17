@@ -22,7 +22,10 @@ const EXP_CSS: Record<string, string> = {
   img: 'img { visibility: hidden !important; }',
 };
 
-interface Switch { view: string; total: number }
+interface Switch {
+  view: string;
+  total: number;
+}
 
 function ua() {
   const m = navigator.userAgent.match(/(Firefox|Chrome)\/(\d+)/);
@@ -45,7 +48,8 @@ export function Diag() {
     style.textContent = css;
     document.head.appendChild(style);
 
-    let last = performance.now(), raf = 0;
+    let last = performance.now(),
+      raf = 0;
     const frame = (t: number) => {
       const d = t - last;
       last = t;
@@ -55,7 +59,9 @@ export function Diag() {
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    const onDown = (e: PointerEvent) => { if ((e.target as Element).closest('.' + app.rail)) down.current = performance.now(); };
+    const onDown = (e: PointerEvent) => {
+      if ((e.target as Element).closest('.' + app.rail)) down.current = performance.now();
+    };
     document.addEventListener('pointerdown', onDown, true);
     const t = setInterval(() => setTick((n) => n + 1), 500);
     return () => {
@@ -69,10 +75,12 @@ export function Diag() {
   // Screen switch: time from finger down on the sidebar to the next painted frame
   useEffect(() => {
     const start = down.current ?? performance.now();
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      switches.current = [{ view, total: performance.now() - start }, ...switches.current].slice(0, 7);
-      down.current = null;
-    }));
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        switches.current = [{ view, total: performance.now() - start }, ...switches.current].slice(0, 7);
+        down.current = null;
+      }),
+    );
   }, [view]);
 
   const fr = frames.current.slice(-90);
@@ -90,7 +98,8 @@ export function Diag() {
       <br />
       fps {(1000 / avg).toFixed(0)} · frame {avg.toFixed(0)}ms · jank&gt;50ms {jank.current}
       <br />
-      dom {document.getElementsByTagName('*').length} · imgs {imgs.length} ({mpx.toFixed(1)} MP) · heap {mem ? Math.round(mem.usedJSHeapSize / 1048576) + ' MB' : 'n/a'}
+      dom {document.getElementsByTagName('*').length} · imgs {imgs.length} ({mpx.toFixed(1)} MP) · heap{' '}
+      {mem ? Math.round(mem.usedJSHeapSize / 1048576) + ' MB' : 'n/a'}
       <br />
       <u>screen switch · tap → painted</u>
       {switches.current.map((s, i) => (

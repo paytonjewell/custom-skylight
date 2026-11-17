@@ -5,7 +5,17 @@ import { useEffect, useRef, useState } from 'react';
 import { dataStore, useData } from '../../data/store';
 import { onHand } from '../../data/kitchen';
 import { amount, nameFor, onList, plannedFor, shoppingFor, stepSeconds, timerLabel } from '../../data/recipes';
-import { addInventory, addToGroceries, editInventory, markMade, placeFor, planDinner, removeInventory, teachMatch, toggleFavorite } from '../../data/recipeStore';
+import {
+  addInventory,
+  addToGroceries,
+  editInventory,
+  markMade,
+  placeFor,
+  planDinner,
+  removeInventory,
+  teachMatch,
+  toggleFavorite,
+} from '../../data/recipeStore';
 import { dayOf, shiftDay } from '../../lib/repeat';
 import { useNow } from '../../lib/clock';
 import { closeSheet, openSheet, toast } from '../../app/ui';
@@ -24,7 +34,12 @@ export function openRecipe(id: string, day?: string): void {
 function addWithUndo(names: string[]): void {
   if (!names.length) return;
   const undo = addToGroceries(names);
-  toast(<>Added <b>{names.length}</b> {names.length === 1 ? 'item' : 'items'} to Groceries</>, { icon: 'cart', undo });
+  toast(
+    <>
+      Added <b>{names.length}</b> {names.length === 1 ? 'item' : 'items'} to Groceries
+    </>,
+    { icon: 'cart', undo },
+  );
 }
 
 function RecipeSheet({ id, day }: { id: string; day?: string }) {
@@ -33,15 +48,27 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
   const r = data.recipes.find((x) => x.id === id);
   const [servings, setServings] = useState(r?.servings ?? 4);
   /** Ingredients picked to buy (by name); starts with what's needed: not pantry, not listed, not in the kitchen */
-  const [picked, setPicked] = useState<Set<string>>(() =>
-    new Set(r?.ingredients.filter((i) => !i.pantry && !i.optional && !onList(data.groceries, i.name) && !onHand(data.inventory, i.name)).map((i) => i.name)));
+  const [picked, setPicked] = useState<Set<string>>(
+    () =>
+      new Set(
+        r?.ingredients
+          .filter((i) => !i.pantry && !i.optional && !onList(data.groceries, i.name) && !onHand(data.inventory, i.name))
+          .map((i) => i.name),
+      ),
+  );
   const [planning, setPlanning] = useState(false);
   if (!r) return null;
   const factor = servings / r.servings;
   const toAdd = r.ingredients.filter((i) => picked.has(i.name) && !onList(data.groceries, i.name)).map((i) => i.name);
   const week = Array.from({ length: 7 }, (_, i) => shiftDay(today, i));
   const plannedOn = week.filter((d) => data.mealPlan[d] === r.id);
-  const toggle = (name: string) => setPicked((p) => { const n = new Set(p); if (n.has(name)) n.delete(name); else n.add(name); return n; });
+  const toggle = (name: string) =>
+    setPicked((p) => {
+      const n = new Set(p);
+      if (n.has(name)) n.delete(name);
+      else n.add(name);
+      return n;
+    });
 
   return (
     <div className={'sheet-pad ' + css.recipe} style={toneStyle({ tone: r.tone })}>
@@ -51,9 +78,13 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
           <div className="label">{r.tags.join(' · ')}</div>
           <h2 className="serif">{r.title}</h2>
           <div className={css.meta}>
-            <span><Icon name="clock" size={18} /> {r.minutes} min</span>
+            <span>
+              <Icon name="clock" size={18} /> {r.minutes} min
+            </span>
             {r.made && <span>Made {madeAgo(r.made, today)}</span>}
-            {plannedOn.length > 0 && <span className={css.planned}>Planned · {plannedOn.map((d) => dayLabel(d, today)).join(', ')}</span>}
+            {plannedOn.length > 0 && (
+              <span className={css.planned}>Planned · {plannedOn.map((d) => dayLabel(d, today)).join(', ')}</span>
+            )}
             {r.source && (
               <a className={css.source} href={r.source} target="_blank" rel="noopener noreferrer">
                 From {r.source.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]} ↗
@@ -61,7 +92,12 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
             )}
           </div>
         </div>
-        <button className={css.heart + (r.favorite ? ' ' + css.isFav : '')} aria-label={r.favorite ? 'Unfavorite' : 'Favorite'} aria-pressed={r.favorite} onClick={() => toggleFavorite(r.id)}>
+        <button
+          className={css.heart + (r.favorite ? ' ' + css.isFav : '')}
+          aria-label={r.favorite ? 'Unfavorite' : 'Favorite'}
+          aria-pressed={r.favorite}
+          onClick={() => toggleFavorite(r.id)}
+        >
           <Icon name="heart" size={26} />
         </button>
       </header>
@@ -71,9 +107,21 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
           <div className={css.secHead}>
             <div className="label">Ingredients</div>
             <div className={css.stepper} aria-label="Servings">
-              <button className="icon-btn" aria-label="Fewer servings" onClick={() => setServings(Math.max(1, servings - 1))}>−</button>
+              <button
+                className="icon-btn"
+                aria-label="Fewer servings"
+                onClick={() => setServings(Math.max(1, servings - 1))}
+              >
+                −
+              </button>
               <b className="num">{servings}</b>
-              <button className="icon-btn" aria-label="More servings" onClick={() => setServings(Math.min(24, servings + 1))}>+</button>
+              <button
+                className="icon-btn"
+                aria-label="More servings"
+                onClick={() => setServings(Math.min(24, servings + 1))}
+              >
+                +
+              </button>
               <small>servings</small>
             </div>
           </div>
@@ -87,22 +135,43 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
               const canTeach = !listed && !have;
               return (
                 <li key={i.name + i.note} className={css.ingRow}>
-                  <button className={css.ing + (on ? ' ' + css.isOn : '') + (listed ? ' ' + css.isListed : '')} disabled={listed} onClick={() => toggle(i.name)}>
+                  <button
+                    className={css.ing + (on ? ' ' + css.isOn : '') + (listed ? ' ' + css.isListed : '')}
+                    disabled={listed}
+                    onClick={() => toggle(i.name)}
+                  >
                     <span className={css.box}>{(on || listed) && <Icon name="check" size={16} />}</span>
                     <span className={css.ingText}>
                       <b>{amount(i, factor)}</b> {nameFor(i, factor)}
                       {i.note && <small>, {i.note}</small>}
                     </span>
-                    {listed ? <em className={css.tag}>On list</em> : have ? <em className={css.tagHave}>In kitchen</em> : i.pantry ? <em className={css.tagSoft}>Pantry</em> : i.optional ? <em className={css.tagSoft}>Optional</em> : null}
+                    {listed ? (
+                      <em className={css.tag}>On list</em>
+                    ) : have ? (
+                      <em className={css.tagHave}>In kitchen</em>
+                    ) : i.pantry ? (
+                      <em className={css.tagSoft}>Pantry</em>
+                    ) : i.optional ? (
+                      <em className={css.tagSoft}>Optional</em>
+                    ) : null}
                   </button>
                   {canTeach && (
-                    <button className={css.haveIt} onClick={() => openHaveIt(r.id, i.name)}>I have this</button>
+                    <button className={css.haveIt} onClick={() => openHaveIt(r.id, i.name)}>
+                      I have this
+                    </button>
                   )}
                 </li>
               );
             })}
           </ul>
-          <button className={'btn btn--solid ' + css.addBtn} disabled={!toAdd.length} onClick={() => { addWithUndo(toAdd); setPicked(new Set()); }}>
+          <button
+            className={'btn btn--solid ' + css.addBtn}
+            disabled={!toAdd.length}
+            onClick={() => {
+              addWithUndo(toAdd);
+              setPicked(new Set());
+            }}
+          >
             <Icon name="cart" size={20} />
             {toAdd.length ? `Add ${toAdd.length} to Groceries` : 'Everything ticked is on the list'}
           </button>
@@ -118,7 +187,11 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
               </li>
             ))}
           </ol>
-          {r.notes && <p className={css.notes}><b>Note:</b> {r.notes}</p>}
+          {r.notes && (
+            <p className={css.notes}>
+              <b>Note:</b> {r.notes}
+            </p>
+          )}
         </section>
       </div>
 
@@ -147,11 +220,20 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
 
       <div className="sheet-actions">
         {day && data.mealPlan[day] === r.id && (
-          <button className="btn btn--ghost" onClick={() => { planDinner(day, null); closeSheet(); }}>
+          <button
+            className="btn btn--ghost"
+            onClick={() => {
+              planDinner(day, null);
+              closeSheet();
+            }}
+          >
             Take off {dayLabel(day, today)}
           </button>
         )}
-        <button className={'btn btn--ghost' + (planning ? ' ' + css.isOnBtn : '')} onClick={() => setPlanning(!planning)}>
+        <button
+          className={'btn btn--ghost' + (planning ? ' ' + css.isOnBtn : '')}
+          onClick={() => setPlanning(!planning)}
+        >
           <Icon name="calendar" size={20} /> Plan
         </button>
         <button className="btn btn--solid" onClick={() => openCook(r.id, servings)}>
@@ -182,10 +264,19 @@ function HaveIt({ recipeId, name }: { recipeId: string; name: string }) {
         onClick={() => {
           const { item, added } = addInventory(name);
           back();
-          toast(<>Added <b>{item.name}</b> to the {item.place.toLowerCase()}</>, {
-            icon: 'check',
-            undo: added ? () => { removeInventory(item.id); } : () => editInventory(item.id, { qty: Math.max(1, item.qty - 1) }),
-          });
+          toast(
+            <>
+              Added <b>{item.name}</b> to the {item.place.toLowerCase()}
+            </>,
+            {
+              icon: 'check',
+              undo: added
+                ? () => {
+                    removeInventory(item.id);
+                  }
+                : () => editInventory(item.id, { qty: Math.max(1, item.qty - 1) }),
+            },
+          );
         }}
       >
         <Icon name="plus" size={22} />
@@ -196,8 +287,16 @@ function HaveIt({ recipeId, name }: { recipeId: string; name: string }) {
       </button>
       {data.inventory.length > 0 && (
         <>
-          <p className={'sheet-p ' + css.haveOr}>Or, if it’s in the kitchen under another name, pick it. From then on, recipes that need {name} will count it, for everyone.</p>
-          <input className={css.haveSearch} placeholder="Search the kitchen" value={q} onChange={(e) => setQ(e.target.value)} />
+          <p className={'sheet-p ' + css.haveOr}>
+            Or, if it’s in the kitchen under another name, pick it. From then on, recipes that need {name} will count
+            it, for everyone.
+          </p>
+          <input
+            className={css.haveSearch}
+            placeholder="Search the kitchen"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </>
       )}
       <ul className={css.haveList}>
@@ -208,7 +307,12 @@ function HaveIt({ recipeId, name }: { recipeId: string; name: string }) {
               onClick={() => {
                 const undo = teachMatch(name, i);
                 back();
-                toast(<><b>{i.name}</b> now counts as {name}</>, { icon: 'check', undo });
+                toast(
+                  <>
+                    <b>{i.name}</b> now counts as {name}
+                  </>,
+                  { icon: 'check', undo },
+                );
               }}
             >
               <b>{i.name}</b>
@@ -218,7 +322,9 @@ function HaveIt({ recipeId, name }: { recipeId: string; name: string }) {
         ))}
       </ul>
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={back}>Back</button>
+        <button className="btn btn--ghost" onClick={back}>
+          Back
+        </button>
       </div>
     </div>
   );
@@ -232,9 +338,17 @@ function ShopSheet({ days }: { days: string[] }) {
   const data = useData();
   const recipes = plannedFor(data, days);
   const items = shoppingFor(recipes, data.groceries, data.inventory);
-  const [picked, setPicked] = useState<Set<string>>(() => new Set(items.filter((x) => !x.pantry && !x.optional && !x.listed && !x.have).map((x) => x.name)));
+  const [picked, setPicked] = useState<Set<string>>(
+    () => new Set(items.filter((x) => !x.pantry && !x.optional && !x.listed && !x.have).map((x) => x.name)),
+  );
   const toAdd = items.filter((x) => picked.has(x.name) && !x.listed).map((x) => x.name);
-  const toggle = (name: string) => setPicked((p) => { const n = new Set(p); if (n.has(name)) n.delete(name); else n.add(name); return n; });
+  const toggle = (name: string) =>
+    setPicked((p) => {
+      const n = new Set(p);
+      if (n.has(name)) n.delete(name);
+      else n.add(name);
+      return n;
+    });
   return (
     <div className="sheet-pad">
       <SheetHeader kicker="Shop for this week" title={recipes.map((r) => r.emoji).join(' ')} />
@@ -244,21 +358,42 @@ function ShopSheet({ days }: { days: string[] }) {
           const on = picked.has(x.name) && !x.listed;
           return (
             <li key={x.name}>
-              <button className={css.ing + (on ? ' ' + css.isOn : '') + (x.listed ? ' ' + css.isListed : '')} disabled={x.listed} onClick={() => toggle(x.name)}>
+              <button
+                className={css.ing + (on ? ' ' + css.isOn : '') + (x.listed ? ' ' + css.isListed : '')}
+                disabled={x.listed}
+                onClick={() => toggle(x.name)}
+              >
                 <span className={css.box}>{(on || x.listed) && <Icon name="check" size={16} />}</span>
                 <span className={css.ingText}>
                   {x.name}
                   <small> · {x.for.join(', ')}</small>
                 </span>
-                {x.listed ? <em className={css.tag}>On list</em> : x.have ? <em className={css.tagHave}>In kitchen</em> : x.pantry ? <em className={css.tagSoft}>Pantry</em> : x.optional ? <em className={css.tagSoft}>Optional</em> : null}
+                {x.listed ? (
+                  <em className={css.tag}>On list</em>
+                ) : x.have ? (
+                  <em className={css.tagHave}>In kitchen</em>
+                ) : x.pantry ? (
+                  <em className={css.tagSoft}>Pantry</em>
+                ) : x.optional ? (
+                  <em className={css.tagSoft}>Optional</em>
+                ) : null}
               </button>
             </li>
           );
         })}
       </ul>
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={closeSheet}>Close</button>
-        <button className="btn btn--solid" disabled={!toAdd.length} onClick={() => { addWithUndo(toAdd); closeSheet(); }}>
+        <button className="btn btn--ghost" onClick={closeSheet}>
+          Close
+        </button>
+        <button
+          className="btn btn--solid"
+          disabled={!toAdd.length}
+          onClick={() => {
+            addWithUndo(toAdd);
+            closeSheet();
+          }}
+        >
           <Icon name="cart" size={20} /> {toAdd.length ? `Add ${toAdd.length} to Groceries` : 'Nothing to add'}
         </button>
       </div>
@@ -276,7 +411,8 @@ function chime(): void {
   try {
     const ctx = new AudioContext();
     [0, 0.35, 0.7].forEach((t) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
+      const o = ctx.createOscillator(),
+        g = ctx.createGain();
       o.frequency.value = 880;
       g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
       g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + t + 0.02);
@@ -339,10 +475,17 @@ function Cook({ id, servings }: { id: string; servings: number }) {
       <section className={css.cookMain}>
         <div className={css.progress}>
           {r.steps.map((_, i) => (
-            <button key={i} className={i === step ? css.isAt : i < step ? css.isPast : ''} aria-label={'Step ' + (i + 1)} onClick={() => setStep(i)} />
+            <button
+              key={i}
+              className={i === step ? css.isAt : i < step ? css.isPast : ''}
+              aria-label={'Step ' + (i + 1)}
+              onClick={() => setStep(i)}
+            />
           ))}
         </div>
-        <div className="label">Step {step + 1} of {r.steps.length}</div>
+        <div className="label">
+          Step {step + 1} of {r.steps.length}
+        </div>
         <p className={css.stepText + ' serif'}>{r.steps[step]}</p>
         <div className={css.timerRow}>
           {timer ? (
@@ -362,7 +505,19 @@ function Cook({ id, servings }: { id: string; servings: number }) {
             <Icon name="left" size={22} /> Back
           </button>
           {last ? (
-            <button className="btn btn--solid" onClick={() => { markMade(r.id, today); closeSheet(); toast(<>Enjoy! <b>{r.title}</b> marked as made</>, { icon: 'check' }); }}>
+            <button
+              className="btn btn--solid"
+              onClick={() => {
+                markMade(r.id, today);
+                closeSheet();
+                toast(
+                  <>
+                    Enjoy! <b>{r.title}</b> marked as made
+                  </>,
+                  { icon: 'check' },
+                );
+              }}
+            >
               <Icon name="check" size={22} /> Done cooking
             </button>
           ) : (

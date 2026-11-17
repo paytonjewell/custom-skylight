@@ -52,7 +52,10 @@ if (FRAME_PREVIEW) {
   const root = document.documentElement;
   root.classList.add('frame-preview');
   const zoom = () =>
-    root.style.setProperty('--preview-zoom', String(Math.min(1, innerWidth / FRAME_VIEWPORT.w, innerHeight / FRAME_VIEWPORT.h)));
+    root.style.setProperty(
+      '--preview-zoom',
+      String(Math.min(1, innerWidth / FRAME_VIEWPORT.w, innerHeight / FRAME_VIEWPORT.h)),
+    );
   zoom();
   addEventListener('resize', zoom);
 }

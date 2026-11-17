@@ -33,11 +33,20 @@ export function SheetHost() {
  * Phone bottom sheets: drag down to close (from the handle, or anywhere once the sheet is scrolled to
  * its top). Let go past a threshold, or flick, and it slides away; otherwise it springs back.
  */
-function useDragToClose(box: RefObject<HTMLDivElement | null>, scrim: RefObject<HTMLDivElement | null>, id: number | undefined) {
+function useDragToClose(
+  box: RefObject<HTMLDivElement | null>,
+  scrim: RefObject<HTMLDivElement | null>,
+  id: number | undefined,
+) {
   useEffect(() => {
     const el = box.current;
     if (!el || !isPhone()) return;
-    let x0 = 0, y0 = 0, t0 = 0, dy = 0, armed = false, dragging = false;
+    let x0 = 0,
+      y0 = 0,
+      t0 = 0,
+      dy = 0,
+      armed = false,
+      dragging = false;
     const place = (d: number) => {
       el.style.transform = d ? `translateY(${d}px)` : '';
       if (scrim.current) scrim.current.style.opacity = d ? String(Math.max(0, 1 - d / el.offsetHeight)) : '';
@@ -55,11 +64,15 @@ function useDragToClose(box: RefObject<HTMLDivElement | null>, scrim: RefObject<
     const move = (e: TouchEvent) => {
       if (!armed) return;
       const t = e.touches[0];
-      const d = t.clientY - y0, dx = t.clientX - x0;
+      const d = t.clientY - y0,
+        dx = t.clientX - x0;
       if (!dragging) {
         if (Math.abs(d) < 6 && Math.abs(dx) < 6) return;
         // Up is a scroll, sideways belongs to whatever scrolls sideways (e.g. the hourly forecast)
-        if (d <= 0 || Math.abs(dx) > d) { armed = false; return; }
+        if (d <= 0 || Math.abs(dx) > d) {
+          armed = false;
+          return;
+        }
         dragging = true;
         t0 = Date.now();
         el.style.transition = 'none';
@@ -93,7 +106,10 @@ function useDragToClose(box: RefObject<HTMLDivElement | null>, scrim: RefObject<
       el.removeEventListener('touchmove', move);
       el.removeEventListener('touchend', end);
       el.removeEventListener('touchcancel', end);
-      if (scrim.current) { scrim.current.style.opacity = ''; scrim.current.style.transition = ''; }
+      if (scrim.current) {
+        scrim.current.style.opacity = '';
+        scrim.current.style.transition = '';
+      }
     };
   }, [box, scrim, id]);
 }
@@ -113,7 +129,13 @@ export function Toasts() {
           {t.icon && <Icon name={t.icon} size={26} />}
           <span className={css.msg}>{t.content}</span>
           {t.undo && (
-            <button className={css.undo} onClick={() => { t.undo?.(); dismissToast(t.id); }}>
+            <button
+              className={css.undo}
+              onClick={() => {
+                t.undo?.();
+                dismissToast(t.id);
+              }}
+            >
               <Icon name="undo" size={22} />
               Undo
             </button>

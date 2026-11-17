@@ -2,7 +2,16 @@
 // The current photo sits on a strip between its neighbours (already loaded, off-screen), so a swipe
 // can drag the strip under the finger and glide on to the next photo, like a Frameo frame.
 // The timed advance glides on the same way, once the next photo has loaded.
-import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type PointerEvent, type Ref, type RefObject } from 'react';
+import {
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type Ref,
+  type RefObject,
+} from 'react';
 import type { Photo } from '../data/types';
 import { dataStore } from '../data/store';
 import { useStore } from '../lib/store';
@@ -81,8 +90,12 @@ export function Slideshow({ interval, active, ref }: Props) {
   };
 
   useImperativeHandle(ref, () => ({
-    next: () => { if (!moving.current) glide(1); },
-    prev: () => { if (!moving.current) glide(-1); },
+    next: () => {
+      if (!moving.current) glide(1);
+    },
+    prev: () => {
+      if (!moving.current) glide(-1);
+    },
     drag(dx) {
       if (moving.current === 'glide') return;
       moving.current = 'drag';
@@ -91,7 +104,8 @@ export function Slideshow({ interval, active, ref }: Props) {
     },
     release(dx, vx) {
       if (moving.current !== 'drag') return;
-      const x = local(dx), w = track.current?.offsetWidth ?? 1;
+      const x = local(dx),
+        w = track.current?.offsetWidth ?? 1;
       if (n > 1 && (Math.abs(x) > w * 0.2 || (Math.abs(vx) > 0.35 && Math.abs(x) > 24))) glide(x < 0 ? 1 : -1, x);
       else {
         moving.current = null;
@@ -133,7 +147,10 @@ function SlideView({ photo: p, pos, onLoad }: { photo: Photo; pos: -1 | 0 | 1; o
       alt=""
       draggable={false}
       onLoad={() => onLoad(p.id)}
-      onError={(e) => { e.currentTarget.classList.add('is-broken'); onLoad(p.id); }}
+      onError={(e) => {
+        e.currentTarget.classList.add('is-broken');
+        onLoad(p.id);
+      }}
     />
   );
   // Landscape fills the screen; portrait is shown whole, centred
@@ -153,24 +170,42 @@ function SlideView({ photo: p, pos, onLoad }: { photo: Photo; pos: -1 | 0 | 1; o
  * finger (and mouse); a tap that doesn't move goes to `onTap`. Spread the result on the surface.
  */
 export function useSwipeNav(show: RefObject<SlideshowHandle | null>, onTap: (e: PointerEvent<HTMLElement>) => void) {
-  const g = useRef<{ id: number; x: number; y: number; dragging: boolean; lastX: number; lastT: number; vx: number } | null>(null);
+  const g = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    dragging: boolean;
+    lastX: number;
+    lastT: number;
+    vx: number;
+  } | null>(null);
   const end = (e: PointerEvent<HTMLElement>, cancelled: boolean) => {
     const d = g.current;
     g.current = null;
     if (!d || e.pointerId !== d.id) return;
-    const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    const dx = e.clientX - d.x,
+      dy = e.clientY - d.y;
     if (d.dragging) show.current?.release(cancelled ? 0 : dx, cancelled ? 0 : d.vx);
     else if (!cancelled && Math.hypot(dx, dy) < 12) onTap(e);
   };
   return {
     onPointerDown(e: PointerEvent<HTMLElement>) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      g.current = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false, lastX: e.clientX, lastT: e.timeStamp, vx: 0 };
+      g.current = {
+        id: e.pointerId,
+        x: e.clientX,
+        y: e.clientY,
+        dragging: false,
+        lastX: e.clientX,
+        lastT: e.timeStamp,
+        vx: 0,
+      };
     },
     onPointerMove(e: PointerEvent<HTMLElement>) {
       const d = g.current;
       if (!d || e.pointerId !== d.id) return;
-      const dx = e.clientX - d.x, dy = e.clientY - d.y;
+      const dx = e.clientX - d.x,
+        dy = e.clientY - d.y;
       if (!d.dragging) {
         // Sideways and past a little slop: it's a swipe. Mostly vertical: leave it alone.
         if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return;

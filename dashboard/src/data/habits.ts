@@ -37,7 +37,8 @@ export function habitStats(t: Task, rows: TaskDone[], today: string, from: strin
     for (let d = first; d <= today; d = shiftDay(d, 1)) cells.set(d, done.has(d) ? 'done' : 'off');
     const days = [...done].filter((d) => d <= today).sort();
     const gap = interval(r);
-    let run = 0, best = 0;
+    let run = 0,
+      best = 0;
     days.forEach((d, i) => {
       run = i > 0 && dayDiff(days[i - 1], d) <= gap ? run + 1 : 1;
       best = Math.max(best, run);
@@ -48,7 +49,10 @@ export function habitStats(t: Task, rows: TaskDone[], today: string, from: strin
     return { current, best, rate: null, cells };
   }
 
-  let run = 0, best = 0, due30 = 0, done30 = 0;
+  let run = 0,
+    best = 0,
+    due30 = 0,
+    done30 = 0;
   const since30 = shiftDay(today, -29);
   for (let d = first; d <= today; d = shiftDay(d, 1)) {
     const due = occursOn(r, d);

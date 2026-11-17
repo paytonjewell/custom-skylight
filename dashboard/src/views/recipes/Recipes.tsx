@@ -25,7 +25,17 @@ import { useLayout } from '../../app/layout';
 import { dayLabel, madeAgo } from './days';
 import css from './Recipes.module.css';
 
-const FILTERS = ['All', 'Ready to make', 'Favorites', 'Quick', 'Dinner', 'Breakfast', "Kids' pick", 'Baking', 'Make ahead'];
+const FILTERS = [
+  'All',
+  'Ready to make',
+  'Favorites',
+  'Quick',
+  'Dinner',
+  'Breakfast',
+  "Kids' pick",
+  'Baking',
+  'Make ahead',
+];
 
 /** `onInventory`: switch to the Inventory tab */
 export function RecipesTab({ onInventory }: { onInventory: () => void }) {
@@ -50,13 +60,32 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
       if (from) {
         planDinner(from, before ?? null);
         const other = before ? data.recipes.find((x) => x.id === before) : undefined;
-        toast(other ? <>Swapped <b>{rec.title}</b> and <b>{other.title}</b></> : <>Moved <b>{rec.title}</b> to {when}</>, {
-          icon: 'calendar',
-          undo: () => { planDinner(from, rec.id); planDinner(day, before ?? null); },
-        });
+        toast(
+          other ? (
+            <>
+              Swapped <b>{rec.title}</b> and <b>{other.title}</b>
+            </>
+          ) : (
+            <>
+              Moved <b>{rec.title}</b> to {when}
+            </>
+          ),
+          {
+            icon: 'calendar',
+            undo: () => {
+              planDinner(from, rec.id);
+              planDinner(day, before ?? null);
+            },
+          },
+        );
         return;
       }
-      toast(<>Planned <b>{rec.title}</b> for {when}</>, { icon: 'calendar', undo: () => planDinner(day, before ?? null) });
+      toast(
+        <>
+          Planned <b>{rec.title}</b> for {when}
+        </>,
+        { icon: 'calendar', undo: () => planDinner(day, before ?? null) },
+      );
     },
     ghost: ({ rec }) => (
       <div className={css.dragCard} style={toneStyle({ tone: rec.tone })}>
@@ -66,8 +95,9 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
     ),
     compact: true,
   });
-  const list = filterRecipes(data.recipes, query, filter === 'Ready to make' ? 'All' : filter)
-    .filter((r) => filter !== 'Ready to make' || !missingFor.get(r.id)?.length);
+  const list = filterRecipes(data.recipes, query, filter === 'Ready to make' ? 'All' : filter).filter(
+    (r) => filter !== 'Ready to make' || !missingFor.get(r.id)?.length,
+  );
   /** Recipe id → the days this week it's planned for */
   const week = Array.from({ length: 7 }, (_, i) => shiftDay(today, i));
   const plannedDays = new Map<string, string[]>();
@@ -81,7 +111,12 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
       <PageHeader kicker={status === 'loading' && !data.kitchenLoaded ? 'Loading…' : 'Kitchen'} title="Recipes">
         <label className={css.search}>
           <Icon name="search" size={20} />
-          <input placeholder="Search recipes or ingredients" value={query} onChange={(e) => setQuery(e.target.value)} enterKeyHint="search" />
+          <input
+            placeholder="Search recipes or ingredients"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            enterKeyHint="search"
+          />
           {query && (
             <button className={css.clear} aria-label="Clear search" onClick={() => setQuery('')}>
               <Icon name="x" size={18} />
@@ -101,7 +136,11 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
         <FromKitchen ready={ready} hasInventory={data.inventory.length > 0} onInventory={onInventory} />
 
         <div className={'chips ' + css.filters}>
-          {FILTERS.filter((f) => ['All', 'Ready to make', 'Favorites', 'Quick'].includes(f) || data.recipes.some((r) => r.tags.includes(f))).map((f) => (
+          {FILTERS.filter(
+            (f) =>
+              ['All', 'Ready to make', 'Favorites', 'Quick'].includes(f) ||
+              data.recipes.some((r) => r.tags.includes(f)),
+          ).map((f) => (
             <button key={f} className={'chip' + (filter === f ? ' is-on' : '')} onClick={() => setFilter(f)}>
               {f === 'Favorites' && <Icon name="heart" size={16} />}
               {f}
@@ -113,14 +152,26 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
           <div className={css.grid}>
             {list.map((r) => (
               <RecipeCard
-                key={r.id} r={r} today={today} planned={plannedDays.get(r.id) ?? []} missing={data.inventory.length ? missingFor.get(r.id) : undefined}
-                drag={dnd.bind({ rec: r })} lifted={!dnd.dragging?.from && dnd.dragging?.rec.id === r.id}
+                key={r.id}
+                r={r}
+                today={today}
+                planned={plannedDays.get(r.id) ?? []}
+                missing={data.inventory.length ? missingFor.get(r.id) : undefined}
+                drag={dnd.bind({ rec: r })}
+                lifted={!dnd.dragging?.from && dnd.dragging?.rec.id === r.id}
               />
             ))}
           </div>
         ) : (
           <EmptyNote className={css.empty}>
-            <i>No recipes</i> {query ? `match “${query}”` : filter === 'Favorites' ? 'marked as favorites yet' : filter === 'Ready to make' ? 'can be made from what’s on hand' : 'here yet'}
+            <i>No recipes</i>{' '}
+            {query
+              ? `match “${query}”`
+              : filter === 'Favorites'
+                ? 'marked as favorites yet'
+                : filter === 'Ready to make'
+                  ? 'can be made from what’s on hand'
+                  : 'here yet'}
           </EmptyNote>
         )}
       </div>
@@ -130,8 +181,14 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
 }
 
 // ------------------------------------------------------------ this week's dinners
-function WeekPlan({ days, today, drag, lifted }: {
-  days: string[]; today: string;
+function WeekPlan({
+  days,
+  today,
+  drag,
+  lifted,
+}: {
+  days: string[];
+  today: string;
   /** Hold a planned dinner to drag it to another day */
   drag: (rec: Recipe, from: string) => DragProps;
   /** The day whose dinner is being dragged */
@@ -139,12 +196,18 @@ function WeekPlan({ days, today, drag, lifted }: {
 }) {
   const data = useData();
   const planned = plannedFor(data, days);
-  const toBuy = shoppingFor(planned, data.groceries, data.inventory).filter((x) => !x.listed && !x.pantry && !x.optional && !x.have).length;
+  const toBuy = shoppingFor(planned, data.groceries, data.inventory).filter(
+    (x) => !x.listed && !x.pantry && !x.optional && !x.have,
+  ).length;
   return (
     <section className={css.week}>
       <div className={css.weekHead}>
         <div className="label">Dinners this week</div>
-        <button className={'btn ' + (toBuy ? 'btn--solid' : 'btn--ghost') + ' ' + css.shopBtn} disabled={!planned.length} onClick={() => openShopSheet(days)}>
+        <button
+          className={'btn ' + (toBuy ? 'btn--solid' : 'btn--ghost') + ' ' + css.shopBtn}
+          disabled={!planned.length}
+          onClick={() => openShopSheet(days)}
+        >
           <Icon name="cart" size={20} />
           {!planned.length ? 'Plan a dinner to shop for it' : toBuy ? `Shop this week · ${toBuy}` : 'All on the list'}
         </button>
@@ -156,7 +219,12 @@ function WeekPlan({ days, today, drag, lifted }: {
             <button
               key={day}
               data-drop={day}
-              className={css.day + (r ? ' ' + css.isPlanned : '') + (day === today ? ' ' + css.isToday : '') + (lifted === day ? ' ' + css.isLifted : '')}
+              className={
+                css.day +
+                (r ? ' ' + css.isPlanned : '') +
+                (day === today ? ' ' + css.isToday : '') +
+                (lifted === day ? ' ' + css.isLifted : '')
+              }
               {...(r ? drag(r, day) : {})}
               style={r ? { ...drag(r, day).style, ...toneStyle({ tone: r.tone }) } : undefined}
               onClick={() => (r ? openRecipe(r.id, day) : pickDinner(day))}
@@ -188,17 +256,29 @@ function PickDinner({ day }: { day: string }) {
   const data = useData();
   const today = dayOf(useNow());
   // Favorites first, then the ones not made for longest
-  const list = [...data.recipes].sort((a, b) => Number(b.favorite) - Number(a.favorite) || (a.made ?? '').localeCompare(b.made ?? ''));
+  const list = [...data.recipes].sort(
+    (a, b) => Number(b.favorite) - Number(a.favorite) || (a.made ?? '').localeCompare(b.made ?? ''),
+  );
   return (
     <div className="sheet-pad">
       <SheetHeader kicker="Plan dinner" title={dayLabel(day, today, true)} />
       <div className={css.pickGrid}>
         {list.map((r) => (
-          <button key={r.id} className={css.pick} style={toneStyle({ tone: r.tone })} onClick={() => { planDinner(day, r.id); closeSheet(); }}>
+          <button
+            key={r.id}
+            className={css.pick}
+            style={toneStyle({ tone: r.tone })}
+            onClick={() => {
+              planDinner(day, r.id);
+              closeSheet();
+            }}
+          >
             <span className={css.pickEmoji}>{r.emoji}</span>
             <span>
               <b>{r.title}</b>
-              <small>{r.minutes} min{r.made ? ' · made ' + madeAgo(r.made, today) : ''}</small>
+              <small>
+                {r.minutes} min{r.made ? ' · made ' + madeAgo(r.made, today) : ''}
+              </small>
             </span>
             {r.favorite && <Icon name="heart" size={16} className={css.fav} />}
           </button>
@@ -209,8 +289,20 @@ function PickDinner({ day }: { day: string }) {
 }
 
 // ------------------------------------------------------------ a recipe card
-function RecipeCard({ r, today, planned, missing, drag, lifted }: {
-  r: Recipe; today: string; planned: string[]; missing?: string[]; drag: DragProps; lifted: boolean;
+function RecipeCard({
+  r,
+  today,
+  planned,
+  missing,
+  drag,
+  lifted,
+}: {
+  r: Recipe;
+  today: string;
+  planned: string[];
+  missing?: string[];
+  drag: DragProps;
+  lifted: boolean;
 }) {
   return (
     <div className={css.card + (lifted ? ' ' + css.isLifted : '')} style={toneStyle({ tone: r.tone })}>
@@ -224,12 +316,16 @@ function RecipeCard({ r, today, planned, missing, drag, lifted }: {
           </small>
           {missing && (
             <span className={css.need + (missing.length ? '' : ' ' + css.isReady)}>
-              {missing.length ? `Need ${missing.length}: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '…' : ''}` : 'Ready to make'}
+              {missing.length
+                ? `Need ${missing.length}: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '…' : ''}`
+                : 'Ready to make'}
             </span>
           )}
           <span className={css.tags}>
             {planned.map((d) => (
-              <em key={d} className={css.plannedTag}>{dayLabel(d, today)}</em>
+              <em key={d} className={css.plannedTag}>
+                {dayLabel(d, today)}
+              </em>
             ))}
             {r.tags.map((t) => (
               <i key={t}>{t}</i>
@@ -237,7 +333,12 @@ function RecipeCard({ r, today, planned, missing, drag, lifted }: {
           </span>
         </span>
       </button>
-      <button className={css.heart + (r.favorite ? ' ' + css.isFav : '')} aria-label={r.favorite ? 'Unfavorite' : 'Favorite'} aria-pressed={r.favorite} onClick={() => toggleFavorite(r.id)}>
+      <button
+        className={css.heart + (r.favorite ? ' ' + css.isFav : '')}
+        aria-label={r.favorite ? 'Unfavorite' : 'Favorite'}
+        aria-pressed={r.favorite}
+        onClick={() => toggleFavorite(r.id)}
+      >
         <Icon name="heart" size={22} />
       </button>
     </div>
@@ -248,7 +349,15 @@ function RecipeCard({ r, today, planned, missing, drag, lifted }: {
 /** Missing this many or fewer: "a quick trip away" */
 const CLOSE = 3;
 
-function FromKitchen({ ready, hasInventory, onInventory }: { ready: Readiness[]; hasInventory: boolean; onInventory: () => void }) {
+function FromKitchen({
+  ready,
+  hasInventory,
+  onInventory,
+}: {
+  ready: Readiness[];
+  hasInventory: boolean;
+  onInventory: () => void;
+}) {
   const data = useData();
   const close = ready.filter((x) => x.missing.length <= CLOSE).slice(0, 8);
   const row = useRef<HTMLDivElement>(null);
@@ -259,7 +368,9 @@ function FromKitchen({ ready, hasInventory, onInventory }: { ready: Readiness[];
         <span className={css.hintEmoji}>🥫</span>
         <span className={css.hintText}>
           <b>What can we make?</b>
-          <small>Add what’s in your pantry, fridge and freezer under Inventory, and recipes will show what they still need.</small>
+          <small>
+            Add what’s in your pantry, fridge and freezer under Inventory, and recipes will show what they still need.
+          </small>
         </span>
         <Icon name="right" size={20} />
       </button>
@@ -274,19 +385,33 @@ function FromKitchen({ ready, hasInventory, onInventory }: { ready: Readiness[];
         {close.map(({ recipe: r, missing }) => {
           const toBuy = missing.map((i) => i.name).filter((n) => !onList(data.groceries, n));
           return (
-            <div key={r.id} className={css.closeCard + (missing.length ? '' : ' ' + css.isReady)} style={toneStyle({ tone: r.tone })}>
+            <div
+              key={r.id}
+              className={css.closeCard + (missing.length ? '' : ' ' + css.isReady)}
+              style={toneStyle({ tone: r.tone })}
+            >
               <button className={css.closeMain} onClick={() => openRecipe(r.id)}>
                 <span className={css.closeEmoji}>{r.emoji}</span>
                 <span>
                   <b>{r.title}</b>
-                  <small>{missing.length ? 'Need ' + missing.map((i) => i.name).join(', ') : 'Everything’s here'}</small>
+                  <small>
+                    {missing.length ? 'Need ' + missing.map((i) => i.name).join(', ') : 'Everything’s here'}
+                  </small>
                 </span>
               </button>
               {missing.length > 0 && (
                 <button
                   className={css.closeAdd}
                   disabled={!toBuy.length}
-                  onClick={() => { const undo = addToGroceries(toBuy); toast(<>Added <b>{toBuy.length}</b> for {r.title} to the shopping list</>, { icon: 'cart', undo }); }}
+                  onClick={() => {
+                    const undo = addToGroceries(toBuy);
+                    toast(
+                      <>
+                        Added <b>{toBuy.length}</b> for {r.title} to the shopping list
+                      </>,
+                      { icon: 'cart', undo },
+                    );
+                  }}
                 >
                   <Icon name="cart" size={16} /> {toBuy.length ? 'Add missing to list' : 'On the list'}
                 </button>

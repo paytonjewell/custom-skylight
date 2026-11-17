@@ -167,7 +167,10 @@ export function deletePhoto(id: string): void {
   const photo = before[at];
   pendingDeletes.add(id);
   set((d) => ({ ...d, photos: d.photos.filter((p) => p.id !== id) }));
-  deleteTimers.set(id, window.setTimeout(() => sendDelete(id), UNDO_MS));
+  deleteTimers.set(
+    id,
+    window.setTimeout(() => sendDelete(id), UNDO_MS),
+  );
   toast('Photo deleted', {
     icon: 'photo',
     ms: UNDO_MS,
@@ -196,7 +199,9 @@ export async function addPhotos(
   files: File[],
   progress?: (done: number, total: number) => void,
 ): Promise<{ added: number; failed: number; skipped: number }> {
-  let added = 0, failed = 0, skipped = 0;
+  let added = 0,
+    failed = 0,
+    skipped = 0;
   // Fingerprint everything first, then ask the server which it already has
   const hashes = await Promise.all(files.map((f) => fileHash(f).catch(() => null)));
   const known = new Set(await api.knownPhotos(hashes.filter((h): h is string => !!h)).catch(() => []));
@@ -242,7 +247,10 @@ const groceryIds = () => dataStore.get().groceries.map((g) => g.id);
 const rememberAisle = (name: string, cat: string) =>
   set((d) => ({
     ...d,
-    groceryNames: [[name, cat] as [string, string], ...d.groceryNames.filter(([n]) => n.toLowerCase() !== name.toLowerCase())],
+    groceryNames: [
+      [name, cat] as [string, string],
+      ...d.groceryNames.filter(([n]) => n.toLowerCase() !== name.toLowerCase()),
+    ],
   }));
 
 export function setQty(id: string, qty: number): void {
@@ -378,7 +386,11 @@ export function placeGroceries(placed: { id: string; cat: string }[]): void {
 const patchList = (id: string, f: (l: Checklist) => Checklist) =>
   set((d) => ({ ...d, lists: d.lists.map((l) => (l.id === id ? f(l) : l)) }));
 const listIds = () => dataStore.get().lists.map((l) => l.id);
-const itemIds = (listId: string) => dataStore.get().lists.find((l) => l.id === listId)?.items.map((i) => i.id) ?? [];
+const itemIds = (listId: string) =>
+  dataStore
+    .get()
+    .lists.find((l) => l.id === listId)
+    ?.items.map((i) => i.id) ?? [];
 
 /** A new, empty list (it opens with its title ready to type) */
 export function addList(): Checklist {
@@ -438,14 +450,20 @@ export function addListItem(listId: string, text: string, heading = false): List
 export function editListItem(listId: string, itemId: string, text: string): void {
   const value = text.trim();
   if (!value) return;
-  const old = dataStore.get().lists.find((l) => l.id === listId)?.items.find((i) => i.id === itemId)?.text;
+  const old = dataStore
+    .get()
+    .lists.find((l) => l.id === listId)
+    ?.items.find((i) => i.id === itemId)?.text;
   patchList(listId, (l) => ({ ...l, items: l.items.map((i) => (i.id === itemId ? { ...i, text: value } : i)) }));
   saveList(() => api.editItem(listId, itemId, { text: value }));
   // Reminders still named after the item follow its new text
   for (const t of linkedTasks(listId, itemId)) if (t.title === old) editTask(t.id, { title: value });
 }
 export function toggleListItem(listId: string, itemId: string): void {
-  const item = dataStore.get().lists.find((l) => l.id === listId)?.items.find((i) => i.id === itemId);
+  const item = dataStore
+    .get()
+    .lists.find((l) => l.id === listId)
+    ?.items.find((i) => i.id === itemId);
   if (!item) return;
   const done = !item.done;
   writeItemDone(listId, itemId, done);
@@ -458,7 +476,10 @@ export function toggleListItem(listId: string, itemId: string): void {
   }
 }
 function writeItemDone(listId: string, itemId: string, done: boolean): void {
-  const item = dataStore.get().lists.find((l) => l.id === listId)?.items.find((i) => i.id === itemId);
+  const item = dataStore
+    .get()
+    .lists.find((l) => l.id === listId)
+    ?.items.find((i) => i.id === itemId);
   if (!item || item.done === done) return;
   patchList(listId, (l) => ({ ...l, items: l.items.map((i) => (i.id === itemId ? { ...i, done } : i)) }));
   saveList(() => api.editItem(listId, itemId, { done }));

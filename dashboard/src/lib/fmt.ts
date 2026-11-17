@@ -1,7 +1,20 @@
 import { daysBetween } from './dates';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 const MON_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
 
 /** The word for a count: pluralize(1, 'photo') → "photo", pluralize(3, 'photo') → "photos".
@@ -20,7 +33,8 @@ export const fmt = {
   },
   /** "4 PM", "3:45 PM" */
   hour(d: Date): string {
-    const h = d.getHours(), m = d.getMinutes();
+    const h = d.getHours(),
+      m = d.getMinutes();
     return (h % 12 || 12) + (m ? ':' + pad(m) : '') + ' ' + (h >= 12 ? 'PM' : 'AM');
   },
   ampm: (d: Date) => (d.getHours() >= 12 ? 'PM' : 'AM'),
@@ -37,7 +51,8 @@ export const fmt = {
   mins(m: number): string {
     m = Math.max(0, Math.round(m));
     if (m < 60) return m + ' min';
-    const h = Math.floor(m / 60), r = m % 60;
+    const h = Math.floor(m / 60),
+      r = m % 60;
     return h + ' hr' + (r ? ' ' + r + ' min' : '');
   },
   /** "Today" / "Tomorrow" / "Yesterday" / weekday name, relative to `now` */

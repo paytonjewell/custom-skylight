@@ -16,8 +16,32 @@ export const STORES: GroceryStore[] = [
  * Items in no aisle go under 'Other', last.
  */
 export const AISLE_ORDER: Record<string, string[]> = {
-  picknsave: ['Produce', 'Deli', 'Bakery', 'Meat', 'Condiments', 'Pantry', 'Household', 'Snacks', 'Beverages', 'Dairy', 'Frozen'],
-  aldi: ['Produce', 'Bakery', 'Snacks', 'Condiments', 'Dairy', 'Pantry', 'Household', 'Meat', 'Deli', 'Beverages', 'Frozen'],
+  picknsave: [
+    'Produce',
+    'Deli',
+    'Bakery',
+    'Meat',
+    'Condiments',
+    'Pantry',
+    'Household',
+    'Snacks',
+    'Beverages',
+    'Dairy',
+    'Frozen',
+  ],
+  aldi: [
+    'Produce',
+    'Bakery',
+    'Snacks',
+    'Condiments',
+    'Dairy',
+    'Pantry',
+    'Household',
+    'Meat',
+    'Deli',
+    'Beverages',
+    'Frozen',
+  ],
 };
 /** "All" follows the first store's layout */
 AISLE_ORDER.all = AISLE_ORDER[STORES[0].id];
@@ -27,8 +51,21 @@ export const OTHER = 'Other';
 
 /** Quick-add tiles, in this order (three to a row). Lowercase, except brand names. */
 export const USUALS = [
-  'milk', 'eggs', 'bananas', 'raspberries', 'strawberries', 'diapers', 'wipes', 'Redbull', 'Monster',
-  'string cheese', 'Veggie Straws', 'frozen sausage', 'apple juice', 'ground beef', 'chicken breast',
+  'milk',
+  'eggs',
+  'bananas',
+  'raspberries',
+  'strawberries',
+  'diapers',
+  'wipes',
+  'Redbull',
+  'Monster',
+  'string cheese',
+  'Veggie Straws',
+  'frozen sausage',
+  'apple juice',
+  'ground beef',
+  'chicken breast',
 ];
 
 /**
@@ -37,17 +74,84 @@ export const USUALS = [
  * last in is remembered on the server (grocery_names) and used instead.
  */
 const STARTER: Record<string, string[]> = {
-  Produce: ['raspberries', 'apples', 'avocados', 'bananas', 'baby spinach', 'blueberries', 'broccoli', 'carrots', 'cucumber', 'garlic', 'grapes', 'lemons', 'limes', 'onions', 'potatoes', 'strawberries', 'tomatoes'],
+  Produce: [
+    'raspberries',
+    'apples',
+    'avocados',
+    'bananas',
+    'baby spinach',
+    'blueberries',
+    'broccoli',
+    'carrots',
+    'cucumber',
+    'garlic',
+    'grapes',
+    'lemons',
+    'limes',
+    'onions',
+    'potatoes',
+    'strawberries',
+    'tomatoes',
+  ],
   Deli: ['sliced turkey', 'sliced ham', 'salami', 'rotisserie chicken', 'hummus'],
   Bakery: ['bread', 'bagels', 'croissants', 'sourdough loaf', 'tortillas', 'hamburger buns'],
   Meat: ['chicken breast', 'bacon', 'chicken breasts', 'chicken thighs', 'ground beef', 'salmon fillets', 'shrimp'],
-  Pantry: ['black beans', 'cereal', 'coffee beans', 'flour', 'honey', 'maple syrup', 'olive oil', 'pasta sauce', 'peanut butter', 'rice', 'rigatoni', 'spaghetti', 'sugar', 'tea'],
-  Condiments: ['ketchup', 'mustard', 'mayo', 'ranch', 'BBQ sauce', 'hot sauce', 'salad dressing', 'pickles', 'soy sauce', 'salsa'],
-  Household: ['diapers', 'wipes', 'dish soap', 'dishwasher pods', 'garbage bags', 'laundry detergent', 'paper towels', 'toilet paper', 'toothpaste'],
+  Pantry: [
+    'black beans',
+    'cereal',
+    'coffee beans',
+    'flour',
+    'honey',
+    'maple syrup',
+    'olive oil',
+    'pasta sauce',
+    'peanut butter',
+    'rice',
+    'rigatoni',
+    'spaghetti',
+    'sugar',
+    'tea',
+  ],
+  Condiments: [
+    'ketchup',
+    'mustard',
+    'mayo',
+    'ranch',
+    'BBQ sauce',
+    'hot sauce',
+    'salad dressing',
+    'pickles',
+    'soy sauce',
+    'salsa',
+  ],
+  Household: [
+    'diapers',
+    'wipes',
+    'dish soap',
+    'dishwasher pods',
+    'garbage bags',
+    'laundry detergent',
+    'paper towels',
+    'toilet paper',
+    'toothpaste',
+  ],
   Snacks: ['Veggie Straws', 'chips', 'crackers', 'dark chocolate', 'Goldfish crackers', 'granola bars', 'popcorn'],
   Beverages: ['Redbull', 'Monster', 'sparkling water', 'orange juice', 'apple juice', 'soda'],
-  Dairy: ['milk', 'string cheese', 'butter', 'cheddar', 'cream cheese', 'eggs', 'greek yogurt', 'milk 2%', 'oat milk', 'parmesan'],
+  Dairy: [
+    'milk',
+    'string cheese',
+    'butter',
+    'cheddar',
+    'cream cheese',
+    'eggs',
+    'greek yogurt',
+    'milk 2%',
+    'oat milk',
+    'parmesan',
+  ],
   Frozen: ['frozen sausage', 'frozen peas', 'frozen berries', 'ice cream', 'pizza', 'waffles'],
 };
 /** [name, aisle] for every starter item */
-export const CATALOG: [string, string][] = Object.entries(STARTER).flatMap(([aisle, names]) => names.map((n): [string, string] => [n, aisle]));
+export const CATALOG: [string, string][] = Object.entries(STARTER).flatMap(([aisle, names]) =>
+  names.map((n): [string, string] => [n, aisle]),
+);

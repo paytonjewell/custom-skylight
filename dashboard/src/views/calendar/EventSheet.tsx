@@ -18,7 +18,13 @@ export function openEventSheet(e: CalEvent): void {
     const t = dataStore.get().tasks.find((x) => x.id === id);
     if (!t) return;
     setTaskDone(id, day, !done, t.who === 'any' ? null : t.who);
-    toast(<>{done ? 'Not done: ' : 'Done: '}<b>{t.title}</b></>, { icon: 'check', undo: () => setTaskDone(id, day, done, t.who === 'any' ? null : t.who) });
+    toast(
+      <>
+        {done ? 'Not done: ' : 'Done: '}
+        <b>{t.title}</b>
+      </>,
+      { icon: 'check', undo: () => setTaskDone(id, day, done, t.who === 'any' ? null : t.who) },
+    );
     return;
   }
   openSheet(() => <EventSheet e={e} />, { cls: css.sheet });
@@ -58,17 +64,19 @@ function EventSheet({ e }: { e: CalEvent }) {
             </div>
           </div>
         ) : null}
-        {!e.color && <div className={css.row}>
-          <Icon name="person" size={28} />
-          <div className={css.people}>
-            {who.map((p) => (
-              <span key={p.id} className="chip" style={toneStyle(p)}>
-                <Avatar p={p} size={32} />
-                {p.name}
-              </span>
-            ))}
+        {!e.color && (
+          <div className={css.row}>
+            <Icon name="person" size={28} />
+            <div className={css.people}>
+              {who.map((p) => (
+                <span key={p.id} className="chip" style={toneStyle(p)}>
+                  <Avatar p={p} size={32} />
+                  {p.name}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>}
+        )}
         {cal && (
           <div className={css.row}>
             <Icon name="calendar" size={28} />
@@ -81,10 +89,22 @@ function EventSheet({ e }: { e: CalEvent }) {
         {e.notes ? <div className={css.notes + ' serif'}>“{e.notes}”</div> : null}
         {cal?.writable && (
           <div className={css.actions}>
-            <button className={'btn btn--ghost ' + css.delete} onClick={() => { closeSheet(); removeEvent(e); }}>
+            <button
+              className={'btn btn--ghost ' + css.delete}
+              onClick={() => {
+                closeSheet();
+                removeEvent(e);
+              }}
+            >
               <Icon name="trash" size={20} /> Delete
             </button>
-            <button className="btn btn--solid" onClick={() => { closeSheet(); openEditEventSheet(e); }}>
+            <button
+              className="btn btn--solid"
+              onClick={() => {
+                closeSheet();
+                openEditEventSheet(e);
+              }}
+            >
               <Icon name="edit" size={20} /> Edit
             </button>
           </div>

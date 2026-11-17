@@ -22,7 +22,11 @@ import { MonthGrid, weekStart } from './calendar/MonthGrid';
 import css from './HomeCalendar.module.css';
 
 type View = 'day' | 'week' | 'month';
-const VIEWS: [View, string][] = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']];
+const VIEWS: [View, string][] = [
+  ['day', 'Day'],
+  ['week', 'Week'],
+  ['month', 'Month'],
+];
 const KEY = 'home.calendar';
 /** Back to today this long after the last tap */
 const IDLE_MS = 2 * 60 * 1000;
@@ -49,7 +53,12 @@ export function HomeCalendar({ now }: { now: Date }) {
   }, [step]);
 
   const today = dayStart(now);
-  const choose = (v: View) => { setView(v); store(KEY, v); setStep(0); setMenu(false); };
+  const choose = (v: View) => {
+    setView(v);
+    store(KEY, v);
+    setStep(0);
+    setMenu(false);
+  };
   const nav = (dir: 1 | -1) => setStep((s) => s + dir);
 
   // Swipe left or right to step, like the arrows, with the next page sliding in
@@ -57,12 +66,14 @@ export function HomeCalendar({ now }: { now: Date }) {
   const stepBy = (dir: 1 | -1) => pager.current?.go(dir);
 
   /** The first day of a page, `n` steps from today */
-  const startOf = (n: number) => (view === 'day' ? addDays(today, n) : view === 'week' ? addDays(today, n * 7) : addDays(weekStart(today), n * 35));
+  const startOf = (n: number) =>
+    view === 'day' ? addDays(today, n) : view === 'week' ? addDays(today, n * 7) : addDays(weekStart(today), n * 35);
   const date = startOf(step);
   const atToday = step === 0;
 
   let title: string;
-  if (view === 'day') title = sameDay(date, today) ? 'Today' : fmt.day(date) + ', ' + fmt.monthShort(date) + ' ' + date.getDate();
+  if (view === 'day')
+    title = sameDay(date, today) ? 'Today' : fmt.day(date) + ', ' + fmt.monthShort(date) + ' ' + date.getDate();
   else if (view === 'week') title = step === 0 ? 'This week' : range(date, addDays(date, 6));
   else title = range(date, addDays(date, 34));
 
@@ -82,7 +93,13 @@ export function HomeCalendar({ now }: { now: Date }) {
               <div className={css.scrim} onClick={() => setMenu(false)} />
               <div className={css.menu} role="menu">
                 {VIEWS.map(([v, label]) => (
-                  <button key={v} role="menuitemradio" aria-checked={view === v} className={css.item + (view === v ? ' ' + css.isOn : '')} onClick={() => choose(v)}>
+                  <button
+                    key={v}
+                    role="menuitemradio"
+                    aria-checked={view === v}
+                    className={css.item + (view === v ? ' ' + css.isOn : '')}
+                    onClick={() => choose(v)}
+                  >
                     {label}
                     <i />
                   </button>
@@ -94,7 +111,11 @@ export function HomeCalendar({ now }: { now: Date }) {
         <button className="icon-btn" aria-label="Back" onClick={() => stepBy(-1)}>
           <Icon name="left" size={22} />
         </button>
-        <button className={css.today + (atToday ? ' ' + css.isAtToday : '')} disabled={atToday} onClick={() => setStep(0)}>
+        <button
+          className={css.today + (atToday ? ' ' + css.isAtToday : '')}
+          disabled={atToday}
+          onClick={() => setStep(0)}
+        >
           Today
         </button>
         <button className="icon-btn" aria-label="Forward" onClick={() => stepBy(1)}>
@@ -118,7 +139,12 @@ export function HomeCalendar({ now }: { now: Date }) {
 }
 
 const range = (a: Date, b: Date) =>
-  fmt.monthShort(a) + ' ' + a.getDate() + ' – ' + (a.getMonth() === b.getMonth() ? '' : fmt.monthShort(b) + ' ') + b.getDate();
+  fmt.monthShort(a) +
+  ' ' +
+  a.getDate() +
+  ' – ' +
+  (a.getMonth() === b.getMonth() ? '' : fmt.monthShort(b) + ' ') +
+  b.getDate();
 
 // ------------------------------------------------------------ week: 7 days and "Next week"
 function Week({ start, now, next }: { start: Date; now: Date; next: () => void }) {
@@ -137,7 +163,14 @@ function Week({ start, now, next }: { start: Date; now: Date; next: () => void }
         const today = sameDay(d, now);
         return (
           // The whole day opens it on the Calendar screen; its events open themselves
-          <div key={i} className={css.cell + (today ? ' ' + css.isToday : '')} role="button" tabIndex={0} aria-label={'Open ' + fmt.day(d)} onClick={() => openCalendarAt(d)}>
+          <div
+            key={i}
+            className={css.cell + (today ? ' ' + css.isToday : '')}
+            role="button"
+            tabIndex={0}
+            aria-label={'Open ' + fmt.day(d)}
+            onClick={() => openCalendarAt(d)}
+          >
             <div className={css.dayHead}>
               <span className={css.dayName}>
                 {fmt.dayShort(d)} <span className={css.dayNum + ' num'}>{d.getDate()}</span>
@@ -146,14 +179,20 @@ function Week({ start, now, next }: { start: Date; now: Date; next: () => void }
               <small>{list.length ? list.length + (list.length === 1 ? ' event' : ' events') : 'No events'}</small>
             </div>
             {fits.map((e) => (
-              <button key={e.id} className={css.ev + (e.allDay ? ' ' + css.isAllDay : '') + (e.end <= now ? ' ' + css.isPast : '')} style={eventStyle(data, e)} onClick={(ev) => { ev.stopPropagation(); openEventSheet(e); }}>
+              <button
+                key={e.id}
+                className={css.ev + (e.allDay ? ' ' + css.isAllDay : '') + (e.end <= now ? ' ' + css.isPast : '')}
+                style={eventStyle(data, e)}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  openEventSheet(e);
+                }}
+              >
                 <b>{evLabel(e)}</b>
                 <small>{e.allDay ? 'All day' : fmt.range(e.start, e.end)}</small>
               </button>
             ))}
-            {fits.length < list.length && (
-              <span className={css.more}>+{list.length - fits.length} more</span>
-            )}
+            {fits.length < list.length && <span className={css.more}>+{list.length - fits.length} more</span>}
           </div>
         );
       })}
@@ -181,14 +220,25 @@ function Schedule({ date, now }: { date: Date; now: Date }) {
     );
   }
   return (
-    <ul className={css.schedule} onClick={(e) => { if (e.target === e.currentTarget) openCalendarAt(date); }}>
+    <ul
+      className={css.schedule}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) openCalendarAt(date);
+      }}
+    >
       {list.map((e) => {
         const cur = !e.allDay && e.start <= now && e.end > now;
         return (
           <li key={e.id}>
-            <button className={css.row + (e.end <= now && !e.allDay ? ' ' + css.isPast : '') + (cur ? ' ' + css.isNow : '')} style={eventStyle(data, e)} onClick={() => openEventSheet(e)}>
+            <button
+              className={css.row + (e.end <= now && !e.allDay ? ' ' + css.isPast : '') + (cur ? ' ' + css.isNow : '')}
+              style={eventStyle(data, e)}
+              onClick={() => openEventSheet(e)}
+            >
               <span className={css.when}>
-                {e.allDay ? 'All day' : (
+                {e.allDay ? (
+                  'All day'
+                ) : (
                   <>
                     <b>{fmt.time(e.start)}</b>
                     <small>{fmt.time(e.end)}</small>

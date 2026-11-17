@@ -15,7 +15,11 @@ import css from './PhotoFrame.module.css';
 
 const FRAME_INTERVAL = 10000;
 
-export function PhotoFrame({ active, showCountdowns, slideshowRef }: {
+export function PhotoFrame({
+  active,
+  showCountdowns,
+  slideshowRef,
+}: {
   active: boolean;
   /** Countdown chips along the bottom (idle only) */
   showCountdowns?: boolean;
@@ -39,7 +43,9 @@ export function PhotoFrame({ active, showCountdowns, slideshowRef }: {
           <div className={css.info} style={shift}>
             <div>
               <div className={css.time + ' num display-num'}>{fmt.time(now, false)}</div>
-              <div className={css.date}>{fmt.day(now)}, {fmt.month(now)} {now.getDate()}</div>
+              <div className={css.date}>
+                {fmt.day(now)}, {fmt.month(now)} {now.getDate()}
+              </div>
             </div>
             <div className={css.right}>
               {w && (

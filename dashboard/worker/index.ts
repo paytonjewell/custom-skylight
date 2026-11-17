@@ -5,11 +5,33 @@ import { signInPage } from './signin-page';
 import { privacyPage } from './privacy-page';
 import { getNews, refreshNews } from './news/news';
 import { addGrocery, clearGroceries, deleteGrocery, editGrocery, getGroceries, orderGroceries } from './groceries';
-import { LIST_ID, addItem, addList, deleteItem, deleteList, editItem, editList, getLists, orderItems, orderLists } from './lists';
+import {
+  LIST_ID,
+  addItem,
+  addList,
+  deleteItem,
+  deleteList,
+  editItem,
+  editList,
+  getLists,
+  orderItems,
+  orderLists,
+} from './lists';
 import { addTask, deleteTask, editTask, getTasks, markDone, unmarkDone } from './tasks';
 import {
-  addEvent, callback, connect, deleteEvent, disconnect, editCalendar, editEvent, getCalendars, getEvents, refreshCalendarLists,
-  refreshCalendars, restoreEvent, syncCalendars,
+  addEvent,
+  callback,
+  connect,
+  deleteEvent,
+  disconnect,
+  editCalendar,
+  editEvent,
+  getCalendars,
+  getEvents,
+  refreshCalendarLists,
+  refreshCalendars,
+  restoreEvent,
+  syncCalendars,
 } from './google';
 import { deletePush, getPush, savePush, sendReminders, testPush } from './push';
 import { getVerse, getWeather, refreshWeather } from './weather';
@@ -21,12 +43,20 @@ import { ID, addPhoto, deletePhoto, json, knownPhotos, listPhotos, reorderPhotos
 // The service worker script is public too: it holds no data, and the browser checks it for updates
 // on its own schedule.
 const PUBLIC = new Set([
-  '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/apple-touch-icon.png', '/sw.js',
+  '/manifest.webmanifest',
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png',
+  '/apple-touch-icon.png',
+  '/sw.js',
 ]);
 
 async function shareFallback(req: Request): Promise<Response> {
   const form = await req.formData().catch(() => null);
-  const link = ['url', 'text', 'title'].map((k) => String(form?.get(k) ?? '').match(/https?:\/\/\S+/)?.[0]).find(Boolean);
+  const link = ['url', 'text', 'title']
+    .map((k) => String(form?.get(k) ?? '').match(/https?:\/\/\S+/)?.[0])
+    .find(Boolean);
   const to = link ? '/?recipe=' + encodeURIComponent(link) + '#kitchen' : '/#photos';
   return Response.redirect(new URL(to, req.url).toString(), 303);
 }
@@ -55,7 +85,9 @@ export default {
 
     let res: Response;
     try {
-      res = (await route(req, env, ctx, path, auth.device)) ?? (isData ? json({ error: 'Not found' }, 404) : await env.ASSETS.fetch(req));
+      res =
+        (await route(req, env, ctx, path, auth.device)) ??
+        (isData ? json({ error: 'Not found' }, 404) : await env.ASSETS.fetch(req));
     } catch (e) {
       console.error(req.method, path, e);
       res = json({ error: 'Server error' }, 500);
@@ -75,18 +107,31 @@ export default {
     // Weather every 15 minutes (worker/weather.ts)
     if (minute % 15 === 2) ctx.waitUntil(refreshWeather(env).catch((e) => console.error('Weather', e)));
     // Google Calendar: events every 15 minutes even with no screen open; the calendar list hourly
-    if (minute % 15 === 7) ctx.waitUntil(syncCalendars(env, 10 * 60 * 1000).catch((e) => console.error('Calendar sync', e)));
+    if (minute % 15 === 7)
+      ctx.waitUntil(syncCalendars(env, 10 * 60 * 1000).catch((e) => console.error('Calendar sync', e)));
     if (minute === 3) ctx.waitUntil(refreshCalendarLists(env).catch((e) => console.error('Calendar lists', e)));
     ctx.waitUntil(sendReminders(env).catch((e) => console.error('Reminders', e)));
   },
 } satisfies ExportedHandler<Env>;
 
-async function route(req: Request, env: Env, ctx: ExecutionContext, path: string, device: Device): Promise<Response | null> {
+async function route(
+  req: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  path: string,
+  device: Device,
+): Promise<Response | null> {
   const m = req.method;
   if (path === '/api/news' && m === 'GET') return getNews(env, ctx);
   if (path === '/api/weather' && m === 'GET') return getWeather(env, ctx);
   if (path === '/api/family' && m === 'GET') return getFamily(env);
-  if (path === '/api/kitchen' || path.startsWith('/api/recipes') || path.startsWith('/api/plan/') || path.startsWith('/api/inventory') || path === '/api/aliases') {
+  if (
+    path === '/api/kitchen' ||
+    path.startsWith('/api/recipes') ||
+    path.startsWith('/api/plan/') ||
+    path.startsWith('/api/inventory') ||
+    path === '/api/aliases'
+  ) {
     return kitchenRoute(req, env, path, m);
   }
   if (path === '/api/verse' && m === 'GET') return getVerse(env);
@@ -99,7 +144,8 @@ async function route(req: Request, env: Env, ctx: ExecutionContext, path: string
     if (m === 'DELETE') return deletePush(req, env, device);
   }
   if (path === '/api/push/test' && m === 'POST') return testPush(req, env, device);
-  if (path.startsWith('/api/google/') || path.startsWith('/api/calendars') || path.startsWith('/api/events')) return calendarRoute(req, env, ctx, path, m);
+  if (path.startsWith('/api/google/') || path.startsWith('/api/calendars') || path.startsWith('/api/events'))
+    return calendarRoute(req, env, ctx, path, m);
   if (path === '/api/photos') {
     if (m === 'GET') return listPhotos(env);
     if (m === 'POST') return addPhoto(req, env, device);
@@ -109,7 +155,8 @@ async function route(req: Request, env: Env, ctx: ExecutionContext, path: string
   const one = path.match(/^\/api\/photos\/([^/]+)$/);
   if (one && ID.test(one[1]) && m === 'DELETE') return deletePhoto(env, one[1]);
   const media = path.match(/^\/media\/([^/]+)\/(full|thumb)$/);
-  if (media && ID.test(media[1]) && (m === 'GET' || m === 'HEAD')) return servePhoto(req, env, media[1], media[2] as 'full' | 'thumb');
+  if (media && ID.test(media[1]) && (m === 'GET' || m === 'HEAD'))
+    return servePhoto(req, env, media[1], media[2] as 'full' | 'thumb');
   if (path === '/api/signout' && m === 'POST') return signOut(req, env, device);
   return null;
 }
@@ -157,7 +204,13 @@ async function taskRoute(req: Request, env: Env, path: string, m: string): Promi
 }
 
 /** Google Calendar: /api/google/…, /api/calendars…, /api/events… (worker/google.ts) */
-async function calendarRoute(req: Request, env: Env, ctx: ExecutionContext, path: string, m: string): Promise<Response | null> {
+async function calendarRoute(
+  req: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  path: string,
+  m: string,
+): Promise<Response | null> {
   if (path === '/api/google/connect' && m === 'GET') return connect(req, env);
   if (path === '/api/google/callback' && m === 'GET') return callback(req, env);
   const account = path.match(/^\/api\/google\/accounts\/([^/]+)$/)?.[1];

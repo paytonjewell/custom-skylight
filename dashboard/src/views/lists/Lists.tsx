@@ -52,15 +52,22 @@ function Grid({ lists }: { lists: Checklist[] }) {
   const view = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   // Only the user's lists are drag items: the grocery card can't move, and nothing can drop before it
-  const { order, ghost, itemProps } = useHoldReorder({ ids: lists.map((l) => l.id), onCommit: reorderLists, container: view, scroller: grid });
+  const { order, ghost, itemProps } = useHoldReorder({
+    ids: lists.map((l) => l.id),
+    onCommit: reorderLists,
+    container: view,
+    scroller: grid,
+  });
   const byId = new Map(lists.map((l) => [l.id, l]));
   const dragged = ghost && byId.get(ghost.id);
   const status = useListStatus();
   const groceryStatus = useGroceryStatus();
   const kicker =
-    status === 'loading' ? 'Loading lists…'
-    : status === 'error' ? 'Couldn’t load your lists'
-    : `${lists.length + 1} ${pluralize(lists.length + 1, 'list')}`;
+    status === 'loading'
+      ? 'Loading lists…'
+      : status === 'error'
+        ? 'Couldn’t load your lists'
+        : `${lists.length + 1} ${pluralize(lists.length + 1, 'list')}`;
 
   const create = () => openList(addList().id);
 
@@ -81,12 +88,15 @@ function Grid({ lists }: { lists: Checklist[] }) {
             </span>
           </span>
           <span className={css.title + ' serif'}>Groceries</span>
-          <span className="label">{groceryStatus === 'loading' ? 'Loading…' : `${toGet.length} ${pluralize(toGet.length, 'item')}`}</span>
+          <span className="label">
+            {groceryStatus === 'loading' ? 'Loading…' : `${toGet.length} ${pluralize(toGet.length, 'item')}`}
+          </span>
           <ul className={css.preview}>
             {toGet.slice(0, 6).map((g) => (
               <li key={g.id}>
                 <i />
-                {g.name}{g.qty > 1 ? ` ×${g.qty}` : ''}
+                {g.name}
+                {g.qty > 1 ? ` ×${g.qty}` : ''}
               </li>
             ))}
           </ul>
@@ -95,15 +105,22 @@ function Grid({ lists }: { lists: Checklist[] }) {
         {order.map((id) => {
           const l = byId.get(id);
           return l ? (
-            <button key={id} className={css.card + ' surface' + (ghost?.id === id ? ' ' + css.isLifted : '')} {...itemProps(id)} onClick={() => openList(id)}>
+            <button
+              key={id}
+              className={css.card + ' surface' + (ghost?.id === id ? ' ' + css.isLifted : '')}
+              {...itemProps(id)}
+              onClick={() => openList(id)}
+            >
               <CardBody l={l} />
             </button>
           ) : null;
         })}
-
       </div>
       {ghost && dragged && (
-        <div className={css.card + ' surface ' + css.ghost} style={{ left: ghost.x, top: ghost.y, width: ghost.w, height: ghost.h }}>
+        <div
+          className={css.card + ' surface ' + css.ghost}
+          style={{ left: ghost.x, top: ghost.y, width: ghost.w, height: ghost.h }}
+        >
           <CardBody l={dragged} />
         </div>
       )}

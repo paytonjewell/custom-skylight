@@ -2,13 +2,7 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
-    "includes": [
-      "**",
-      "!worker/worker-configuration.d.ts",
-      "!kiosk",
-      "!dist",
-      "!**/*.svg"
-    ]
+    "includes": ["**", "!worker/worker-configuration.d.ts", "!kiosk", "!dist", "!**/*.svg"]
   },
   "formatter": {
     "indentStyle": "space",
@@ -16,7 +10,12 @@
     "lineWidth": 120
   },
   "javascript": {
-    "formatter": { "quoteStyle": "single", "jsxQuoteStyle": "double", "trailingCommas": "all", "arrowParentheses": "always" }
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
   },
   "css": {
     "parser": { "cssModules": true },

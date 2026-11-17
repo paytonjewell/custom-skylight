@@ -28,17 +28,38 @@ export function Habits({ data, people, today }: { data: Data; people: string[]; 
   return (
     <div className={css.habits} data-scroll-top>
       {people.flatMap((who) =>
-        habits.filter((t) => t.who === who).map((t) => (
-          <HabitCard key={t.id} data={data} t={t} rows={by.get(t.id) ?? []} today={today} start={start} weeks={weeks} />
-        )),
+        habits
+          .filter((t) => t.who === who)
+          .map((t) => (
+            <HabitCard
+              key={t.id}
+              data={data}
+              t={t}
+              rows={by.get(t.id) ?? []}
+              today={today}
+              start={start}
+              weeks={weeks}
+            />
+          )),
       )}
     </div>
   );
 }
 
-function HabitCard({ data, t, rows, today, start, weeks }: {
-  data: Data; t: Task; rows: TaskDone[];
-  today: string; start: string; weeks: number;
+function HabitCard({
+  data,
+  t,
+  rows,
+  today,
+  start,
+  weeks,
+}: {
+  data: Data;
+  t: Task;
+  rows: TaskDone[];
+  today: string;
+  start: string;
+  weeks: number;
 }) {
   const p = person(data, t.who);
   const s = habitStats(t, rows, today, shiftDay(today, -400));
@@ -72,7 +93,9 @@ function HabitCard({ data, t, rows, today, start, weeks }: {
       <div className={css.body}>
         <dl className={css.stats}>
           <div>
-            <dt><Icon name="flame" size={18} /> Streak</dt>
+            <dt>
+              <Icon name="flame" size={18} /> Streak
+            </dt>
             <dd className="num">{s.current}</dd>
           </div>
           <div>
@@ -90,10 +113,19 @@ function HabitCard({ data, t, rows, today, start, weeks }: {
               const first = shiftDay(start, w * 7);
               const prev = shiftDay(first, -7);
               // Label a week when its Monday starts a new month (and the first column)
-              return <span key={w}>{w === 0 || first.slice(5, 7) !== prev.slice(5, 7) ? MONTHS[Number(first.slice(5, 7)) - 1] : ''}</span>;
+              return (
+                <span key={w}>
+                  {w === 0 || first.slice(5, 7) !== prev.slice(5, 7) ? MONTHS[Number(first.slice(5, 7)) - 1] : ''}
+                </span>
+              );
             })}
           </div>
-          <div className={css.grid} style={{ gridTemplateColumns: `repeat(${weeks}, var(--cell))` }} role="img" aria-label={`${t.title}: ${s.current} in a row, best ${s.best}`}>
+          <div
+            className={css.grid}
+            style={{ gridTemplateColumns: `repeat(${weeks}, var(--cell))` }}
+            role="img"
+            aria-label={`${t.title}: ${s.current} in a row, best ${s.best}`}
+          >
             {days.map((d) => (
               <i key={d} className={d > today ? css.future : css[cellClass(s.cells.get(d))]} title={d} />
             ))}

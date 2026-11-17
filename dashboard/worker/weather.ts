@@ -15,7 +15,8 @@ const getConfig = async <T>(env: Env, key: string): Promise<T | null> => {
 };
 const setConfig = (env: Env, key: string, value: unknown) =>
   env.DB.prepare('INSERT INTO config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
-    .bind(key, JSON.stringify(value)).run();
+    .bind(key, JSON.stringify(value))
+    .run();
 
 /** Today's date at home ('YYYY-MM-DD') */
 const homeDay = (tz: string, at = new Date()) => at.toLocaleDateString('en-CA', { timeZone: tz });
@@ -38,8 +39,15 @@ const compass = (deg: number) => COMPASS[Math.round(deg / 45) % 8];
 const SYNODIC = 29.530588853;
 const NEW_MOON = Date.UTC(2000, 0, 6, 18, 14); // a known new moon
 const MOON_PHASES: [number, string][] = [
-  [1.85, 'New moon'], [5.54, 'Waxing crescent'], [9.23, 'First quarter'], [12.92, 'Waxing gibbous'], [16.61, 'Full moon'],
-  [20.3, 'Waning gibbous'], [23.99, 'Last quarter'], [27.68, 'Waning crescent'], [99, 'New moon'],
+  [1.85, 'New moon'],
+  [5.54, 'Waxing crescent'],
+  [9.23, 'First quarter'],
+  [12.92, 'Waxing gibbous'],
+  [16.61, 'Full moon'],
+  [20.3, 'Waning gibbous'],
+  [23.99, 'Last quarter'],
+  [27.68, 'Waning crescent'],
+  [99, 'New moon'],
 ];
 /** The moon on a date: phase, % lit, and the days of the next full and new moons (to within about a day) */
 export function moon(at: Date, tz = 'UTC'): Weather['moon'] {
@@ -59,20 +67,42 @@ export function moon(at: Date, tz = 'UTC'): Weather['moon'] {
 
 interface OpenMeteo {
   current: {
-    time: string; temperature_2m: number; apparent_temperature: number; relative_humidity_2m: number; dew_point_2m: number;
-    wind_speed_10m: number; wind_gusts_10m: number; wind_direction_10m: number; weather_code: number; is_day: number;
+    time: string;
+    temperature_2m: number;
+    apparent_temperature: number;
+    relative_humidity_2m: number;
+    dew_point_2m: number;
+    wind_speed_10m: number;
+    wind_gusts_10m: number;
+    wind_direction_10m: number;
+    weather_code: number;
+    is_day: number;
   };
-  hourly: { time: string[]; temperature_2m: number[]; weather_code: number[]; precipitation_probability: (number | null)[]; is_day: number[] };
+  hourly: {
+    time: string[];
+    temperature_2m: number[];
+    weather_code: number[];
+    precipitation_probability: (number | null)[];
+    is_day: number[];
+  };
   daily: {
-    time: string[]; weather_code: number[]; temperature_2m_max: number[]; temperature_2m_min: number[];
-    precipitation_probability_max: (number | null)[]; sunrise: string[]; sunset: string[]; uv_index_max: (number | null)[];
+    time: string[];
+    weather_code: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    precipitation_probability_max: (number | null)[];
+    sunrise: string[];
+    sunset: string[];
+    uv_index_max: (number | null)[];
   };
 }
 
 /** Open-Meteo's answer → ours: today and tomorrow by the hour (from midnight today), and each day for a week */
 export function toWeather(o: OpenMeteo, at: Date, place: Pick<Home, 'name' | 'tz'> = { name: '', tz: 'UTC' }): Weather {
   const r = Math.round;
-  const H = o.hourly, D = o.daily, C = o.current;
+  const H = o.hourly,
+    D = o.daily,
+    C = o.current;
   const hours = H.time.slice(0, 48).map((_, i) => i);
   return {
     place: place.name,
@@ -90,12 +120,20 @@ export function toWeather(o: OpenMeteo, at: Date, place: Pick<Home, 'name' | 'tz
     sunrise: D.sunrise[0].slice(11, 16),
     sunset: D.sunset[0].slice(11, 16),
     moon: moon(at, place.tz),
-    daily: D.time.map((_, d) => d).map((d) => {
-      const p = D.precipitation_probability_max[d] ?? 0;
-      const c = condition(D.weather_code[d], true);
-      // A day Open-Meteo calls wet but gives little chance of it: show it as cloudy
-      return { d, c: p < 30 && (c === 'rain' || c === 'snow' || c === 'storm') ? 'cloud' : c, hi: r(D.temperature_2m_max[d]), lo: r(D.temperature_2m_min[d]), p };
-    }),
+    daily: D.time
+      .map((_, d) => d)
+      .map((d) => {
+        const p = D.precipitation_probability_max[d] ?? 0;
+        const c = condition(D.weather_code[d], true);
+        // A day Open-Meteo calls wet but gives little chance of it: show it as cloudy
+        return {
+          d,
+          c: p < 30 && (c === 'rain' || c === 'snow' || c === 'storm') ? 'cloud' : c,
+          hi: r(D.temperature_2m_max[d]),
+          lo: r(D.temperature_2m_min[d]),
+          p,
+        };
+      }),
     t: hours.map((i) => r(H.temperature_2m[i])),
     c: hours.map((i) => condition(H.weather_code[i], !!H.is_day[i])),
     p: hours.map((i) => H.precipitation_probability[i] ?? 0),
@@ -107,11 +145,17 @@ export async function refreshWeather(env: Env): Promise<Weather | null> {
   const place = home(env);
   if (!place) return null;
   const q = new URLSearchParams({
-    latitude: String(place.lat), longitude: String(place.lon), timezone: place.tz,
-    temperature_unit: 'fahrenheit', wind_speed_unit: 'mph', forecast_days: '8',
-    current: 'temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,is_day',
+    latitude: String(place.lat),
+    longitude: String(place.lon),
+    timezone: place.tz,
+    temperature_unit: 'fahrenheit',
+    wind_speed_unit: 'mph',
+    forecast_days: '8',
+    current:
+      'temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,is_day',
     hourly: 'temperature_2m,weather_code,precipitation_probability,is_day',
-    daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max',
+    daily:
+      'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max',
   });
   const res = await fetch('https://api.open-meteo.com/v1/forecast?' + q, { headers: { 'User-Agent': UA } });
   if (!res.ok) throw new Error('Open-Meteo ' + res.status);
@@ -138,20 +182,39 @@ export async function getWeather(env: Env, ctx: ExecutionContext): Promise<Respo
 }
 
 // ------------------------------------------------------------ verse of the day
-const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', mdash: '—', ndash: '–', hellip: '…' };
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  ldquo: '“',
+  rdquo: '”',
+  lsquo: '‘',
+  rsquo: '’',
+  mdash: '—',
+  ndash: '–',
+  hellip: '…',
+};
 /** Bible Gateway's text → plain text: no tags, entities, verse numbers or outer quotes */
 export function plainVerse(s: string): string {
   return s
     .replace(/<[^>]*>/g, '')
     .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) =>
-      e[0] === '#' ? String.fromCodePoint(parseInt(e.slice(e[1] === 'x' ? 2 : 1), e[1] === 'x' ? 16 : 10)) : (ENTITIES[e.toLowerCase()] ?? m))
+      e[0] === '#'
+        ? String.fromCodePoint(parseInt(e.slice(e[1] === 'x' ? 2 : 1), e[1] === 'x' ? 16 : 10))
+        : (ENTITIES[e.toLowerCase()] ?? m),
+    )
     .replace(/\[\d+\]\s*/g, '')
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/^[“"](.*)[”"]$/s, '$1');
 }
 
-interface Votd { votd?: { rawtext?: string; content?: string; display_ref?: string; version_id?: string } }
+interface Votd {
+  votd?: { rawtext?: string; content?: string; display_ref?: string; version_id?: string };
+}
 type KeptVerse = Verse & { day: string };
 
 /** GET /api/verse: today's verse of the day (fetched once a day; yesterday's if Bible Gateway is down) */
@@ -160,7 +223,9 @@ export async function getVerse(env: Env): Promise<Response> {
   const kept = await getConfig<KeptVerse>(env, 'verse');
   if (kept?.day === today) return json(kept);
   try {
-    const res = await fetch(`https://www.biblegateway.com/votd/get/?format=json&version=${VERSION}`, { headers: { 'User-Agent': UA } });
+    const res = await fetch(`https://www.biblegateway.com/votd/get/?format=json&version=${VERSION}`, {
+      headers: { 'User-Agent': UA },
+    });
     if (!res.ok) throw new Error('Bible Gateway ' + res.status);
     const v = (await res.json<Votd>()).votd;
     const text = plainVerse(v?.rawtext || v?.content || '');

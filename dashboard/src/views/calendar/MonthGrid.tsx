@@ -23,7 +23,12 @@ const LANE = { frame: 23, phone: 16 };
 /** Sunday on or before a day */
 export const weekStart = (d: Date) => addDays(dayStart(d), -dayStart(d).getDay());
 
-interface Placed { e: CalEvent; a: number; b: number; lane: number }
+interface Placed {
+  e: CalEvent;
+  a: number;
+  b: number;
+  lane: number;
+}
 
 /** A week's events placed in lanes: longer all-day spans first, then all-day, then by time */
 function placeWeek(events: CalEvent[], start: Date): Placed[] {
@@ -54,7 +59,13 @@ function placeWeek(events: CalEvent[], start: Date): Placed[] {
   });
 }
 
-export function MonthGrid({ start, weeks, now, month, onDay }: {
+export function MonthGrid({
+  start,
+  weeks,
+  now,
+  month,
+  onDay,
+}: {
   /** The first Sunday shown */
   start: Date;
   weeks: number;
@@ -88,7 +99,9 @@ export function MonthGrid({ start, weeks, now, month, onDay }: {
     <div className={css.grid + (phone ? ' ' + css.isPhone : '')}>
       <div className={css.dow}>
         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <span key={i} className="label">{fmt.dayShort(addDays(start, i))}</span>
+          <span key={i} className="label">
+            {fmt.dayShort(addDays(start, i))}
+          </span>
         ))}
       </div>
       <div className={css.weeks} ref={ref} style={{ gridTemplateRows: `repeat(${weeks}, minmax(0, 1fr))` }}>
@@ -98,7 +111,9 @@ export function MonthGrid({ start, weeks, now, month, onDay }: {
           const need = placed.reduce((m, p) => Math.max(m, p.lane + 1), 0);
           // Too many: the last lane that fits says "+N more" for each day that has hidden events
           const shown = need > fit ? fit - 1 : need;
-          const hidden = [0, 1, 2, 3, 4, 5, 6].map((c) => placed.filter((p) => p.lane >= shown && p.a <= c && c < p.b).length);
+          const hidden = [0, 1, 2, 3, 4, 5, 6].map(
+            (c) => placed.filter((p) => p.lane >= shown && p.a <= c && c < p.b).length,
+          );
           return (
             <div key={w} className={css.week}>
               {/* The days, filling the row (tap one to open it), with the date and weather on top */}
@@ -127,28 +142,52 @@ export function MonthGrid({ start, weeks, now, month, onDay }: {
                 })}
               </div>
               {/* Events in lanes over the days, below the date line */}
-              <div className={css.lanes} style={{ gridTemplateRows: `${HEAD}px repeat(${Math.max(1, need > fit ? fit : need)}, ${lane}px)` } as CSSProperties}>
-              {placed.filter((p) => p.lane < shown).map((p) => (
-                <button
-                  key={p.e.id}
-                  {...drag.bind(p.e)}
-                  className={css.chip + (p.e.allDay ? ' ' + css.isAllDay : '') + (p.e.end <= now ? ' ' + css.isPast : '') + (drag.lifted(p.e) ? ' ' + css.isLifted : '')}
-                  style={eventStyle(data, p.e, { gridColumn: `${p.a + 1} / ${p.b + 1}`, gridRow: p.lane + 2, ...drag.bind(p.e).style })}
-                  onClick={() => openEventSheet(p.e)}
-                >
-                  {!phone && !p.e.allDay && <small>{fmt.time(p.e.start).replace(':00', '')}</small>}
-                  {/* Phones: the name only, small */}
-                  <span>{phone ? p.e.title : evLabel(p.e)}</span>
-                </button>
-              ))}
-              {need > fit &&
-                hidden.map((n, c) =>
-                  n ? (
-                    <button key={'more' + c} className={css.more} style={{ gridColumn: c + 1, gridRow: shown + 2 }} onClick={() => onDay(addDays(s, c))}>
-                      +{n}{phone ? '' : ' more'}
+              <div
+                className={css.lanes}
+                style={
+                  {
+                    gridTemplateRows: `${HEAD}px repeat(${Math.max(1, need > fit ? fit : need)}, ${lane}px)`,
+                  } as CSSProperties
+                }
+              >
+                {placed
+                  .filter((p) => p.lane < shown)
+                  .map((p) => (
+                    <button
+                      key={p.e.id}
+                      {...drag.bind(p.e)}
+                      className={
+                        css.chip +
+                        (p.e.allDay ? ' ' + css.isAllDay : '') +
+                        (p.e.end <= now ? ' ' + css.isPast : '') +
+                        (drag.lifted(p.e) ? ' ' + css.isLifted : '')
+                      }
+                      style={eventStyle(data, p.e, {
+                        gridColumn: `${p.a + 1} / ${p.b + 1}`,
+                        gridRow: p.lane + 2,
+                        ...drag.bind(p.e).style,
+                      })}
+                      onClick={() => openEventSheet(p.e)}
+                    >
+                      {!phone && !p.e.allDay && <small>{fmt.time(p.e.start).replace(':00', '')}</small>}
+                      {/* Phones: the name only, small */}
+                      <span>{phone ? p.e.title : evLabel(p.e)}</span>
                     </button>
-                  ) : null,
-                )}
+                  ))}
+                {need > fit &&
+                  hidden.map((n, c) =>
+                    n ? (
+                      <button
+                        key={'more' + c}
+                        className={css.more}
+                        style={{ gridColumn: c + 1, gridRow: shown + 2 }}
+                        onClick={() => onDay(addDays(s, c))}
+                      >
+                        +{n}
+                        {phone ? '' : ' more'}
+                      </button>
+                    ) : null,
+                  )}
               </div>
             </div>
           );

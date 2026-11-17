@@ -19,7 +19,11 @@ export const taskPeople = (people: Person[]): Person[] => people.filter((p) => p
  */
 export const taskLanes = (people: Person[]): string[] => {
   const ps = taskPeople(people);
-  return [...ps.filter((p) => p.calendar !== false).map((p) => p.id), 'any', ...ps.filter((p) => p.calendar === false).map((p) => p.id)];
+  return [
+    ...ps.filter((p) => p.calendar !== false).map((p) => p.id),
+    'any',
+    ...ps.filter((p) => p.calendar === false).map((p) => p.id),
+  ];
 };
 /** Who reminders can go to (a phone's owner): people, not pets or tasks-only profiles */
 export const phonePeople = (people: Person[]): Person[] => people.filter((p) => !p.pet && p.calendar !== false);
@@ -34,7 +38,9 @@ export const evColor = (d: Data, e: CalEvent): Person =>
  */
 export function evStripes(d: Data, e: CalEvent): Person[] {
   if (e.color || isFamily(d, e)) return [];
-  const ps = [...new Set(e.people)].map((id) => person(d, id)).filter((p, i, all) => p !== d.family && all.indexOf(p) === i);
+  const ps = [...new Set(e.people)]
+    .map((id) => person(d, id))
+    .filter((p, i, all) => p !== d.family && all.indexOf(p) === i);
   return ps.length >= 2 ? ps : [];
 }
 /** An event's title with its emoji in front, where it has one */
@@ -42,8 +48,11 @@ export const evLabel = (e: Pick<CalEvent, 'emoji' | 'title'>): string => (e.emoj
 export const leaveBy = (e: CalEvent): Date => (e.travel ? new Date(e.start.getTime() - e.travel * 60000) : e.start);
 
 function onDay(events: CalEvent[], day: Date, allDay: boolean, pid?: string) {
-  const s = dayStart(day), e = addDays(s, 1);
-  return events.filter((ev) => !!ev.allDay === allDay && ev.start < e && ev.end > s && (!pid || ev.people.includes(pid)));
+  const s = dayStart(day),
+    e = addDays(s, 1);
+  return events.filter(
+    (ev) => !!ev.allDay === allDay && ev.start < e && ev.end > s && (!pid || ev.people.includes(pid)),
+  );
 }
 export function timedOn(events: CalEvent[], day: Date, pid?: string): CalEvent[] {
   return onDay(events, day, false, pid).sort((a, b) => +a.start - +b.start || +b.end - +a.end);
@@ -59,7 +68,8 @@ export function nextEvent(events: CalEvent[], now: Date): CalEvent | null {
 
 /** Countdown chips: the next few all-day events (starting tomorrow or later), one per title. */
 export function countdowns(events: CalEvent[], now: Date, limit = 6): CalEvent[] {
-  const today = dayStart(now), seen = new Set<string>();
+  const today = dayStart(now),
+    seen = new Set<string>();
   // Sorted before keeping one per title, so it's the soonest of a repeating one (this year's birthday,
   // not next year's)
   return events
@@ -71,7 +81,14 @@ export function countdowns(events: CalEvent[], now: Date, limit = 6): CalEvent[]
 
 // ------------------------------------------------------------ weather
 export const WX_LABELS: Record<WxCond, string> = {
-  sun: 'Sunny', moon: 'Clear', partly: 'Partly cloudy', cloud: 'Overcast', rain: 'Rain', snow: 'Snow', fog: 'Fog', storm: 'Thunderstorms',
+  sun: 'Sunny',
+  moon: 'Clear',
+  partly: 'Partly cloudy',
+  cloud: 'Overcast',
+  rain: 'Rain',
+  snow: 'Snow',
+  fog: 'Fog',
+  storm: 'Thunderstorms',
 };
 const WET: WxCond[] = ['rain', 'snow', 'storm'];
 
@@ -107,7 +124,11 @@ export function weatherNow(d: Data, events: CalEvent[], now: Date) {
   // Rain or snow (50%+) before the end of today
   const endOfDay = i - now.getHours() + 24;
   let wetAt = -1;
-  for (let x = i; x < Math.min(endOfDay, W.p.length); x++) if (W.p[x] >= 50) { wetAt = x; break; }
+  for (let x = i; x < Math.min(endOfDay, W.p.length); x++)
+    if (W.p[x] >= 50) {
+      wetAt = x;
+      break;
+    }
   const word = (x: number) => (W.c[x] === 'snow' ? 'Snow' : 'Rain');
   let summary: string, advice: string;
   if (wetAt === i) {
@@ -118,12 +139,26 @@ export function weatherNow(d: Data, events: CalEvent[], now: Date) {
   } else if (wetAt > -1) {
     summary = word(wetAt) + ' from ' + fmt.hour(at(wetAt));
     const soccer = timedOn(events, now).some((e) => /soccer/i.test(e.title) && e.start > now);
-    advice = W.c[wetAt] === 'snow' ? 'Boots and gloves later' : soccer ? 'Pack a rain jacket for soccer' : 'Grab a rain jacket';
+    advice =
+      W.c[wetAt] === 'snow'
+        ? 'Boots and gloves later'
+        : soccer
+          ? 'Pack a rain jacket for soccer'
+          : 'Grab a rain jacket';
   } else {
     summary = WET.includes(cur.c) ? WX_LABELS[cur.c] : W.hi < 32 ? 'Cold and dry' : 'Dry all day';
     advice = advise(fresh ? W.now.feels : cur.t);
   }
-  return { temp: cur.t, cond: cur.c, label: WX_LABELS[cur.c], hi: W.hi, lo: W.lo, feels: fresh ? W.now.feels : cur.t, summary, advice };
+  return {
+    temp: cur.t,
+    cond: cur.c,
+    label: WX_LABELS[cur.c],
+    hi: W.hi,
+    lo: W.lo,
+    feels: fresh ? W.now.feels : cur.t,
+    summary,
+    advice,
+  };
 }
 
 export function hourly(d: Data, now: Date, count: number) {
@@ -135,7 +170,12 @@ export function hourly(d: Data, now: Date, count: number) {
     const x = (now.getHours() + k) % 24;
     const f = hourAt(W, i + k);
     // "Now" is the current reading, as at the top
-    return { h: x, ...f, ...(k === 0 && fresh ? { t: W.now.t, c: W.now.c } : {}), label: k === 0 ? 'Now' : (x % 12 || 12) + (x >= 12 ? 'p' : 'a') };
+    return {
+      h: x,
+      ...f,
+      ...(k === 0 && fresh ? { t: W.now.t, c: W.now.c } : {}),
+      label: k === 0 ? 'Now' : (x % 12 || 12) + (x >= 12 ? 'p' : 'a'),
+    };
   });
 }
 
@@ -177,10 +217,12 @@ export function knownGroceries(d: Data): [string, string][] {
 export function spellGrocery(d: Data, name: string): string {
   const typed = name.trim().replace(/\s+/g, ' ');
   const lower = typed.toLowerCase();
-  return d.usuals.find((u) => u.toLowerCase() === lower)
-    ?? d.catalog.find(([n]) => n.toLowerCase() === lower)?.[0]
-    ?? d.groceryNames.find(([n]) => n.toLowerCase() === lower)?.[0]
-    ?? typed;
+  return (
+    d.usuals.find((u) => u.toLowerCase() === lower) ??
+    d.catalog.find(([n]) => n.toLowerCase() === lower)?.[0] ??
+    d.groceryNames.find(([n]) => n.toLowerCase() === lower)?.[0] ??
+    typed
+  );
 }
 
 /** Aisle for a typed item: where it was last time, else the closest known name's, else 'Other' */
@@ -189,7 +231,10 @@ export function categorize(d: Data, name: string): string {
   const known = knownGroceries(d);
   const hit =
     known.find((c) => c[0].toLowerCase() === n) ||
-    known.find((c) => { const a = c[0].toLowerCase(); return a.includes(n) || n.includes(a); }) ||
+    known.find((c) => {
+      const a = c[0].toLowerCase();
+      return a.includes(n) || n.includes(a);
+    }) ||
     known.find((c) => n.split(/\s+/).some((w) => w.length > 3 && c[0].toLowerCase().includes(w)));
   return hit ? hit[1] : OTHER;
 }

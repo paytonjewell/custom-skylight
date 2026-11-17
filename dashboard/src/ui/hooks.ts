@@ -25,11 +25,14 @@ export function usePendingAction(delay: number) {
     start(id: string, commit: () => void) {
       if (timers.current.has(id)) return;
       setPending((p) => new Set(p).add(id));
-      timers.current.set(id, window.setTimeout(() => {
-        timers.current.delete(id);
-        unmark(id);
-        commit();
-      }, delay));
+      timers.current.set(
+        id,
+        window.setTimeout(() => {
+          timers.current.delete(id);
+          unmark(id);
+          commit();
+        }, delay),
+      );
     },
     cancel(id: string): boolean {
       const t = timers.current.get(id);
@@ -70,7 +73,8 @@ export function useEdgeFade(ref: RefObject<HTMLElement | null>, deps: unknown[])
 export function usePixelShift(active: boolean, now: Date): CSSProperties | undefined {
   return useMemo(() => {
     if (!active) return undefined;
-    const x = Math.round(Math.random() * 8 - 4), y = Math.round(Math.random() * 8 - 4);
+    const x = Math.round(Math.random() * 8 - 4),
+      y = Math.round(Math.random() * 8 - 4);
     return { transform: `translate(${x}px, ${y}px)` };
   }, [active, now]);
 }

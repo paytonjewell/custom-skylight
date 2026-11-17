@@ -1,6 +1,6 @@
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
-import {  } from '../data/select';
+import {} from '../data/select';
 import { daysBetween } from '../lib/dates';
 import { fmt, pluralize } from '../lib/fmt';
 import { useNow } from '../lib/clock';
@@ -24,10 +24,18 @@ export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: bo
   const title = !e.emoji && emoji ? e.title.replace(emoji, '').replace(/\s+/g, ' ').trim() : e.title;
   const d = e.start;
   const unit = pluralize(days, 'day');
-  const icon = <span className={css.icon}>{emoji ? <span className={css.emoji}>{emoji}</span> : <Icon name="calendar" size={22} />}</span>;
+  const icon = (
+    <span className={css.icon}>
+      {emoji ? <span className={css.emoji}>{emoji}</span> : <Icon name="calendar" size={22} />}
+    </span>
+  );
 
   return (
-    <button className={css.chip + (glass ? ' ' + css.glass : ' surface') + (className ? ' ' + className : '')} style={eventStyle(data, e)} onClick={() => openEventSheet(e)}>
+    <button
+      className={css.chip + (glass ? ' ' + css.glass : ' surface') + (className ? ' ' + className : '')}
+      style={eventStyle(data, e)}
+      onClick={() => openEventSheet(e)}
+    >
       {icon}
       {glass ? (
         <span className={css.text}>
@@ -40,7 +48,9 @@ export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: bo
         <>
           <span className={css.text}>
             <b>{title}</b>
-            <small>{fmt.dayShort(d)}, {fmt.monthShort(d)} {d.getDate()}</small>
+            <small>
+              {fmt.dayShort(d)}, {fmt.monthShort(d)} {d.getDate()}
+            </small>
           </span>
           <span className={css.days}>
             <b>{days}</b>

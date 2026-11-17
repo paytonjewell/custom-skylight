@@ -6,16 +6,35 @@ import type { Task, TaskDone } from '../src/data/types.ts';
 import type { Repeat } from '../src/lib/repeat.ts';
 
 const habit = (repeat: Repeat): Task => ({
-  id: 'h', title: 'Habit', emoji: '', who: 'john', repeat, due: null, slot: 'anytime', time: null,
-  habit: true, onCalendar: false, remind: null, notify: [], listId: null, listItemId: null, created: '2026-01-01T00:00:00Z',
+  id: 'h',
+  title: 'Habit',
+  emoji: '',
+  who: 'john',
+  repeat,
+  due: null,
+  slot: 'anytime',
+  time: null,
+  habit: true,
+  onCalendar: false,
+  remind: null,
+  notify: [],
+  listId: null,
+  listItemId: null,
+  created: '2026-01-01T00:00:00Z',
 });
-const done = (...days: string[]): TaskDone[] => days.map((day) => ({ task: 'h', day, at: day + 'T12:00:00Z', by: null }));
+const done = (...days: string[]): TaskDone[] =>
+  days.map((day) => ({ task: 'h', day, at: day + 'T12:00:00Z', by: null }));
 const FROM = '2025-11-01';
 
 test('daily: streak counts back from today; today undone does not break it', () => {
   const t = habit({ kind: 'daily', start: '2026-11-01' });
   // Done Nov 10–14, not yet on the 15th
-  const s = habitStats(t, done('2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13', '2026-11-14'), '2026-11-15', FROM);
+  const s = habitStats(
+    t,
+    done('2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13', '2026-11-14'),
+    '2026-11-15',
+    FROM,
+  );
   assert.equal(s.current, 5);
   assert.equal(s.cells.get('2026-11-15'), 'due');
   assert.equal(s.cells.get('2026-11-09'), 'missed');
@@ -26,7 +45,12 @@ test('daily: streak counts back from today; today undone does not break it', () 
 
 test('a missed day resets the streak; best keeps the longest run', () => {
   const t = habit({ kind: 'daily', start: '2026-11-01' });
-  const s = habitStats(t, done('2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-06', '2026-11-07'), '2026-11-07', FROM);
+  const s = habitStats(
+    t,
+    done('2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-06', '2026-11-07'),
+    '2026-11-07',
+    FROM,
+  );
   assert.equal(s.current, 2);
   assert.equal(s.best, 4);
 });
@@ -42,7 +66,12 @@ test('weekday habit: the weekend does not break the streak', () => {
 test('completion rate over the last 30 days', () => {
   const t = habit({ kind: 'daily', start: '2026-11-01' });
   // Nov 1–10 due (10 days, today the 10th done), 5 done
-  const s = habitStats(t, done('2026-11-01', '2026-11-03', '2026-11-05', '2026-11-07', '2026-11-10'), '2026-11-10', FROM);
+  const s = habitStats(
+    t,
+    done('2026-11-01', '2026-11-03', '2026-11-05', '2026-11-07', '2026-11-10'),
+    '2026-11-10',
+    FROM,
+  );
   assert.equal(s.rate, 0.5);
   // Today not done yet: it doesn't count against the rate
   const s2 = habitStats(t, done('2026-11-01', '2026-11-02'), '2026-11-03', FROM);

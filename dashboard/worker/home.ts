@@ -17,14 +17,20 @@ export interface Home {
 
 /** HOME_PLACE, HOME_LAT, HOME_LON and HOME_TZ; null until the coordinates are set */
 export function home(env: Env): Home | null {
-  const lat = Number(env.HOME_LAT), lon = Number(env.HOME_LON);
+  const lat = Number(env.HOME_LAT),
+    lon = Number(env.HOME_LON);
   if (!env.HOME_LAT || !env.HOME_LON || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   return { name: env.HOME_PLACE || '', lat, lon, tz: validTz(env.HOME_TZ) ? env.HOME_TZ : 'UTC' };
 }
 
 function validTz(tz: string | undefined): tz is string {
   if (!tz) return false;
-  try { new Intl.DateTimeFormat('en', { timeZone: tz }); return true; } catch { return false; }
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Who the dashboard shows when FAMILY isn't set */
@@ -48,14 +54,21 @@ function family(env: Env): Person[] {
   try {
     const list = JSON.parse(env.FAMILY) as Partial<Person>[];
     const people = list
-      .filter((p) => p && typeof p.id === 'string' && p.id && p.id !== 'any' && p.id !== 'family' && typeof p.name === 'string')
-      .map((p, i): Person => ({
-        id: p.id!, name: p.name!, tone: typeof p.tone === 'number' ? p.tone : (i % 4) + 1,
-        ...(typeof p.age === 'number' ? { age: p.age } : {}),
-        ...(p.pet ? { pet: true } : {}),
-        ...(p.tasks === false ? { tasks: false as const } : {}),
-        ...(p.calendar === false ? { calendar: false as const } : {}),
-      }));
+      .filter(
+        (p) =>
+          p && typeof p.id === 'string' && p.id && p.id !== 'any' && p.id !== 'family' && typeof p.name === 'string',
+      )
+      .map(
+        (p, i): Person => ({
+          id: p.id!,
+          name: p.name!,
+          tone: typeof p.tone === 'number' ? p.tone : (i % 4) + 1,
+          ...(typeof p.age === 'number' ? { age: p.age } : {}),
+          ...(p.pet ? { pet: true } : {}),
+          ...(p.tasks === false ? { tasks: false as const } : {}),
+          ...(p.calendar === false ? { calendar: false as const } : {}),
+        }),
+      );
     return people.length ? people : SAMPLE_FAMILY;
   } catch (e) {
     console.warn('FAMILY is not valid JSON', e);
@@ -73,15 +86,29 @@ export const getFamily = (env: Env): Response => json(family(env));
 export function localFeeds(env: Env): Feed[] {
   if (!env.LOCAL_NEWS) return [];
   try {
-    const list = JSON.parse(env.LOCAL_NEWS) as { source?: string; url?: string; search?: string; limit?: number; days?: number }[];
+    const list = JSON.parse(env.LOCAL_NEWS) as {
+      source?: string;
+      url?: string;
+      search?: string;
+      limit?: number;
+      days?: number;
+    }[];
     return list.flatMap((f): Feed[] => {
       const extra = { ...(f.limit ? { limit: f.limit } : {}), ...(f.days ? { days: f.days } : {}) };
       if (f.search) {
-        return [{
-          topic: 'local', source: 'Google News', url: googleNews(`${f.search} when:14d`), google: true, limit: 20, days: 10, ...extra,
-          // obituary sites and game-stream/schedule listings
-          exclude: /obituar|legacy|tribute archive|funeral|maxpreps|nfhs network|hudl/i,
-        }];
+        return [
+          {
+            topic: 'local',
+            source: 'Google News',
+            url: googleNews(`${f.search} when:14d`),
+            google: true,
+            limit: 20,
+            days: 10,
+            ...extra,
+            // obituary sites and game-stream/schedule listings
+            exclude: /obituar|legacy|tribute archive|funeral|maxpreps|nfhs network|hudl/i,
+          },
+        ];
       }
       if (f.url && f.source) return [{ topic: 'local', source: f.source, url: f.url, ...extra }];
       return [];

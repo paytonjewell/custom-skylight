@@ -45,7 +45,9 @@ const patchUI = (p: Partial<UIState>) => ui.set((s) => ({ ...s, ...p }));
 
 // ------------------------------------------------------------ idle counter (ticked by App)
 let idleSec = 0;
-export const resetIdle = () => { idleSec = 0; };
+export const resetIdle = () => {
+  idleSec = 0;
+};
 export const idleTick = () => ++idleSec;
 
 // ------------------------------------------------------------ navigation + modes

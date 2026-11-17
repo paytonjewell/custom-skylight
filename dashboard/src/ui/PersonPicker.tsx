@@ -18,9 +18,23 @@ interface Props {
 }
 
 /** Row of people as big avatar buttons (who's involved / who did it) */
-export function PersonPicker({ people, selected = [], onPick, everyone, everyoneLabel = 'Everyone', avatarSize = 56, big, after = [] }: Props) {
+export function PersonPicker({
+  people,
+  selected = [],
+  onPick,
+  everyone,
+  everyoneLabel = 'Everyone',
+  avatarSize = 56,
+  big,
+  after = [],
+}: Props) {
   const button = (p: Person, label: string) => (
-    <button key={p.id} className={css.person + (selected.includes(p.id) ? ' ' + css.isOn : '')} style={toneStyle(p)} onClick={() => onPick(p.id)}>
+    <button
+      key={p.id}
+      className={css.person + (selected.includes(p.id) ? ' ' + css.isOn : '')}
+      style={toneStyle(p)}
+      onClick={() => onPick(p.id)}
+    >
       <Avatar p={p} size={avatarSize} />
       <span>{label}</span>
     </button>

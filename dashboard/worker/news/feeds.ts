@@ -29,7 +29,6 @@ export interface Feed {
   exclude?: RegExp;
 }
 
-
 const FEEDS: Feed[] = [
   // Top: politics and national news
   { topic: 'top', source: 'Fox News', url: 'https://moxie.foxnews.com/google-publisher/politics.xml' },
@@ -43,12 +42,33 @@ const FEEDS: Feed[] = [
   { topic: 'world', source: 'BBC', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
 
   // Military: news for and about the services, defense, and the Department of Defense's own news
-  { topic: 'military', source: 'Military Times', url: 'https://www.militarytimes.com/arc/outboundfeeds/rss/?outputType=xml', limit: 8 },
-  { topic: 'military', source: 'Military.com', url: 'https://www.military.com/rss-feeds/content?keyword=headlines&channel=news&type=news', limit: 8 },
+  {
+    topic: 'military',
+    source: 'Military Times',
+    url: 'https://www.militarytimes.com/arc/outboundfeeds/rss/?outputType=xml',
+    limit: 8,
+  },
+  {
+    topic: 'military',
+    source: 'Military.com',
+    url: 'https://www.military.com/rss-feeds/content?keyword=headlines&channel=news&type=news',
+    limit: 8,
+  },
   { topic: 'military', source: 'Task & Purpose', url: 'https://taskandpurpose.com/feed/', limit: 8 },
   { topic: 'military', source: 'The War Zone', url: 'https://www.twz.com/feed', limit: 8 },
-  { topic: 'military', source: 'Defense News', url: 'https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml', limit: 8 },
-  { topic: 'military', source: 'DoD News', url: 'https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=1&Site=945&max=10', limit: 6, days: 7 },
+  {
+    topic: 'military',
+    source: 'Defense News',
+    url: 'https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml',
+    limit: 8,
+  },
+  {
+    topic: 'military',
+    source: 'DoD News',
+    url: 'https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=1&Site=945&max=10',
+    limit: 6,
+    days: 7,
+  },
 
   { topic: 'tech', source: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index' },
   { topic: 'tech', source: 'The Verge', url: 'https://www.theverge.com/rss/index.xml' },

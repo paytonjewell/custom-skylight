@@ -13,7 +13,9 @@ test('encrypted payload decrypts on the phone side (RFC 8291)', async () => {
   ua.generateKeys();
   const authSecret = randomBytes(16);
   const message = JSON.stringify({ title: '♻️ Recycling', body: 'Day before the 1st Thursday' });
-  const sealed = Buffer.from(await encrypt(new TextEncoder().encode(message), b64url(ua.getPublicKey()), b64url(authSecret)));
+  const sealed = Buffer.from(
+    await encrypt(new TextEncoder().encode(message), b64url(ua.getPublicKey()), b64url(authSecret)),
+  );
 
   // Header: salt (16) | record size (4) | key length (1) | server public key | ciphertext
   const salt = sealed.subarray(0, 16);
@@ -35,8 +37,22 @@ test('encrypted payload decrypts on the phone side (RFC 8291)', async () => {
 });
 
 const task = (p: Partial<Task>): Task => ({
-  id: 't', title: 'Task', emoji: '', who: 'john', repeat: null, due: null, slot: 'anytime', time: null, habit: false,
-  onCalendar: false, remind: '08:00', notify: ['john'], listId: null, listItemId: null, created: '2026-01-01T00:00:00Z', ...p,
+  id: 't',
+  title: 'Task',
+  emoji: '',
+  who: 'john',
+  repeat: null,
+  due: null,
+  slot: 'anytime',
+  time: null,
+  habit: false,
+  onCalendar: false,
+  remind: '08:00',
+  notify: ['john'],
+  listId: null,
+  listItemId: null,
+  created: '2026-01-01T00:00:00Z',
+  ...p,
 });
 const TZ = 'America/Chicago'; // UTC-6 in November
 const at = (local: string) => new Date(local + '-06:00');
@@ -48,7 +64,10 @@ test('local day and time in a time zone', () => {
 test('a reminder goes out in the minutes after its time, only to the people it notifies', () => {
   const t = task({ repeat: { kind: 'daily', start: '2026-11-01' } });
   assert.equal(dueReminders([t], [], 'john', TZ, at('2026-11-15T07:59:00')).length, 0);
-  assert.deepEqual(dueReminders([t], [], 'john', TZ, at('2026-11-15T08:05:00')).map((x) => x.day), ['2026-11-15']);
+  assert.deepEqual(
+    dueReminders([t], [], 'john', TZ, at('2026-11-15T08:05:00')).map((x) => x.day),
+    ['2026-11-15'],
+  );
   assert.equal(dueReminders([t], [], 'john', TZ, at('2026-11-15T08:20:00')).length, 0); // too late: missed window
   assert.equal(dueReminders([t], [], 'mary', TZ, at('2026-11-15T08:05:00')).length, 0); // not Mary's
   const both = task({ notify: ['john', 'mary'] });
@@ -73,10 +92,19 @@ test('no reminder when it is done, not due today, or overdue from before', () =>
 test('a reminder just before midnight still goes out, just after', () => {
   const t = task({ remind: '23:59', due: '2026-11-15' });
   assert.equal(dueReminders([t], [], 'john', TZ, at('2026-11-15T23:58:00')).length, 0);
-  assert.deepEqual(dueReminders([t], [], 'john', TZ, at('2026-11-15T23:59:00')).map((x) => x.day), ['2026-11-15']);
-  assert.deepEqual(dueReminders([t], [], 'john', TZ, at('2026-11-16T00:03:00')).map((x) => x.day), ['2026-11-15']);
+  assert.deepEqual(
+    dueReminders([t], [], 'john', TZ, at('2026-11-15T23:59:00')).map((x) => x.day),
+    ['2026-11-15'],
+  );
+  assert.deepEqual(
+    dueReminders([t], [], 'john', TZ, at('2026-11-16T00:03:00')).map((x) => x.day),
+    ['2026-11-15'],
+  );
   assert.equal(dueReminders([t], [], 'john', TZ, at('2026-11-16T00:20:00')).length, 0);
   // A daily one at 23:59 is sent for the day it was due, not the new day
   const daily = task({ remind: '23:59', repeat: { kind: 'daily', start: '2026-11-01' } });
-  assert.deepEqual(dueReminders([daily], [], 'john', TZ, at('2026-11-16T00:03:00')).map((x) => x.day), ['2026-11-15']);
+  assert.deepEqual(
+    dueReminders([daily], [], 'john', TZ, at('2026-11-16T00:03:00')).map((x) => x.day),
+    ['2026-11-15'],
+  );
 });

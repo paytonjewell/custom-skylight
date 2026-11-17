@@ -8,7 +8,22 @@ import type { DragProps } from './useDragDrop';
 import { Icon } from './Icon';
 import css from './SwipeRow.module.css';
 
-export function SwipeRow({ label, open, onOpenChange, onTap, onEdit, onDelete, onLater, className, slideClass, style, drag, lifted, drop, children }: {
+export function SwipeRow({
+  label,
+  open,
+  onOpenChange,
+  onTap,
+  onEdit,
+  onDelete,
+  onLater,
+  className,
+  slideClass,
+  style,
+  drag,
+  lifted,
+  drop,
+  children,
+}: {
   /** What the row is, for the actions' labels ("Edit <label>") */
   label: string;
   open: SwipeSide | null;
@@ -30,7 +45,14 @@ export function SwipeRow({ label, open, onOpenChange, onTap, onEdit, onDelete, o
   drop?: string;
   children: ReactNode;
 }) {
-  const swipe = useSwipeReveal({ open, onOpenChange, start: true, end: true, disabled: lifted, endWidth: onLater ? REVEAL * 2 : REVEAL });
+  const swipe = useSwipeReveal({
+    open,
+    onOpenChange,
+    start: true,
+    end: true,
+    disabled: lifted,
+    endWidth: onLater ? REVEAL * 2 : REVEAL,
+  });
   const action = (name: string, run: () => void) => ({
     'aria-label': name + ' ' + label,
     tabIndex: open ? 0 : -1,
@@ -42,7 +64,12 @@ export function SwipeRow({ label, open, onOpenChange, onTap, onEdit, onDelete, o
   });
   return (
     <div
-      className={css.row + (swipe.offset > 0 ? ' ' + css.showStart : swipe.offset < 0 ? ' ' + css.showEnd : '') + (lifted ? ' ' + css.lifted : '') + (className ? ' ' + className : '')}
+      className={
+        css.row +
+        (swipe.offset > 0 ? ' ' + css.showStart : swipe.offset < 0 ? ' ' + css.showEnd : '') +
+        (lifted ? ' ' + css.lifted : '') +
+        (className ? ' ' + className : '')
+      }
       style={drag ? { ...drag.style, ...style } : style}
       onClickCapture={drag?.onClickCapture}
       data-drop={drop}

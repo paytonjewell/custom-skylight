@@ -33,8 +33,24 @@ function findBinary() {
   const build = readdirSync(base).find((d) => d.endsWith('-' + VERSION));
   if (!build) return null;
   const candidates = [
-    join(base, build, 'chrome-mac-arm64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'),
-    join(base, build, 'chrome-mac-x64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'),
+    join(
+      base,
+      build,
+      'chrome-mac-arm64',
+      'Google Chrome for Testing.app',
+      'Contents',
+      'MacOS',
+      'Google Chrome for Testing',
+    ),
+    join(
+      base,
+      build,
+      'chrome-mac-x64',
+      'Google Chrome for Testing.app',
+      'Contents',
+      'MacOS',
+      'Google Chrome for Testing',
+    ),
     join(base, build, 'chrome-linux64', 'chrome'),
     join(base, build, 'chrome-win64', 'chrome.exe'),
   ];
@@ -44,7 +60,9 @@ function findBinary() {
 let bin = findBinary();
 if (!bin) {
   console.log(`Downloading Chrome for Testing ${VERSION} (once, about 150 MB) into .frame-chrome/`);
-  execFileSync('npx', ['-y', '@puppeteer/browsers@2.10.10', 'install', 'chrome@' + VERSION, '--path', DIR], { stdio: 'inherit' });
+  execFileSync('npx', ['-y', '@puppeteer/browsers@2.10.10', 'install', 'chrome@' + VERSION, '--path', DIR], {
+    stdio: 'inherit',
+  });
   bin = findBinary();
   if (!bin) throw new Error('Chrome for Testing was downloaded but not found in .frame-chrome/');
 }

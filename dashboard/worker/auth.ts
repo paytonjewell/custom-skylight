@@ -60,7 +60,9 @@ export async function authenticate(req: Request, env: Env): Promise<{ device: De
 
   if (now - hit.lastSeen < RENEW_AFTER) return { device: hit.device };
   hit.lastSeen = now;
-  await env.DB.prepare('UPDATE devices SET last_seen = ? WHERE id = ?').bind(new Date(now).toISOString(), hit.device.id).run();
+  await env.DB.prepare('UPDATE devices SET last_seen = ? WHERE id = ?')
+    .bind(new Date(now).toISOString(), hit.device.id)
+    .run();
   return { device: hit.device, setCookie: cookieHeader(req, token) };
 }
 
@@ -68,16 +70,22 @@ export async function authenticate(req: Request, env: Env): Promise<{ device: De
 export async function signIn(req: Request, env: Env): Promise<Response> {
   const form = await req.formData();
   const pin = String(form.get('pin') ?? '');
-  const name = String(form.get('name') ?? '').trim().slice(0, 40) || 'Unnamed device';
+  const name =
+    String(form.get('name') ?? '')
+      .trim()
+      .slice(0, 40) || 'Unnamed device';
   const page = (error: string, status: number) => signInPage(req, { error, name, status });
 
   const secret = env.DASHBOARD_PIN ?? '';
   // Not 5xx: the kiosk app swaps a 5xx page for its offline screen, which would hide this message
-  if (secret.length < MIN_PIN) return page(`The dashboard's PIN isn't set up yet (it needs at least ${MIN_PIN} digits).`, 200);
+  if (secret.length < MIN_PIN)
+    return page(`The dashboard's PIN isn't set up yet (it needs at least ${MIN_PIN} digits).`, 200);
 
   const ip = req.headers.get('CF-Connecting-IP') ?? 'local';
   const now = Date.now();
-  await env.DB.prepare('DELETE FROM signin_failures WHERE at < ?').bind(now - OVERALL.ms).run();
+  await env.DB.prepare('DELETE FROM signin_failures WHERE at < ?')
+    .bind(now - OVERALL.ms)
+    .run();
   const counts = await env.DB.prepare(
     'SELECT (SELECT count(*) FROM signin_failures WHERE ip = ? AND at > ?) AS ip, (SELECT count(*) FROM signin_failures WHERE at > ?) AS overall',
   )
@@ -95,7 +103,9 @@ export async function signIn(req: Request, env: Env): Promise<Response> {
   }
 
   const token = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
   const at = new Date(now).toISOString();
   await env.DB.prepare('INSERT INTO devices (id, name, token_hash, created_at, last_seen) VALUES (?, ?, ?, ?, ?)')
     .bind(crypto.randomUUID(), name, hex(await sha256(token)), at, at)

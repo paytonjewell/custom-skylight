@@ -16,7 +16,13 @@ const body = <T>(req: Request) => req.json<T>().catch(() => null);
 const str = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max;
 const now = () => new Date().toISOString();
 
-interface ItemRow { id: string; list_id: string; text: string; done: number; heading: number }
+interface ItemRow {
+  id: string;
+  list_id: string;
+  text: string;
+  done: number;
+  heading: number;
+}
 
 /** GET /api/lists: every list with its items, in order */
 export async function getLists(env: Env): Promise<Response> {
@@ -29,8 +35,10 @@ export async function getLists(env: Env): Promise<Response> {
     const item: ListItem = { id: r.id, text: r.text, done: !!r.done, ...(r.heading ? { heading: true } : {}) };
     byList.set(r.list_id, [...(byList.get(r.list_id) ?? []), item]);
   }
-  const out: Checklist[] = (lists.results as unknown as { id: string; title: string; emoji: string }[])
-    .map((l) => ({ ...l, items: byList.get(l.id) ?? [] }));
+  const out: Checklist[] = (lists.results as unknown as { id: string; title: string; emoji: string }[]).map((l) => ({
+    ...l,
+    items: byList.get(l.id) ?? [],
+  }));
   return json(out);
 }
 
@@ -47,7 +55,8 @@ function item(v: unknown): ListItem | null {
  */
 export async function addList(req: Request, env: Env): Promise<Response> {
   const b = await body<{ id?: unknown; title?: unknown; emoji?: unknown; items?: unknown }>(req);
-  if (!b || typeof b.id !== 'string' || !LIST_ID.test(b.id) || !str(b.title, MAX_TITLE) || !str(b.emoji, MAX_EMOJI)) return bad('Expected { id, title, emoji }');
+  if (!b || typeof b.id !== 'string' || !LIST_ID.test(b.id) || !str(b.title, MAX_TITLE) || !str(b.emoji, MAX_EMOJI))
+    return bad('Expected { id, title, emoji }');
   const raw = b.items ?? [];
   if (!Array.isArray(raw) || raw.length > MAX_ITEMS) return bad('Bad items');
   const items = raw.map(item);
@@ -59,8 +68,10 @@ export async function addList(req: Request, env: Env): Promise<Response> {
         'INSERT INTO lists (id, title, emoji, position, created_at, updated_at) VALUES (?, ?, ?, (SELECT COALESCE(MAX(position), 0) + 1 FROM lists), ?, ?)',
       ).bind(b.id, b.title, b.emoji, at, at),
       ...items.map((i, n) =>
-        env.DB.prepare('INSERT INTO list_items (id, list_id, text, done, heading, position) VALUES (?, ?, ?, ?, ?, ?)')
-          .bind(i!.id, b.id, i!.text, i!.done ? 1 : 0, i!.heading ? 1 : 0, n)),
+        env.DB.prepare(
+          'INSERT INTO list_items (id, list_id, text, done, heading, position) VALUES (?, ?, ?, ?, ?, ?)',
+        ).bind(i!.id, b.id, i!.text, i!.done ? 1 : 0, i!.heading ? 1 : 0, n),
+      ),
     ]);
   } catch (e) {
     if (String(e).includes('UNIQUE')) return bad('Already exists', 409);
@@ -72,9 +83,13 @@ export async function addList(req: Request, env: Env): Promise<Response> {
 /** PATCH /api/lists/:id ({ title?, emoji? }) */
 export async function editList(req: Request, env: Env, id: string): Promise<Response> {
   const b = await body<{ title?: unknown; emoji?: unknown }>(req);
-  if (!b || (b.title !== undefined && !str(b.title, MAX_TITLE)) || (b.emoji !== undefined && !str(b.emoji, MAX_EMOJI))) return bad('Expected { title?, emoji? }');
-  const { meta } = await env.DB.prepare('UPDATE lists SET title = COALESCE(?, title), emoji = COALESCE(?, emoji), updated_at = ? WHERE id = ?')
-    .bind(b.title ?? null, b.emoji ?? null, now(), id).run();
+  if (!b || (b.title !== undefined && !str(b.title, MAX_TITLE)) || (b.emoji !== undefined && !str(b.emoji, MAX_EMOJI)))
+    return bad('Expected { title?, emoji? }');
+  const { meta } = await env.DB.prepare(
+    'UPDATE lists SET title = COALESCE(?, title), emoji = COALESCE(?, emoji), updated_at = ? WHERE id = ?',
+  )
+    .bind(b.title ?? null, b.emoji ?? null, now(), id)
+    .run();
   return meta.changes ? done() : bad('No such list', 404);
 }
 
@@ -90,7 +105,9 @@ export async function deleteList(env: Env, id: string): Promise<Response> {
 /** Parse { ids: [...] } (display order) */
 async function idsFrom(req: Request): Promise<string[] | null> {
   const ids = (await body<{ ids?: unknown }>(req))?.ids;
-  return Array.isArray(ids) && ids.length <= MAX_ITEMS && ids.every((x) => typeof x === 'string' && LIST_ID.test(x)) ? ids : null;
+  return Array.isArray(ids) && ids.length <= MAX_ITEMS && ids.every((x) => typeof x === 'string' && LIST_ID.test(x))
+    ? ids
+    : null;
 }
 
 /** PUT /api/lists/order ({ ids }) */
@@ -112,7 +129,9 @@ export async function addItem(req: Request, env: Env, listId: string): Promise<R
   try {
     await env.DB.prepare(
       'INSERT INTO list_items (id, list_id, text, done, heading, position) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position), 0) + 1 FROM list_items WHERE list_id = ?))',
-    ).bind(i.id, listId, i.text, i.done ? 1 : 0, i.heading ? 1 : 0, listId).run();
+    )
+      .bind(i.id, listId, i.text, i.done ? 1 : 0, i.heading ? 1 : 0, listId)
+      .run();
   } catch (e) {
     if (String(e).includes('UNIQUE')) return bad('Already exists', 409);
     throw e;
@@ -124,9 +143,22 @@ export async function addItem(req: Request, env: Env, listId: string): Promise<R
 export async function editItem(req: Request, env: Env, listId: string, id: string): Promise<Response> {
   const b = await body<{ text?: unknown; done?: unknown }>(req);
   const text = b?.text;
-  if (!b || (text !== undefined && (!str(text, MAX_TEXT) || !text.trim())) || (b.done !== undefined && typeof b.done !== 'boolean')) return bad('Expected { text?, done? }');
-  const { meta } = await env.DB.prepare('UPDATE list_items SET text = COALESCE(?, text), done = COALESCE(?, done) WHERE id = ? AND list_id = ?')
-    .bind(typeof text === 'string' ? text.trim() : null, typeof b.done === 'boolean' ? (b.done ? 1 : 0) : null, id, listId).run();
+  if (
+    !b ||
+    (text !== undefined && (!str(text, MAX_TEXT) || !text.trim())) ||
+    (b.done !== undefined && typeof b.done !== 'boolean')
+  )
+    return bad('Expected { text?, done? }');
+  const { meta } = await env.DB.prepare(
+    'UPDATE list_items SET text = COALESCE(?, text), done = COALESCE(?, done) WHERE id = ? AND list_id = ?',
+  )
+    .bind(
+      typeof text === 'string' ? text.trim() : null,
+      typeof b.done === 'boolean' ? (b.done ? 1 : 0) : null,
+      id,
+      listId,
+    )
+    .run();
   return meta.changes ? done() : bad('No such item', 404);
 }
 

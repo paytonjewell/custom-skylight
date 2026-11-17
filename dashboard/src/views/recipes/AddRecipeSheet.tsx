@@ -44,7 +44,13 @@ export function openAddRecipe(link?: string): void {
   openSheet(() => <AddRecipe link={link} />, { cls: css.sheet });
 }
 
-const site = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } };
+const site = (url: string) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+};
 
 function AddRecipe({ link: startLink }: { link?: string }) {
   const data = useData();
@@ -69,7 +75,10 @@ function AddRecipe({ link: startLink }: { link?: string }) {
   const [pasted, setPasted] = useState('');
 
   const fill = (x: Pick<ImportedRecipe, 'title' | 'ingredients' | 'steps'> & Partial<ImportedRecipe>) => {
-    if (x.title) { setTitle(x.title); setEmoji(guessEmoji(x.title)); }
+    if (x.title) {
+      setTitle(x.title);
+      setEmoji(guessEmoji(x.title));
+    }
     setIngText(x.ingredients.join('\n'));
     setStepText(x.steps.join('\n'));
     if (x.minutes) setMinutes(Math.min(2880, x.minutes));
@@ -94,18 +103,29 @@ function AddRecipe({ link: startLink }: { link?: string }) {
     }
   };
   // Opened with a link: import it straight away
-  useEffect(() => { if (startLink) void fetchLink(startLink); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (startLink) void fetchLink(startLink);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const usePasted = () => {
     const x = parseRecipeText(pasted);
-    if (!x) return setImportErr('Couldn’t find an “Ingredients” heading in that text. Paste from the recipe’s name down through its steps.');
+    if (!x)
+      return setImportErr(
+        'Couldn’t find an “Ingredients” heading in that text. Paste from the recipe’s name down through its steps.',
+      );
     fill(x);
     setPasting(false);
     setImportErr('');
   };
 
-  const lines = ingText.split('\n').map((l) => l.trim()).filter(Boolean);
-  const parsed = lines.map((line) => ({ line, i: parseIngredient(line) })).filter((x): x is { line: string; i: Ingredient } => !!x.i);
-  const kindOf = (line: string, i: Ingredient): Kind => kinds[line] ?? (i.optional ? 'optional' : i.pantry ? 'pantry' : 'needed');
+  const lines = ingText
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const parsed = lines
+    .map((line) => ({ line, i: parseIngredient(line) }))
+    .filter((x): x is { line: string; i: Ingredient } => !!x.i);
+  const kindOf = (line: string, i: Ingredient): Kind =>
+    kinds[line] ?? (i.optional ? 'optional' : i.pantry ? 'pantry' : 'needed');
   const ingredients: Ingredient[] = parsed.map(({ line, i }) => {
     const { pantry: _p, optional: _o, ...rest } = i;
     const k = kindOf(line, i);
@@ -119,11 +139,26 @@ function AddRecipe({ link: startLink }: { link?: string }) {
     if (missing.length) return;
     const id = newId();
     addRecipe({
-      id, title: title.trim(), emoji, tone: (data.recipes.length % 4) + 1, tags, minutes, servings, ingredients, steps,
-      ...(notes.trim() ? { notes: notes.trim() } : {}), ...(/^https?:\/\//.test(source) ? { source } : {}), favorite: false,
+      id,
+      title: title.trim(),
+      emoji,
+      tone: (data.recipes.length % 4) + 1,
+      tags,
+      minutes,
+      servings,
+      ingredients,
+      steps,
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
+      ...(/^https?:\/\//.test(source) ? { source } : {}),
+      favorite: false,
     });
     closeSheet();
-    toast(<>Added <b>{title.trim()}</b> to Recipes</>, { icon: 'recipe' });
+    toast(
+      <>
+        Added <b>{title.trim()}</b> to Recipes
+      </>,
+      { icon: 'recipe' },
+    );
     openRecipe(id);
   };
   const toggleTag = (t: string) => setTags((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]));
@@ -142,22 +177,27 @@ function AddRecipe({ link: startLink }: { link?: string }) {
             placeholder="Paste a recipe link"
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void fetchLink(); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void fetchLink();
+            }}
             enterKeyHint="go"
           />
           <button className="btn btn--solid" disabled={!link.trim() || importing} onClick={() => void fetchLink()}>
             {importing ? 'Reading…' : 'Get recipe'}
           </button>
         </div>
-        {source && !importErr && !importing && <small className={css.imported}>From {site(source)} · check it over below</small>}
+        {source && !importErr && !importing && (
+          <small className={css.imported}>From {site(source)} · check it over below</small>
+        )}
         {importErr && (
           <p className={css.importErr}>
-            {importErr}{' '}
-            {!pasting && <button onClick={() => setPasting(true)}>Paste the recipe’s text instead</button>}
+            {importErr} {!pasting && <button onClick={() => setPasting(true)}>Paste the recipe’s text instead</button>}
           </p>
         )}
         {!importErr && !pasting && !source && (
-          <button className={css.pasteLink} onClick={() => setPasting(true)}>or paste a recipe’s text</button>
+          <button className={css.pasteLink} onClick={() => setPasting(true)}>
+            or paste a recipe’s text
+          </button>
         )}
         {pasting && (
           <>
@@ -169,13 +209,19 @@ function AddRecipe({ link: startLink }: { link?: string }) {
               value={pasted}
               onChange={(e) => setPasted(e.target.value)}
             />
-            <button className={'btn btn--ghost ' + css.useBtn} disabled={!pasted.trim()} onClick={usePasted}>Fill in the form</button>
+            <button className={'btn btn--ghost ' + css.useBtn} disabled={!pasted.trim()} onClick={usePasted}>
+              Fill in the form
+            </button>
           </>
         )}
       </div>
 
       <div className={css.titleRow}>
-        <button className={css.emojiBtn + (picking ? ' ' + css.isOn : '')} aria-label="Choose an emoji" onClick={() => setPicking(!picking)}>
+        <button
+          className={css.emojiBtn + (picking ? ' ' + css.isOn : '')}
+          aria-label="Choose an emoji"
+          onClick={() => setPicking(!picking)}
+        >
           {emoji}
         </button>
         <input
@@ -186,12 +232,21 @@ function AddRecipe({ link: startLink }: { link?: string }) {
           enterKeyHint="next"
         />
       </div>
-      {picking && <EmojiPicker onPick={(e) => { setEmoji(e); setPicking(false); }} />}
+      {picking && (
+        <EmojiPicker
+          onPick={(e) => {
+            setEmoji(e);
+            setPicking(false);
+          }}
+        />
+      )}
 
       <div className="label">Tags</div>
       <div className="chips">
         {TAGS.map((t) => (
-          <button key={t} className={'chip' + (tags.includes(t) ? ' is-on' : '')} onClick={() => toggleTag(t)}>{t}</button>
+          <button key={t} className={'chip' + (tags.includes(t) ? ' is-on' : '')} onClick={() => toggleTag(t)}>
+            {t}
+          </button>
         ))}
       </div>
 
@@ -199,10 +254,23 @@ function AddRecipe({ link: startLink }: { link?: string }) {
         <div>
           <div className="label">Minutes, start to finish</div>
           <div className={css.minutes}>
-            <input type="number" inputMode="numeric" min={0} max={2880} value={minutes} onChange={(e) => setMinutes(Math.max(0, Math.min(2880, Math.round(Number(e.target.value) || 0))))} />
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={2880}
+              value={minutes}
+              onChange={(e) => setMinutes(Math.max(0, Math.min(2880, Math.round(Number(e.target.value) || 0))))}
+            />
             <div className="chips">
               {MINUTES.map((m) => (
-                <button key={m} className={'chip chip--ghost' + (minutes === m ? ' is-on' : '')} onClick={() => setMinutes(m)}>{m}</button>
+                <button
+                  key={m}
+                  className={'chip chip--ghost' + (minutes === m ? ' is-on' : '')}
+                  onClick={() => setMinutes(m)}
+                >
+                  {m}
+                </button>
               ))}
             </div>
           </div>
@@ -210,9 +278,13 @@ function AddRecipe({ link: startLink }: { link?: string }) {
         <div>
           <div className="label">Serves</div>
           <div className={css.stepper}>
-            <button className="icon-btn" aria-label="Fewer" onClick={() => setServings(Math.max(1, servings - 1))}><Icon name="minus" size={20} /></button>
+            <button className="icon-btn" aria-label="Fewer" onClick={() => setServings(Math.max(1, servings - 1))}>
+              <Icon name="minus" size={20} />
+            </button>
             <b className="num">{servings}</b>
-            <button className="icon-btn" aria-label="More" onClick={() => setServings(Math.min(100, servings + 1))}><Icon name="plus" size={20} /></button>
+            <button className="icon-btn" aria-label="More" onClick={() => setServings(Math.min(100, servings + 1))}>
+              <Icon name="plus" size={20} />
+            </button>
           </div>
         </div>
       </div>
@@ -256,15 +328,30 @@ function AddRecipe({ link: startLink }: { link?: string }) {
         value={stepText}
         onChange={(e) => setStepText(e.target.value)}
       />
-      {steps.length > 0 && <small className={css.hint}>{steps.length} {steps.length === 1 ? 'step' : 'steps'} · times in a step (“bake 25 minutes”) become timers in Cook mode</small>}
+      {steps.length > 0 && (
+        <small className={css.hint}>
+          {steps.length} {steps.length === 1 ? 'step' : 'steps'} · times in a step (“bake 25 minutes”) become timers in
+          Cook mode
+        </small>
+      )}
 
       <div className="label">Notes</div>
-      <textarea className={css.area} rows={2} placeholder="Optional" value={notes} onChange={(e) => setNotes(e.target.value)} />
+      <textarea
+        className={css.area}
+        rows={2}
+        placeholder="Optional"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
 
       {tried && missing.length > 0 && <p className={css.err}>Add {missing.join(' and ')} to save it.</p>}
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={closeSheet}>Cancel</button>
-        <button className="btn btn--solid" onClick={save}>Save recipe</button>
+        <button className="btn btn--ghost" onClick={closeSheet}>
+          Cancel
+        </button>
+        <button className="btn btn--solid" onClick={save}>
+          Save recipe
+        </button>
       </div>
     </div>
   );

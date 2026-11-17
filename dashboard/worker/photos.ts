@@ -31,7 +31,10 @@ const toPhoto = (r: Row): Photo => ({
 
 const key = (id: string, size: 'full' | 'thumb') => `photos/${id}/${size}.jpg`;
 export const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  });
 const bad = (error: string, status = 400) => json({ error }, status);
 
 /** GET /api/photos */
@@ -46,22 +49,27 @@ export async function listPhotos(env: Env): Promise<Response> {
 export async function knownPhotos(req: Request, env: Env): Promise<Response> {
   const body = await req.json<{ hashes?: unknown }>().catch(() => null);
   const hashes = body?.hashes;
-  if (!Array.isArray(hashes) || hashes.length > 500 || !hashes.every((h) => typeof h === 'string' && HASH.test(h))) return bad('Expected { hashes: [...] }');
+  if (!Array.isArray(hashes) || hashes.length > 500 || !hashes.every((h) => typeof h === 'string' && HASH.test(h)))
+    return bad('Expected { hashes: [...] }');
   if (!hashes.length) return json({ known: [] });
   const { results } = await env.DB.prepare(
     `SELECT source_hash FROM photos WHERE source_hash IN (${hashes.map(() => '?').join(',')})`,
-  ).bind(...hashes).all<{ source_hash: string }>();
+  )
+    .bind(...hashes)
+    .all<{ source_hash: string }>();
   return json({ known: results.map((r) => r.source_hash) });
 }
 
 /** POST /api/photos (multipart: full, thumb, width, height, takenAt?, sourceHash?). 409 if already added. */
 export async function addPhoto(req: Request, env: Env, device: Device): Promise<Response> {
   const form = await req.formData();
-  const full = form.get('full'), thumb = form.get('thumb');
+  const full = form.get('full'),
+    thumb = form.get('thumb');
   if (!(full instanceof File) || !(thumb instanceof File)) return bad('Expected "full" and "thumb" image files');
   if (!TYPES.has(full.type) || !TYPES.has(thumb.type)) return bad('Images must be JPEG, WebP or PNG');
   if (full.size > MAX_FULL || thumb.size > MAX_THUMB) return bad('Image too large', 413);
-  const width = Number(form.get('width')), height = Number(form.get('height'));
+  const width = Number(form.get('width')),
+    height = Number(form.get('height'));
   const dim = (n: number) => Number.isInteger(n) && n > 0 && n <= 10000;
   if (!dim(width) || !dim(height)) return bad('Bad width/height');
   const takenRaw = String(form.get('takenAt') ?? '');
@@ -69,7 +77,8 @@ export async function addPhoto(req: Request, env: Env, device: Device): Promise<
   const hashRaw = String(form.get('sourceHash') ?? '');
   const sourceHash = HASH.test(hashRaw) ? hashRaw : null;
   const duplicate = () => json({ error: 'Already added' }, 409);
-  if (sourceHash && (await env.DB.prepare('SELECT 1 FROM photos WHERE source_hash = ?').bind(sourceHash).first())) return duplicate();
+  if (sourceHash && (await env.DB.prepare('SELECT 1 FROM photos WHERE source_hash = ?').bind(sourceHash).first()))
+    return duplicate();
 
   const id = crypto.randomUUID();
   await Promise.all([
@@ -104,7 +113,8 @@ export async function deletePhoto(env: Env, id: string): Promise<Response> {
 export async function reorderPhotos(req: Request, env: Env): Promise<Response> {
   const body = await req.json<{ ids?: unknown }>().catch(() => null);
   const ids = body?.ids;
-  if (!Array.isArray(ids) || ids.length > 10000 || !ids.every((x) => typeof x === 'string' && ID.test(x))) return bad('Expected { ids: [...] }');
+  if (!Array.isArray(ids) || ids.length > 10000 || !ids.every((x) => typeof x === 'string' && ID.test(x)))
+    return bad('Expected { ids: [...] }');
   if (ids.length) {
     const stmt = env.DB.prepare('UPDATE photos SET position = ? WHERE id = ?');
     await env.DB.batch(ids.map((id, i) => stmt.bind(i, id)));

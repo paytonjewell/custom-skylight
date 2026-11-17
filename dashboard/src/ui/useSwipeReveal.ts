@@ -11,7 +11,15 @@ const DECIDE = 10; // px of movement before deciding swipe vs scroll
 /** Which action is showing: 'start' (row swiped right) or 'end' (row swiped left) */
 export type SwipeSide = 'start' | 'end';
 
-export function useSwipeReveal({ open, onOpenChange, start = false, end = false, startWidth = REVEAL, endWidth = REVEAL, disabled }: {
+export function useSwipeReveal({
+  open,
+  onOpenChange,
+  start = false,
+  end = false,
+  startWidth = REVEAL,
+  endWidth = REVEAL,
+  disabled,
+}: {
   /** The side that's open (the parent keeps one row open at a time) */
   open: SwipeSide | null;
   onOpenChange: (side: SwipeSide | null) => void;
@@ -25,7 +33,14 @@ export function useSwipeReveal({ open, onOpenChange, start = false, end = false,
   disabled?: boolean;
 }) {
   const [live, setLive] = useState<number | null>(null); // offset while the finger is down
-  const g = useRef<{ x0: number; y0: number; pointer: number; base: number; scale: number; horizontal: boolean | null } | null>(null);
+  const g = useRef<{
+    x0: number;
+    y0: number;
+    pointer: number;
+    base: number;
+    scale: number;
+    horizontal: boolean | null;
+  } | null>(null);
   /** A swipe just ended: the click the browser fires after it isn't a tap */
   const swiped = useRef(false);
 
@@ -52,7 +67,11 @@ export function useSwipeReveal({ open, onOpenChange, start = false, end = false,
         if (e.button !== 0 || disabled) return;
         const el = e.currentTarget;
         g.current = {
-          x0: e.clientX, y0: e.clientY, pointer: e.pointerId, base: resting, horizontal: null,
+          x0: e.clientX,
+          y0: e.clientY,
+          pointer: e.pointerId,
+          base: resting,
+          horizontal: null,
           // The frame's stage is CSS-scaled; client px ÷ scale = layout px
           scale: el.getBoundingClientRect().width / el.offsetWidth || 1,
         };
@@ -62,7 +81,8 @@ export function useSwipeReveal({ open, onOpenChange, start = false, end = false,
         const s = g.current;
         if (!s || e.pointerId !== s.pointer) return;
         if (disabled) return stop();
-        const mx = e.clientX - s.x0, my = e.clientY - s.y0;
+        const mx = e.clientX - s.x0,
+          my = e.clientY - s.y0;
         if (s.horizontal === null) {
           if (Math.hypot(mx, my) < DECIDE) return;
           s.horizontal = Math.abs(mx) > Math.abs(my);
@@ -72,7 +92,8 @@ export function useSwipeReveal({ open, onOpenChange, start = false, end = false,
         }
         let x = s.base + mx / s.scale;
         // Each side stops at its width; one without an action barely moves
-        const max = start ? startWidth : 0, min = end ? -endWidth : 0;
+        const max = start ? startWidth : 0,
+          min = end ? -endWidth : 0;
         if (x > max) x = max + (x - max) * (start ? 0.3 : 0.15);
         else if (x < min) x = min + (x - min) * (end ? 0.3 : 0.15);
         setLive(x);

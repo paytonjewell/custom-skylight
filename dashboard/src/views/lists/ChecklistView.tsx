@@ -1,14 +1,14 @@
 // One list from the Lists screen: an editable title, checklist items (tap to check off, hold and drag
 // to rearrange, swipe left to delete, swipe right to edit), and headings that group the items under them (e.g. one per
 // person on a gift list). Adding is on the right, as on the grocery list (at the top on phones).
-import { useRef, useState } from "react";
-import type { Checklist, ListItem, Task } from "../../data/types";
-import { useData } from "../../data/store";
-import { nextDue } from "../../data/tasks";
-import { dayOf } from "../../lib/repeat";
-import { useNow } from "../../lib/clock";
-import { openTaskSheet } from "../tasks/TaskSheet";
-import { whenText } from "../tasks/AllTasks";
+import { useRef, useState } from 'react';
+import type { Checklist, ListItem, Task } from '../../data/types';
+import { useData } from '../../data/store';
+import { nextDue } from '../../data/tasks';
+import { dayOf } from '../../lib/repeat';
+import { useNow } from '../../lib/clock';
+import { openTaskSheet } from '../tasks/TaskSheet';
+import { whenText } from '../tasks/AllTasks';
 import {
   addListItem,
   deleteList,
@@ -25,34 +25,26 @@ import {
   deleteTask,
   restoreTask,
   toggleListItem,
-} from "../../data/actions";
-import { closeSheet, openSheet, toast } from "../../app/ui";
-import { EmojiPicker } from "../../ui/EmojiPicker";
-import { useLayout } from "../../app/layout";
-import { Icon } from "../../ui/Icon";
-import { PageHeader, SheetHeader } from "../../ui/headers";
-import { EmptyNote } from "../../ui/EmptyNote";
-import { useHoldReorder } from "../../ui/useHoldReorder";
-import { REVEAL, useSwipeReveal, type SwipeSide } from "../../ui/useSwipeReveal";
-import { EditField } from "../../ui/EditField";
-import css from "./ChecklistView.module.css";
+} from '../../data/actions';
+import { closeSheet, openSheet, toast } from '../../app/ui';
+import { EmojiPicker } from '../../ui/EmojiPicker';
+import { useLayout } from '../../app/layout';
+import { Icon } from '../../ui/Icon';
+import { PageHeader, SheetHeader } from '../../ui/headers';
+import { EmptyNote } from '../../ui/EmptyNote';
+import { useHoldReorder } from '../../ui/useHoldReorder';
+import { REVEAL, useSwipeReveal, type SwipeSide } from '../../ui/useSwipeReveal';
+import { EditField } from '../../ui/EditField';
+import css from './ChecklistView.module.css';
 
-export function ChecklistView({
-  list,
-  onBack,
-}: {
-  list: Checklist;
-  onBack: () => void;
-}) {
+export function ChecklistView({ list, onBack }: { list: Checklist; onBack: () => void }) {
   // The add box is beside the list on the frame, above it on phones
-  const phone = useLayout() === "phone";
+  const phone = useLayout() === 'phone';
   const data = useData();
   const now = useNow();
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   /** The row swiped open to show an action, and which side (one row at a time) */
-  const [swiped, setSwiped] = useState<{ id: string; side: SwipeSide } | null>(
-    null,
-  );
+  const [swiped, setSwiped] = useState<{ id: string; side: SwipeSide } | null>(null);
   /** The row whose text is being edited */
   const [editing, setEditing] = useState<string | null>(null);
   const view = useRef<HTMLDivElement>(null);
@@ -71,19 +63,19 @@ export function ChecklistView({
   const add = (heading: boolean) => {
     if (!text.trim()) return;
     addListItem(list.id, text, heading);
-    setText("");
+    setText('');
     input.current?.focus();
     // keep the newest item in view
     requestAnimationFrame(() =>
       scroller.current?.scrollTo({
         top: scroller.current.scrollHeight,
-        behavior: "smooth",
+        behavior: 'smooth',
       }),
     );
   };
 
   const remove = (i: ListItem) =>
-    withReminders(linkedTasks(list.id, i.id), "item", (undoTasks) => {
+    withReminders(linkedTasks(list.id, i.id), 'item', (undoTasks) => {
       const gone = removeListItem(list.id, i.id);
       if (gone)
         toast(
@@ -91,7 +83,7 @@ export function ChecklistView({
             Removed <b>{i.text}</b>
           </>,
           {
-            icon: "trash",
+            icon: 'trash',
             undo: () => {
               restoreListItem(list.id, gone.item, gone.at);
               undoTasks();
@@ -101,16 +93,16 @@ export function ChecklistView({
     });
 
   const removeList = () =>
-    withReminders(linkedTasks(list.id), "list", (undoTasks) => {
+    withReminders(linkedTasks(list.id), 'list', (undoTasks) => {
       const gone = deleteList(list.id);
       onBack();
       if (gone)
         toast(
           <>
-            Deleted <b>{gone.list.title || "Untitled list"}</b>
+            Deleted <b>{gone.list.title || 'Untitled list'}</b>
           </>,
           {
-            icon: "trash",
+            icon: 'trash',
             undo: () => {
               restoreList(gone.list, gone.at);
               undoTasks();
@@ -132,30 +124,30 @@ export function ChecklistView({
       <PageHeader
         className={css.head}
         onBack={onBack}
-        kicker={lines.length ? `${done} of ${lines.length} done` : "New list"}
+        kicker={lines.length ? `${done} of ${lines.length} done` : 'New list'}
         title={
           <span className={css.titleRow}>
-          <button
-            className={css.emojiBtn}
-            aria-label="Change the list’s emoji"
-            onClick={() => openEmojiSheet(list.id, list.title)}
-          >
-            {list.emoji}
-          </button>
-          <input
-            className={css.title}
-            value={list.title}
-            placeholder="Name this list"
-            aria-label="List name"
-            autoComplete="off"
-            enterKeyHint="done"
-            // A brand-new list opens with its name ready to type
-            autoFocus={!list.title}
-            onChange={(e) => renameList(list.id, e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") input.current?.focus();
-            }}
-          />
+            <button
+              className={css.emojiBtn}
+              aria-label="Change the list’s emoji"
+              onClick={() => openEmojiSheet(list.id, list.title)}
+            >
+              {list.emoji}
+            </button>
+            <input
+              className={css.title}
+              value={list.title}
+              placeholder="Name this list"
+              aria-label="List name"
+              autoComplete="off"
+              enterKeyHint="done"
+              // A brand-new list opens with its name ready to type
+              autoFocus={!list.title}
+              onChange={(e) => renameList(list.id, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') input.current?.focus();
+              }}
+            />
           </span>
         }
       >
@@ -165,12 +157,7 @@ export function ChecklistView({
         </button>
       </PageHeader>
 
-      <div
-        className={css.list}
-        ref={scroller}
-        data-dragging={ghost ? "" : undefined}
-        data-scroll-top
-      >
+      <div className={css.list} ref={scroller} data-dragging={ghost ? '' : undefined} data-scroll-top>
         {list.items.length ? (
           order.map((id) => {
             const i = byId.get(id);
@@ -183,11 +170,7 @@ export function ChecklistView({
                 open={swiped?.id === id ? swiped.side : null}
                 onOpenChange={(side) => setSwiped(side ? { id, side } : null)}
                 // While a row is open, a tap anywhere in the list just closes it
-                onTap={() =>
-                  swiped
-                    ? setSwiped(null)
-                    : !i.heading && toggleListItem(list.id, id)
-                }
+                onTap={() => (swiped ? setSwiped(null) : !i.heading && toggleListItem(list.id, id))}
                 onRemove={() => {
                   setSwiped(null);
                   remove(i);
@@ -219,13 +202,13 @@ export function ChecklistView({
           <EmptyNote large className={css.empty}>
             Nothing here yet.
             <br />
-            <i>Add the first item {phone ? "above" : "on the right"}.</i>
+            <i>Add the first item {phone ? 'above' : 'on the right'}.</i>
           </EmptyNote>
         )}
       </div>
       {ghost && byId.get(ghost.id) && (
         <div
-          className={rowClass(byId.get(ghost.id)!) + " " + css.ghost}
+          className={rowClass(byId.get(ghost.id)!) + ' ' + css.ghost}
           style={{
             left: ghost.x,
             top: ghost.y,
@@ -240,7 +223,7 @@ export function ChecklistView({
       )}
 
       <aside className={css.side}>
-        <div className={css.add + " surface"}>
+        <div className={css.add + ' surface'}>
           <label className={css.inputWrap}>
             <Icon name="plus" size={30} />
             <input
@@ -252,23 +235,15 @@ export function ChecklistView({
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") add(false);
+                if (e.key === 'Enter') add(false);
               }}
             />
           </label>
           <div className={css.addButtons}>
-            <button
-              className="btn btn--solid"
-              disabled={!text.trim()}
-              onClick={() => add(false)}
-            >
+            <button className="btn btn--solid" disabled={!text.trim()} onClick={() => add(false)}>
               Add item
             </button>
-            <button
-              className="btn btn--ghost"
-              disabled={!text.trim()}
-              onClick={() => add(true)}
-            >
+            <button className="btn btn--ghost" disabled={!text.trim()} onClick={() => add(true)}>
               Add as heading
             </button>
           </div>
@@ -294,7 +269,7 @@ function Row({
 }: {
   i: ListItem;
   lifted: boolean;
-  props: ReturnType<ReturnType<typeof useHoldReorder>["itemProps"]>;
+  props: ReturnType<ReturnType<typeof useHoldReorder>['itemProps']>;
   open: SwipeSide | null;
   onOpenChange: (side: SwipeSide | null) => void;
   onTap: () => void;
@@ -319,7 +294,7 @@ function Row({
   });
   // The actions aren't drag handles: a press on one shouldn't lift the row
   const action = (label: string, run: () => void) => ({
-    "aria-label": label,
+    'aria-label': label,
     tabIndex: open ? 0 : -1,
     onPointerDown: (e: { stopPropagation(): void }) => e.stopPropagation(),
     onClick: (e: { stopPropagation(): void }) => {
@@ -331,12 +306,8 @@ function Row({
     <div
       className={
         rowClass(i) +
-        (lifted ? " " + css.isLifted : "") +
-        (swipe.offset > 0
-          ? " " + css.showStart
-          : swipe.offset < 0
-            ? " " + css.showEnd
-            : "")
+        (lifted ? ' ' + css.isLifted : '') +
+        (swipe.offset > 0 ? ' ' + css.showStart : swipe.offset < 0 ? ' ' + css.showEnd : '')
       }
       {...props}
       onClick={() => {
@@ -344,33 +315,23 @@ function Row({
       }}
     >
       {/* Behind the row: Edit is revealed by swiping it right, Delete by swiping it left */}
-      <button
-        className={css.action + " " + css.editAction}
-        {...action("Edit " + i.text, onEdit)}
-      >
+      <button className={css.action + ' ' + css.editAction} {...action('Edit ' + i.text, onEdit)}>
         <Icon name="edit" size={24} />
       </button>
       {onRemind && (
         <button
-          className={css.action + " " + css.remindAction}
-          {...action((reminder ? "Edit reminder for " : "Remind me: ") + i.text, onRemind)}
+          className={css.action + ' ' + css.remindAction}
+          {...action((reminder ? 'Edit reminder for ' : 'Remind me: ') + i.text, onRemind)}
         >
           <Icon name="bell" size={24} />
         </button>
       )}
-      <button
-        className={css.action + " " + css.deleteAction}
-        {...action("Delete " + i.text, onRemove)}
-      >
+      <button className={css.action + ' ' + css.deleteAction} {...action('Delete ' + i.text, onRemove)}>
         <Icon name="trash" size={26} />
       </button>
       <div
-        className={slideClass(i) + (swipe.swiping ? " " + css.swiping : "")}
-        style={
-          swipe.offset
-            ? { transform: `translateX(${swipe.offset}px)` }
-            : undefined
-        }
+        className={slideClass(i) + (swipe.swiping ? ' ' + css.swiping : '')}
+        style={swipe.offset ? { transform: `translateX(${swipe.offset}px)` } : undefined}
         {...swipe.handlers}
       >
         <RowBody i={i} editing={editing} onEditDone={onEditDone} reminder={reminder} />
@@ -380,12 +341,9 @@ function Row({
 }
 
 /** A row's classes (shared with the copy drawn under the finger while dragging, so it looks the same) */
-const rowClass = (i: ListItem) =>
-  css.row +
-  (i.heading ? " " + css.heading : "") +
-  (i.done ? " " + css.isDone : "");
+const rowClass = (i: ListItem) => css.row + (i.heading ? ' ' + css.heading : '') + (i.done ? ' ' + css.isDone : '');
 /** Items are cards (`surface`: Glass's frosted edge); headings sit flat on the page with their underline */
-const slideClass = (i: ListItem) => css.slide + (i.heading ? "" : " surface");
+const slideClass = (i: ListItem) => css.slide + (i.heading ? '' : ' surface');
 
 /** What a row shows (also drawn under the finger while dragging); while editing, its text is a field */
 function RowBody({
@@ -399,14 +357,10 @@ function RowBody({
   onEditDone?: (value: string | null) => void;
   reminder?: { label: string } | null;
 }) {
-  const textClass = i.heading ? css.headingText + " serif" : css.text;
+  const textClass = i.heading ? css.headingText + ' serif' : css.text;
   const text =
     editing && onEditDone ? (
-      <EditField
-        className={textClass + " " + css.editField}
-        value={i.text}
-        onDone={onEditDone}
-      />
+      <EditField className={textClass + ' ' + css.editField} value={i.text} onDone={onEditDone} />
     ) : (
       <span className={textClass}>{i.text}</span>
     );
@@ -432,7 +386,7 @@ function openEmojiSheet(listId: string, title: string) {
   openSheet(
     () => (
       <div className="sheet-pad">
-        <SheetHeader kicker={title || "Untitled list"} title="Pick an emoji" />
+        <SheetHeader kicker={title || 'Untitled list'} title="Pick an emoji" />
         <EmojiPicker
           onPick={(e) => {
             setListEmoji(listId, e);
@@ -441,7 +395,7 @@ function openEmojiSheet(listId: string, title: string) {
         />
       </div>
     ),
-    { cls: "sheet--wide" },
+    { cls: 'sheet--wide' },
   );
 }
 
@@ -450,22 +404,25 @@ function openEmojiSheet(listId: string, title: string) {
  * as plain tasks. `run` does the delete; it gets an undo for whatever happened to the reminders.
  * With no reminders it just runs.
  */
-function withReminders(tasks: Task[], what: "list" | "item", run: (undoTasks: () => void) => void) {
+function withReminders(tasks: Task[], what: 'list' | 'item', run: (undoTasks: () => void) => void) {
   if (!tasks.length) return run(() => {});
   const n = tasks.length;
-  const them = n === 1 ? "it" : "them";
+  const them = n === 1 ? 'it' : 'them';
   openSheet(() => (
     <div className="sheet-pad">
       <SheetHeader
-        kicker={what === "list" ? "Delete list" : "Delete item"}
-        title={n === 1 ? "Delete its reminder too?" : `Delete its ${n} reminders too?`}
+        kicker={what === 'list' ? 'Delete list' : 'Delete item'}
+        title={n === 1 ? 'Delete its reminder too?' : `Delete its ${n} reminders too?`}
       />
       <p className="sheet-p">
-        This {what} has {n === 1 ? "a reminder" : `${n} reminders`} on the Tasks screen
-        {n === 1 ? ` (“${tasks[0].title}”)` : ""}. You can delete {them} too, or keep {them} as {n === 1 ? "a task" : "tasks"}.
+        This {what} has {n === 1 ? 'a reminder' : `${n} reminders`} on the Tasks screen
+        {n === 1 ? ` (“${tasks[0].title}”)` : ''}. You can delete {them} too, or keep {them} as{' '}
+        {n === 1 ? 'a task' : 'tasks'}.
       </p>
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={closeSheet}>Cancel</button>
+        <button className="btn btn--ghost" onClick={closeSheet}>
+          Cancel
+        </button>
         <button
           className="btn btn--ghost"
           onClick={() => {
@@ -474,7 +431,7 @@ function withReminders(tasks: Task[], what: "list" | "item", run: (undoTasks: ()
             run(() => relinkTasks(tasks));
           }}
         >
-          Keep as {n === 1 ? "a task" : "tasks"}
+          Keep as {n === 1 ? 'a task' : 'tasks'}
         </button>
         <button
           className="btn btn--danger"
@@ -484,7 +441,7 @@ function withReminders(tasks: Task[], what: "list" | "item", run: (undoTasks: ()
             run(() => gone.forEach((g) => g && restoreTask(g.task, g.done)));
           }}
         >
-          Delete {n === 1 ? "reminder" : "reminders"}
+          Delete {n === 1 ? 'reminder' : 'reminders'}
         </button>
       </div>
     </div>

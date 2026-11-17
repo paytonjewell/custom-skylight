@@ -22,8 +22,15 @@ import { createStore, useStore } from '../../lib/store';
 import { EventDragProvider, dayKey, useEventDrag } from './eventDrag';
 import css from './Calendar.module.css';
 
-const PX = 72, START = 6, END = 23; // 72px per hour, 6 AM → 11 PM
-const MODES = [['day', 'Today'], ['3day', '3 Day'], ['week', 'Week'], ['month', 'Month']] as const;
+const PX = 72,
+  START = 6,
+  END = 23; // 72px per hour, 6 AM → 11 PM
+const MODES = [
+  ['day', 'Today'],
+  ['3day', '3 Day'],
+  ['week', 'Week'],
+  ['month', 'Month'],
+] as const;
 type CalView = (typeof MODES)[number][0];
 const STEP: Record<Exclude<CalView, 'month'>, number> = { day: 1, '3day': 3, week: 7 };
 
@@ -45,18 +52,28 @@ type Placed =
 
 /** Side-by-side layout for overlapping events: at most 2 columns, the rest collapse into "+N more". */
 function layout(evs: CalEvent[]): Placed[] {
-  const out: Placed[] = [], clusters: CalEvent[][] = [];
-  let cur: CalEvent[] | null = null, curEnd = 0;
+  const out: Placed[] = [],
+    clusters: CalEvent[][] = [];
+  let cur: CalEvent[] | null = null,
+    curEnd = 0;
   for (const e of evs) {
-    if (!cur || +e.start >= curEnd) { cur = []; clusters.push(cur); curEnd = 0; }
+    if (!cur || +e.start >= curEnd) {
+      cur = [];
+      clusters.push(cur);
+      curEnd = 0;
+    }
     cur.push(e);
     curEnd = Math.max(curEnd, +e.end);
   }
   for (const c of clusters) {
-    const cols: number[] = [], placed: { e: CalEvent; col: number }[] = [];
+    const cols: number[] = [],
+      placed: { e: CalEvent; col: number }[] = [];
     for (const e of c) {
       let i = cols.findIndex((end) => end <= +e.start);
-      if (i < 0) { i = cols.length; cols.push(0); }
+      if (i < 0) {
+        i = cols.length;
+        cols.push(0);
+      }
       cols[i] = +e.end;
       placed.push({ e, col: i });
     }
@@ -65,7 +82,9 @@ function layout(evs: CalEvent[]): Placed[] {
       const extra = placed.filter((p) => p.col > 0).map((p) => p.e);
       placed.filter((p) => p.col === 0).forEach((p) => out.push({ e: p.e, col: 0, cols: 2 }));
       out.push({
-        more: extra, col: 1, cols: 2,
+        more: extra,
+        col: 1,
+        cols: 2,
         start: new Date(Math.min(...extra.map((e) => +e.start))),
         end: new Date(Math.max(...extra.map((e) => +e.end))),
       });
@@ -100,7 +119,9 @@ export function Calendar({ active }: { active: boolean }) {
   }, [asked]);
 
   const nav = (dir: 1 | -1) =>
-    setDate((d) => (mode === 'month' ? new Date(d.getFullYear(), d.getMonth() + dir, 1) : addDays(d, dir * STEP[mode])));
+    setDate((d) =>
+      mode === 'month' ? new Date(d.getFullYear(), d.getMonth() + dir, 1) : addDays(d, dir * STEP[mode]),
+    );
   const goToday = () => {
     const t = dayStart(clockNow());
     if (mode === 'month') t.setDate(1);
@@ -115,15 +136,27 @@ export function Calendar({ active }: { active: boolean }) {
     setDate(t);
     setJumps((j) => j + 1);
   };
-  const openDay = (d: Date) => { setMode('day'); setDate(dayStart(d)); setJumps((j) => j + 1); };
-  const onAdded = (start: Date) => { setDate(dayStart(start)); if (mode === 'month') setMode('day'); };
+  const openDay = (d: Date) => {
+    setMode('day');
+    setDate(dayStart(d));
+    setJumps((j) => j + 1);
+  };
+  const onAdded = (start: Date) => {
+    setDate(dayStart(start));
+    if (mode === 'month') setMode('day');
+  };
 
   // Swipe left/right to change day, week or month, with the next one sliding in; the arrows slide too.
   // `pos` counts steps, so each page keeps its identity (and scroll) as it slides into the middle.
   const pager = useRef<PagerHandle>(null);
   const [pos, setPos] = useState(0);
   const stepBy = (dir: 1 | -1) => pager.current?.go(dir);
-  const shifted = (n: number) => (n === 0 ? date : mode === 'month' ? new Date(date.getFullYear(), date.getMonth() + n, 1) : addDays(date, n * STEP[mode]));
+  const shifted = (n: number) =>
+    n === 0
+      ? date
+      : mode === 'month'
+        ? new Date(date.getFullYear(), date.getMonth() + n, 1)
+        : addDays(date, n * STEP[mode]);
 
   const isToday = mode === 'month' ? date.getMonth() === now.getMonth() : sameDay(date, now);
   // Jumps (not steps) scroll the day grid back to now; a page that slid in keeps its scroll
@@ -146,31 +179,40 @@ export function Calendar({ active }: { active: boolean }) {
         <button className={'icon-btn ' + css.cog} aria-label="Calendar settings" onClick={openCalendarSettings}>
           <Icon name="settings" size={26} />
         </button>
-        <button className={css.fab} aria-label="Add event" onClick={() => openAddEventSheet(onAdded, mode === 'month' ? undefined : date)}>
+        <button
+          className={css.fab}
+          aria-label="Add event"
+          onClick={() => openAddEventSheet(onAdded, mode === 'month' ? undefined : date)}
+        >
           <Icon name="plus" size={26} />
         </button>
       </header>
       {data.googleConfigured && !data.googleAccounts.length && (
         <button className={css.sample} onClick={openCalendarSettings}>
           <Icon name="calendar" size={20} />
-          <span>These are sample events. <b>Connect Google Calendar</b> to see yours.</span>
+          <span>
+            These are sample events. <b>Connect Google Calendar</b> to see yours.
+          </span>
         </button>
       )}
       {/* Hold an event, then drag it to another time or day (eventDrag.tsx) */}
       <EventDragProvider hourGrid={{ px: PX, start: START }}>
-      <Pager
-        className={css.body}
-        index={pos}
-        onStep={(dir) => { nav(dir); setPos((p) => p + dir); }}
-        handle={pager}
-        render={(off) => {
-          const d = shifted(off);
-          if (mode === 'day') return <DayView date={d} now={now} active={active} resetKey={resetKey} />;
-          if (mode === '3day') return <ThreeDay date={d} now={now} active={active} resetKey={resetKey} />;
-          if (mode === 'week') return <WeekView date={d} now={now} openDay={openDay} />;
-          return <MonthView date={d} now={now} openDay={openDay} />;
-        }}
-      />
+        <Pager
+          className={css.body}
+          index={pos}
+          onStep={(dir) => {
+            nav(dir);
+            setPos((p) => p + dir);
+          }}
+          handle={pager}
+          render={(off) => {
+            const d = shifted(off);
+            if (mode === 'day') return <DayView date={d} now={now} active={active} resetKey={resetKey} />;
+            if (mode === '3day') return <ThreeDay date={d} now={now} active={active} resetKey={resetKey} />;
+            if (mode === 'week') return <WeekView date={d} now={now} openDay={openDay} />;
+            return <MonthView date={d} now={now} openDay={openDay} />;
+          }}
+        />
       </EventDragProvider>
     </div>
   );
@@ -180,15 +222,27 @@ function Title({ mode, date: d, now }: { mode: CalView; date: Date; now: Date })
   let t, k;
   if (mode === 'day') {
     k = fmt.month(d) + ' ' + d.getFullYear() + ' · ' + (sameDay(d, now) ? 'Today' : fmt.rel(d, now));
-    t = <>{fmt.day(d)} <i>{d.getDate()}</i></>;
+    t = (
+      <>
+        {fmt.day(d)} <i>{d.getDate()}</i>
+      </>
+    );
   } else if (mode === '3day') {
     const e = addDays(d, 2);
     k = fmt.month(d) + ' ' + d.getFullYear();
-    t = <>{fmt.dayShort(d)} {d.getDate()} <i>–</i> {fmt.dayShort(e)} {e.getDate()}</>;
+    t = (
+      <>
+        {fmt.dayShort(d)} {d.getDate()} <i>–</i> {fmt.dayShort(e)} {e.getDate()}
+      </>
+    );
   } else if (mode === 'week') {
     const w = addDays(d, 6);
     k = 'Next 7 days';
-    t = <>{fmt.monthShort(d)} {d.getDate()} <i>–</i> {fmt.monthShort(w)} {w.getDate()}</>;
+    t = (
+      <>
+        {fmt.monthShort(d)} {d.getDate()} <i>–</i> {fmt.monthShort(w)} {w.getDate()}
+      </>
+    );
   } else {
     k = String(d.getFullYear());
     t = fmt.month(d);
@@ -202,19 +256,42 @@ function Title({ mode, date: d, now }: { mode: CalView; date: Date; now: Date })
 }
 
 // ------------------------------------------------------------ time grid pieces
-function EvBlock({ e, style, lane, half, day, now }: { e: CalEvent; style: CSSProperties; lane?: string; half?: boolean; day: Date; now: Date }) {
+function EvBlock({
+  e,
+  style,
+  lane,
+  half,
+  day,
+  now,
+}: {
+  e: CalEvent;
+  style: CSSProperties;
+  lane?: string;
+  half?: boolean;
+  day: Date;
+  now: Date;
+}) {
   const data = useData();
   const fam = isFamily(data, e);
   const mins = (+e.end - +e.start) / 60000;
   const others = lane ? e.people.filter((id) => id !== lane) : e.people.length > 1 && !fam ? e.people : [];
   const cls =
-    css.ev + (e.end <= now ? ' ' + css.isPast : '') + (e.start <= now && e.end > now ? ' ' + css.isNow : '') + (mins < 45 ? ' ' + css.isShort : '') +
-    (fam ? ' ' + css.isFamily : '') + (half ? ' ' + css.isHalf : '');
+    css.ev +
+    (e.end <= now ? ' ' + css.isPast : '') +
+    (e.start <= now && e.end > now ? ' ' + css.isNow : '') +
+    (mins < 45 ? ' ' + css.isShort : '') +
+    (fam ? ' ' + css.isFamily : '') +
+    (half ? ' ' + css.isHalf : '');
   const box = blockBox(e, day);
   const drag = useEventDrag();
   const b = drag.bind(e);
   return (
-    <button {...b} className={cls + (drag.lifted(e) ? ' ' + css.isLifted : '')} style={eventStyle(data, e, { top: box.top, height: box.h, ...style, ...b.style })} onClick={() => openEventSheet(e)}>
+    <button
+      {...b}
+      className={cls + (drag.lifted(e) ? ' ' + css.isLifted : '')}
+      style={eventStyle(data, e, { top: box.top, height: box.h, ...style, ...b.style })}
+      onClick={() => openEventSheet(e)}
+    >
       {e.travel ? <span className={css.travel} style={{ height: (e.travel * PX) / 60 }} /> : null}
       <span className={css.evTitle}>{evLabel(e)}</span>
       <span className={css.evMeta}>
@@ -230,9 +307,13 @@ function EvBlock({ e, style, lane, half, day, now }: { e: CalEvent; style: CSSPr
         ) : null}
       </span>
       {e.color ? null : fam ? (
-        <span className={css.evWith}><Dots ids={data.ALL} size={14} /></span>
+        <span className={css.evWith}>
+          <Dots ids={data.ALL} size={14} />
+        </span>
       ) : others.length ? (
-        <span className={css.evWith}><Dots ids={others} size={14} /></span>
+        <span className={css.evWith}>
+          <Dots ids={others} size={14} />
+        </span>
       ) : null}
     </button>
   );
@@ -243,11 +324,17 @@ function Blocks({ list, day, now, lane }: { list: CalEvent[]; day: Date; now: Da
   return (
     <>
       {layout(list).map((it) => {
-        const w = 100 / it.cols, horiz = { left: `calc(${it.col * w}% + 2px)`, width: `calc(${w}% - 4px)` };
+        const w = 100 / it.cols,
+          horiz = { left: `calc(${it.col * w}% + 2px)`, width: `calc(${w}% - 4px)` };
         if ('more' in it) {
           const top = y(it.start);
           return (
-            <button key={'more' + it.more[0].id} className={css.ev + ' ' + css.evMore} style={{ top, height: Math.max(30, y(it.end) - top - 3), ...horiz }} onClick={() => openMoreSheet(it.more)}>
+            <button
+              key={'more' + it.more[0].id}
+              className={css.ev + ' ' + css.evMore}
+              style={{ top, height: Math.max(30, y(it.end) - top - 3), ...horiz }}
+              onClick={() => openMoreSheet(it.more)}
+            >
               +{it.more.length}
               <small>more</small>
             </button>
@@ -316,15 +403,32 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
       {allDay.length > 0 && (
         <div className={css.allday}>
           <div className={css.gutter + ' label'}>All day</div>
-          <div className={css.alldayGrid} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }} data-drop={'d:' + dayKey(date)}>
+          <div
+            className={css.alldayGrid}
+            style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+            data-drop={'d:' + dayKey(date)}
+          >
             {allDay.map((e) => {
               const col = single || isFamily(data, e) ? '1 / -1' : ids.indexOf(e.people[0]) + 1 + ' / span 1';
-              const spanDays = Math.round((+e.end - +e.start) / DAY_MS), dayN = Math.round((+s - +e.start) / DAY_MS) + 1;
+              const spanDays = Math.round((+e.end - +e.start) / DAY_MS),
+                dayN = Math.round((+s - +e.start) / DAY_MS) + 1;
               return (
-                <button key={e.id} {...drag.bind(e)} className={css.ad + (e.start < s ? ' ' + css.adCont : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')} style={eventStyle(data, e, { gridColumn: col, ...drag.bind(e).style })} onClick={() => openEventSheet(e)}>
+                <button
+                  key={e.id}
+                  {...drag.bind(e)}
+                  className={
+                    css.ad + (e.start < s ? ' ' + css.adCont : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')
+                  }
+                  style={eventStyle(data, e, { gridColumn: col, ...drag.bind(e).style })}
+                  onClick={() => openEventSheet(e)}
+                >
                   {e.start < s && <Icon name="left" size={16} />}
                   {evLabel(e)}
-                  {spanDays > 1 && <small>Day {dayN} of {spanDays}</small>}
+                  {spanDays > 1 && (
+                    <small>
+                      Day {dayN} of {spanDays}
+                    </small>
+                  )}
                 </button>
               );
             })}
@@ -339,18 +443,25 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
             </div>
           </div>
         ) : (
-        <div className={css.lanes} style={{ gridTemplateColumns: `repeat(${lanes.length}, 1fr)` }}>
-          {lanes.map((p) => (
-            <div key={p.id} className={css.lane} style={toneStyle(p)} data-drop={t}>
-              <Blocks list={timedOn(events, date, p.id).filter((e) => !isFamily(data, e))} day={date} now={now} lane={p.id} />
-            </div>
-          ))}
-          <div className={css.laneFam}>
-            {timed.filter((e) => isFamily(data, e)).map((e) => (
-              <EvBlock key={e.id} e={e} style={{ left: 2, right: 2 }} day={date} now={now} />
+          <div className={css.lanes} style={{ gridTemplateColumns: `repeat(${lanes.length}, 1fr)` }}>
+            {lanes.map((p) => (
+              <div key={p.id} className={css.lane} style={toneStyle(p)} data-drop={t}>
+                <Blocks
+                  list={timedOn(events, date, p.id).filter((e) => !isFamily(data, e))}
+                  day={date}
+                  now={now}
+                  lane={p.id}
+                />
+              </div>
             ))}
+            <div className={css.laneFam}>
+              {timed
+                .filter((e) => isFamily(data, e))
+                .map((e) => (
+                  <EvBlock key={e.id} e={e} style={{ left: 2, right: 2 }} day={date} now={now} />
+                ))}
+            </div>
           </div>
-        </div>
         )}
         {/* Outside .lanes (which is already offset by the hour gutter), as in the 3-day view */}
         <NowLine days={[date]} now={now} />
@@ -371,8 +482,11 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
   const data = useData();
   const events = useEvents();
   const days = [0, 1, 2].map((i) => addDays(date, i));
-  const s0 = dayStart(date), s3 = addDays(s0, 3);
-  const allDay = days.some((d) => allDayOn(events, d).length) ? events.filter((e) => e.allDay && e.start < s3 && e.end > s0) : [];
+  const s0 = dayStart(date),
+    s3 = addDays(s0, 3);
+  const allDay = days.some((d) => allDayOn(events, d).length)
+    ? events.filter((e) => e.allDay && e.start < s3 && e.end > s0)
+    : [];
   const drag = useEventDrag();
   return (
     <div className={css.day + ' ' + css.three}>
@@ -391,9 +505,18 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
           <div className={css.gutter + ' label'}>All day</div>
           <div className={css.alldayGrid + ' ' + css.alldayGrid3} data-drop={'a3:' + dayKey(s0)}>
             {allDay.map((e) => {
-              const a = Math.max(0, Math.round((+e.start - +s0) / DAY_MS)), b = Math.min(3, Math.round((+e.end - +s0) / DAY_MS));
+              const a = Math.max(0, Math.round((+e.start - +s0) / DAY_MS)),
+                b = Math.min(3, Math.round((+e.end - +s0) / DAY_MS));
               return (
-                <button key={e.id} {...drag.bind(e)} className={css.ad + (e.start < s0 ? ' ' + css.adCont : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')} style={eventStyle(data, e, { gridColumn: `${a + 1} / ${b + 1}`, ...drag.bind(e).style })} onClick={() => openEventSheet(e)}>
+                <button
+                  key={e.id}
+                  {...drag.bind(e)}
+                  className={
+                    css.ad + (e.start < s0 ? ' ' + css.adCont : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')
+                  }
+                  style={eventStyle(data, e, { gridColumn: `${a + 1} / ${b + 1}`, ...drag.bind(e).style })}
+                  onClick={() => openEventSheet(e)}
+                >
                   {e.start < s0 && <Icon name="left" size={16} />}
                   {evLabel(e)}
                   {e.end > s3 && <Icon name="right" size={16} />}
@@ -406,7 +529,11 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
       <GridScroll resetKey={resetKey} active={active}>
         <div className={css.lanes + ' ' + css.lanes3}>
           {days.map((d) => (
-            <div key={+d} className={css.lane + (sameDay(d, now) ? ' ' + css.isToday : '')} data-drop={'t:' + dayKey(d)}>
+            <div
+              key={+d}
+              className={css.lane + (sameDay(d, now) ? ' ' + css.isToday : '')}
+              data-drop={'t:' + dayKey(d)}
+            >
               <Blocks list={timedOn(events, d)} day={d} now={now} />
             </div>
           ))}
@@ -421,7 +548,10 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
 function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: Date) => void }) {
   const data = useData();
   const events = useEvents();
-  const stop = (fn: () => void) => (e: MouseEvent) => { e.stopPropagation(); fn(); };
+  const stop = (fn: () => void) => (e: MouseEvent) => {
+    e.stopPropagation();
+    fn();
+  };
   // On a phone the week is a scrolling agenda, so every event fits; the frame's columns stop at 7
   const agenda = useLayout() === 'phone';
   const drag = useEventDrag();
@@ -429,20 +559,42 @@ function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: 
     <div className={css.week}>
       {[0, 1, 2, 3, 4, 5, 6].map((i) => {
         const d = addDays(date, i);
-        const ad = allDayOn(events, d), list = timedOn(events, d), max = agenda ? Infinity : 7 - ad.length, more = list.length - max;
+        const ad = allDayOn(events, d),
+          list = timedOn(events, d),
+          max = agenda ? Infinity : 7 - ad.length,
+          more = list.length - max;
         return (
-          <div key={i} className={css.wkCol + (sameDay(d, now) ? ' ' + css.isToday : '')} onClick={() => openDay(d)} data-drop={'d:' + dayKey(d)}>
+          <div
+            key={i}
+            className={css.wkCol + (sameDay(d, now) ? ' ' + css.isToday : '')}
+            onClick={() => openDay(d)}
+            data-drop={'d:' + dayKey(d)}
+          >
             <div className={css.wkHead}>
               <b>{fmt.dayShort(d)}</b>
               <span className="num display-num">{d.getDate()}</span>
             </div>
             {ad.map((e) => (
-              <button key={e.id} {...drag.bind(e)} className={css.wkAd + (drag.lifted(e) ? ' ' + css.isLifted : '')} style={eventStyle(data, e, drag.bind(e).style)} onClick={stop(() => openEventSheet(e))}>
+              <button
+                key={e.id}
+                {...drag.bind(e)}
+                className={css.wkAd + (drag.lifted(e) ? ' ' + css.isLifted : '')}
+                style={eventStyle(data, e, drag.bind(e).style)}
+                onClick={stop(() => openEventSheet(e))}
+              >
                 {evLabel(e)}
               </button>
             ))}
             {list.slice(0, max).map((e) => (
-              <button key={e.id} {...drag.bind(e)} className={css.wkEv + (e.end <= now ? ' ' + css.isPast : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')} style={eventStyle(data, e, drag.bind(e).style)} onClick={stop(() => openEventSheet(e))}>
+              <button
+                key={e.id}
+                {...drag.bind(e)}
+                className={
+                  css.wkEv + (e.end <= now ? ' ' + css.isPast : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')
+                }
+                style={eventStyle(data, e, drag.bind(e).style)}
+                onClick={stop(() => openEventSheet(e))}
+              >
                 <span className={css.wkT}>{fmt.time(e.start, false)}</span>
                 <span className={css.wkN}>{evLabel(e)}</span>
               </button>

@@ -31,7 +31,10 @@ async function idFor(link: string): Promise<string> {
     // not a URL; use as is
   }
   const d = await crypto.subtle.digest('SHA-256', enc.encode(key));
-  return [...new Uint8Array(d)].slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return [...new Uint8Array(d)]
+    .slice(0, 16)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 interface FeedState {
@@ -43,9 +46,12 @@ interface FeedState {
 
 /** Feeds whose check is due, longest-waiting first (never-checked ones first of all) */
 async function dueFeeds(env: Env, now: number): Promise<{ feed: Feed; state: FeedState | null }[]> {
-  const { results } = await env.DB.prepare('SELECT url, checked_at, etag, last_modified FROM news_feeds').all<FeedState>();
+  const { results } = await env.DB.prepare(
+    'SELECT url, checked_at, etag, last_modified FROM news_feeds',
+  ).all<FeedState>();
   const byUrl = new Map(results.map((r) => [r.url, r]));
-  return feedsFor(env).map((feed) => ({ feed, state: byUrl.get(feed.url) ?? null }))
+  return feedsFor(env)
+    .map((feed) => ({ feed, state: byUrl.get(feed.url) ?? null }))
     .filter(({ state }) => !state || now - state.checked_at >= EVERY_MS)
     .sort((a, b) => (a.state?.checked_at ?? 0) - (b.state?.checked_at ?? 0));
 }
@@ -54,22 +60,32 @@ async function dueFeeds(env: Env, now: number): Promise<{ feed: Feed; state: Fee
 async function refreshFeed(env: Env, feed: Feed, state: FeedState | null, now: number): Promise<number> {
   // Left out (undefined): keep the stored ETag / Last-Modified. null: the site stopped sending one, so
   // forget it rather than keep sending a stale If-None-Match / If-Modified-Since.
-  const setState = (s: { checked_at: number; etag?: string | null; last_modified?: string | null; error?: string | null }) =>
+  const setState = (s: {
+    checked_at: number;
+    etag?: string | null;
+    last_modified?: string | null;
+    error?: string | null;
+  }) =>
     env.DB.prepare(
       `INSERT INTO news_feeds (url, checked_at, etag, last_modified, error) VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(url) DO UPDATE SET checked_at = excluded.checked_at, etag = excluded.etag,
          last_modified = excluded.last_modified, error = excluded.error`,
-    ).bind(
-      feed.url,
-      s.checked_at,
-      s.etag !== undefined ? s.etag : state?.etag ?? null,
-      s.last_modified !== undefined ? s.last_modified : state?.last_modified ?? null,
-      s.error ?? null,
-    ).run();
+    )
+      .bind(
+        feed.url,
+        s.checked_at,
+        s.etag !== undefined ? s.etag : (state?.etag ?? null),
+        s.last_modified !== undefined ? s.last_modified : (state?.last_modified ?? null),
+        s.error ?? null,
+      )
+      .run();
 
   let res: Response;
   try {
-    const headers: Record<string, string> = { 'User-Agent': UA, Accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.8' };
+    const headers: Record<string, string> = {
+      'User-Agent': UA,
+      Accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, */*;q=0.8',
+    };
     if (state?.etag) headers['If-None-Match'] = state.etag;
     if (state?.last_modified) headers['If-Modified-Since'] = state.last_modified;
     res = await fetch(feed.url, { headers, signal: AbortSignal.timeout(10_000) });
@@ -98,7 +114,13 @@ async function refreshFeed(env: Env, feed: Feed, state: FeedState | null, now: n
     .filter((s) => s.published >= keepFrom)
     .filter((s) => !feed.exclude || !(feed.exclude.test(s.source) || feed.exclude.test(s.title)))
     // Google News results from an outlet we already follow directly would be duplicates
-    .filter((s) => !feed.google || !feedsFor(env).some((f) => !f.google && f.topic === feed.topic && f.source.toLowerCase() === s.source.toLowerCase()))
+    .filter(
+      (s) =>
+        !feed.google ||
+        !feedsFor(env).some(
+          (f) => !f.google && f.topic === feed.topic && f.source.toLowerCase() === s.source.toLowerCase(),
+        ),
+    )
     .sort((a, b) => b.published - a.published)
     .slice(0, limit);
 
@@ -112,14 +134,30 @@ async function refreshFeed(env: Env, feed: Feed, state: FeedState | null, now: n
        OR (excluded.image IS NOT NULL AND news.image IS NOT excluded.image)`,
   );
   const at = new Date(now).toISOString();
-  const stmts = await Promise.all(fresh.map(async (s) =>
-    upsert.bind(await idFor(s.link), feed.url, feed.topic, s.source, s.title, s.summary, s.link, s.image,
-      new Date(Math.min(s.published, now)).toISOString(), at)));
+  const stmts = await Promise.all(
+    fresh.map(async (s) =>
+      upsert.bind(
+        await idFor(s.link),
+        feed.url,
+        feed.topic,
+        s.source,
+        s.title,
+        s.summary,
+        s.link,
+        s.image,
+        new Date(Math.min(s.published, now)).toISOString(),
+        at,
+      ),
+    ),
+  );
 
   await env.DB.batch([
     ...stmts,
     // This feed's stories past its age limit, and anything beyond the topic's newest PER_TOPIC
-    env.DB.prepare('DELETE FROM news WHERE feed = ? AND published_at < ?').bind(feed.url, new Date(keepFrom).toISOString()),
+    env.DB.prepare('DELETE FROM news WHERE feed = ? AND published_at < ?').bind(
+      feed.url,
+      new Date(keepFrom).toISOString(),
+    ),
     env.DB.prepare(
       `DELETE FROM news WHERE topic = ? AND id NOT IN (
          SELECT id FROM news WHERE topic = ? ORDER BY published_at DESC LIMIT ?)`,
@@ -173,22 +211,42 @@ export async function getNews(env: Env, ctx: ExecutionContext): Promise<Response
     `SELECT id, topic, source, title, summary, link, image, published_at FROM (
        SELECT *, ROW_NUMBER() OVER (PARTITION BY topic ORDER BY published_at DESC) AS n FROM news
      ) WHERE n <= ? ORDER BY published_at DESC`,
-  ).bind(PER_TOPIC).all<Row>();
+  )
+    .bind(PER_TOPIC)
+    .all<Row>();
   // The same headline from two feeds in a topic (sister outlets, a site's overlapping feeds): once,
   // the newest copy
   const seen = new Set<string>();
   const stories: NewsStory[] = results
     .filter((r) => {
-      const key = r.topic + ':' + r.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const key =
+        r.topic +
+        ':' +
+        r.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     })
     .map((r) => ({
-      id: r.id, topic: r.topic, source: r.source, title: r.title, summary: r.summary, link: r.link, img: r.image, published: r.published_at,
+      id: r.id,
+      topic: r.topic,
+      source: r.source,
+      title: r.title,
+      summary: r.summary,
+      link: r.link,
+      img: r.image,
+      published: r.published_at,
     }));
-  const last = await env.DB.prepare('SELECT MAX(checked_at) AS t FROM news_feeds WHERE error IS NULL').first<{ t: number | null }>();
-  return new Response(JSON.stringify({ topics: TOPICS, updated: new Date(last?.t ?? Date.now()).toISOString(), stories }), {
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
+  const last = await env.DB.prepare('SELECT MAX(checked_at) AS t FROM news_feeds WHERE error IS NULL').first<{
+    t: number | null;
+  }>();
+  return new Response(
+    JSON.stringify({ topics: TOPICS, updated: new Date(last?.t ?? Date.now()).toISOString(), stories }),
+    {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    },
+  );
 }

@@ -45,12 +45,18 @@ function ThemeSheet() {
           </button>
         ))}
       </div>
-      <button className={css.auto + ' surface' + (autoDark ? ' ' + css.isOn : '')} role="switch" aria-checked={autoDark} onClick={() => setAutoDark(!autoDark)}>
+      <button
+        className={css.auto + ' surface' + (autoDark ? ' ' + css.isOn : '')}
+        role="switch"
+        aria-checked={autoDark}
+        onClick={() => setAutoDark(!autoDark)}
+      >
         <Icon name="moon" size={24} />
         <span>
           <b>Dark after sunset</b>
           <small>
-            Switches to Dark from sunset ({W ? fmt.time(atTime(W.sunset, now)) : '7 PM'}) to sunrise ({W ? fmt.time(atTime(W.sunrise, now)) : '7 AM'})
+            Switches to Dark from sunset ({W ? fmt.time(atTime(W.sunset, now)) : '7 PM'}) to sunrise (
+            {W ? fmt.time(atTime(W.sunrise, now)) : '7 AM'})
           </small>
         </span>
         <i className={css.switch} />
@@ -82,7 +88,12 @@ function SleepSetting() {
   );
   return (
     <div className={css.sleep + ' surface'}>
-      <button className={css.auto + (on ? ' ' + css.isOn : '')} role="switch" aria-checked={on} onClick={() => setSleep({ on: !on })}>
+      <button
+        className={css.auto + (on ? ' ' + css.isOn : '')}
+        role="switch"
+        aria-checked={on}
+        onClick={() => setSleep({ on: !on })}
+      >
         <Icon name="moon" size={24} />
         <span>
           <b>Sleep at night</b>

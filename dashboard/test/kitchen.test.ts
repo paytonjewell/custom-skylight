@@ -20,7 +20,8 @@ test('where things go: learned first, then what it is, then its aisle', () => {
   assert.equal(guessPlace('Ground Beef', [['ground beef', 'Freezer']]), 'Freezer'); // kept there before
 });
 
-const inv = (...names: string[]): InventoryItem[] => names.map((name, i) => ({ id: 'i' + i, name, place: 'Pantry', qty: 1, note: '' }));
+const inv = (...names: string[]): InventoryItem[] =>
+  names.map((name, i) => ({ id: 'i' + i, name, place: 'Pantry', qty: 1, note: '' }));
 
 test('matching ingredients to what’s on hand', () => {
   const have = inv('Shredded cheddar', 'egg', 'lean ground beef', 'tortilla');
@@ -36,7 +37,10 @@ test('matching ingredients to what’s on hand', () => {
 test('what can be made: pantry staples are assumed, the closest come first', () => {
   const tacos = SAMPLE_RECIPES.find((r) => r.id === 'tacos')!;
   const have = inv('ground beef', 'taco seasoning', 'tortillas', 'cheddar', 'tomatoes', 'lettuce', 'sour cream');
-  assert.deepEqual(readiness(tacos, have).missing.map((i) => i.name), ['salsa']);
+  assert.deepEqual(
+    readiness(tacos, have).missing.map((i) => i.name),
+    ['salsa'],
+  );
   const ready = whatCanWeMake(SAMPLE_RECIPES, [...have, ...inv('salsa')]);
   assert.equal(ready[0].missing.length, 0);
   assert.ok(ready.some((x) => x.recipe.id === 'tacos' && !x.missing.length));

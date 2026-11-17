@@ -10,13 +10,28 @@ export type Place = (typeof PLACES)[number];
 /** Words that say where something is kept, checked in this order (frozen beats everything) */
 const RULES: [RegExp, Place][] = [
   [/\b(frozen|ice cream|popsicles?|ice pops?|waffles|tater tots|pizza rolls)\b/, 'Freezer'],
-  [/\b(milk|cream|cheese|cheddar|mozzarella|parmesan|feta|butter|yogurt|eggs?|sour cream|cream cheese|half and half)\b/, 'Fridge'],
-  [/\b(chicken|beef|pork|turkey|bacon|sausage|ham|salami|steak|salmon|fish|shrimp|tofu|hot dogs?|deli|hummus)\b/, 'Fridge'],
-  [/\b(lettuce|spinach|kale|broccoli|carrots?|celery|cucumbers?|peppers?|zucchini|berries|strawberries|raspberries|blueberries|grapes|lemons?|limes?|herbs|cilantro|parsley|green onions?|mushrooms?)\b/, 'Fridge'],
+  [
+    /\b(milk|cream|cheese|cheddar|mozzarella|parmesan|feta|butter|yogurt|eggs?|sour cream|cream cheese|half and half)\b/,
+    'Fridge',
+  ],
+  [
+    /\b(chicken|beef|pork|turkey|bacon|sausage|ham|salami|steak|salmon|fish|shrimp|tofu|hot dogs?|deli|hummus)\b/,
+    'Fridge',
+  ],
+  [
+    /\b(lettuce|spinach|kale|broccoli|carrots?|celery|cucumbers?|peppers?|zucchini|berries|strawberries|raspberries|blueberries|grapes|lemons?|limes?|herbs|cilantro|parsley|green onions?|mushrooms?)\b/,
+    'Fridge',
+  ],
   [/\b(mayo|mayonnaise|ranch|salad dressing|pickles|juice|tortillas? fresh)\b/, 'Fridge'],
 ];
 /** Grocery aisle → where it usually ends up */
-const AISLE_PLACE: Record<string, Place> = { Dairy: 'Fridge', Meat: 'Fridge', Deli: 'Fridge', Frozen: 'Freezer', Produce: 'Fridge' };
+const AISLE_PLACE: Record<string, Place> = {
+  Dairy: 'Fridge',
+  Meat: 'Fridge',
+  Deli: 'Fridge',
+  Frozen: 'Freezer',
+  Produce: 'Fridge',
+};
 /** Produce that lives on the counter or in the cupboard */
 const COUNTER = /\b(bananas?|potatoes?|sweet potatoes?|onions?|garlic|tomatoes?|avocados?|apples?|bread|squash)\b/;
 
@@ -53,7 +68,12 @@ export function readiness(recipe: Recipe, inventory: InventoryItem[]): Readiness
 export function whatCanWeMake(recipes: Recipe[], inventory: InventoryItem[]): Readiness[] {
   return recipes
     .map((r) => readiness(r, inventory))
-    .sort((a, b) => a.missing.length - b.missing.length || Number(b.recipe.favorite) - Number(a.recipe.favorite) || a.recipe.minutes - b.recipe.minutes);
+    .sort(
+      (a, b) =>
+        a.missing.length - b.missing.length ||
+        Number(b.recipe.favorite) - Number(a.recipe.favorite) ||
+        a.recipe.minutes - b.recipe.minutes,
+    );
 }
 
 /** "1 in the fridge", "2 in the pantry": how much of something is on hand, for the grocery list */

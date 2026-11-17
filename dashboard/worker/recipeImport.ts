@@ -23,13 +23,36 @@ export interface ImportedRecipe {
 
 type Json = unknown;
 
-const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', frac12: '½', frac14: '¼', frac34: '¾', deg: '°', ndash: '–', mdash: '—', rsquo: '’', lsquo: '‘', ldquo: '“', rdquo: '”', hellip: '…' };
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  frac12: '½',
+  frac14: '¼',
+  frac34: '¾',
+  deg: '°',
+  ndash: '–',
+  mdash: '—',
+  rsquo: '’',
+  lsquo: '‘',
+  ldquo: '“',
+  rdquo: '”',
+  hellip: '…',
+};
 /** Plain text: no tags or entities, spaces tidied */
 function plain(s: string): string {
   return s
     .replace(/<[^>]*>/g, ' ')
     .replace(/&(#x?[0-9a-f]+|[a-z0-9]+);/gi, (m, e: string) =>
-      e[0] === '#' ? String.fromCodePoint(parseInt(e.slice(e[1] === 'x' || e[1] === 'X' ? 2 : 1), e[1] === 'x' || e[1] === 'X' ? 16 : 10)) : (ENTITIES[e.toLowerCase()] ?? m))
+      e[0] === '#'
+        ? String.fromCodePoint(
+            parseInt(e.slice(e[1] === 'x' || e[1] === 'X' ? 2 : 1), e[1] === 'x' || e[1] === 'X' ? 16 : 10),
+          )
+        : (ENTITIES[e.toLowerCase()] ?? m),
+    )
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -42,7 +65,9 @@ const isRecipe = (v: Json): v is Record<string, Json> => {
 
 /** The first schema.org Recipe in a page's JSON-LD blocks (inside @graph, lists, mainEntity…) */
 export function findRecipe(html: string): Record<string, Json> | null {
-  const blocks = [...html.matchAll(/<script[^>]*type=["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  const blocks = [...html.matchAll(/<script[^>]*type=["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script>/gi)].map(
+    (m) => m[1],
+  );
   const walk = (v: Json, depth = 0): Record<string, Json> | null => {
     if (depth > 8 || !v || typeof v !== 'object') return null;
     if (isRecipe(v)) return v;
@@ -78,7 +103,10 @@ export function readSteps(v: Json): string[] {
     if (typeof x === 'string') {
       // One block of text: split into its lines (or sentences, if it's all one line)
       const parts = x.includes('\n') ? x.split(/\n+/) : [x];
-      parts.map(plain).filter(Boolean).forEach((p) => out.push(p.replace(/^(?:step\s*)?\d+[.):]\s*/i, '')));
+      parts
+        .map(plain)
+        .filter(Boolean)
+        .forEach((p) => out.push(p.replace(/^(?:step\s*)?\d+[.):]\s*/i, '')));
       return;
     }
     if (!x || typeof x !== 'object') return;
@@ -106,12 +134,19 @@ export function readServings(v: Json): number | null {
 
 /** The site's categories and keywords → the app's tags */
 const TAG_WORDS: [RegExp, string][] = [
-  [/\b(dinner|main|entree|entrée|supper)\b/i, 'Dinner'], [/\blunch\b/i, 'Lunch'], [/\bbreakfast|brunch\b/i, 'Breakfast'],
-  [/\b(side|sides|side dish)\b/i, 'Side'], [/\b(dessert|cookie|cake|pie|brownie)s?\b/i, 'Dessert'], [/\b(baking|bread|muffin)s?\b/i, 'Baking'],
-  [/\b(kid|kids|kid-friendly|family)\b/i, "Kids' pick"], [/\b(make[- ]ahead|freezer)\b/i, 'Make ahead'],
+  [/\b(dinner|main|entree|entrée|supper)\b/i, 'Dinner'],
+  [/\blunch\b/i, 'Lunch'],
+  [/\bbreakfast|brunch\b/i, 'Breakfast'],
+  [/\b(side|sides|side dish)\b/i, 'Side'],
+  [/\b(dessert|cookie|cake|pie|brownie)s?\b/i, 'Dessert'],
+  [/\b(baking|bread|muffin)s?\b/i, 'Baking'],
+  [/\b(kid|kids|kid-friendly|family)\b/i, "Kids' pick"],
+  [/\b(make[- ]ahead|freezer)\b/i, 'Make ahead'],
 ];
 function readTags(r: Record<string, Json>, minutes: number | null): string[] {
-  const words = [...asArray(r.recipeCategory), ...asArray(r.keywords)].filter((x): x is string => typeof x === 'string').join(', ');
+  const words = [...asArray(r.recipeCategory), ...asArray(r.keywords)]
+    .filter((x): x is string => typeof x === 'string')
+    .join(', ');
   const tags = TAG_WORDS.filter(([re]) => re.test(words)).map(([, t]) => t);
   if (minutes !== null && minutes <= 30) tags.push('Quick');
   return [...new Set(tags)];
@@ -122,7 +157,10 @@ export function toImported(r: Record<string, Json>, source: string): ImportedRec
   const total = isoMinutes(r.totalTime);
   const parts = (isoMinutes(r.prepTime) ?? 0) + (isoMinutes(r.cookTime) ?? 0);
   const minutes = total ?? (parts || null);
-  const ingredients = asArray(r.recipeIngredient ?? r.ingredients).filter((x): x is string => typeof x === 'string').map(plain).filter(Boolean);
+  const ingredients = asArray(r.recipeIngredient ?? r.ingredients)
+    .filter((x): x is string => typeof x === 'string')
+    .map(plain)
+    .filter(Boolean);
   return {
     title: plain(typeof r.name === 'string' ? r.name : ''),
     ingredients,
@@ -144,12 +182,19 @@ async function readCapped(res: Response): Promise<string> {
     const { done, value } = await reader.read();
     if (done) break;
     size += value.length;
-    if (size > MAX_BYTES) { await reader.cancel(); break; }
+    if (size > MAX_BYTES) {
+      await reader.cancel();
+      break;
+    }
     chunks.push(value);
   }
   const all = new Uint8Array(Math.min(size, MAX_BYTES));
   let at = 0;
-  for (const c of chunks) { all.set(c.subarray(0, all.length - at), at); at += c.length; if (at >= all.length) break; }
+  for (const c of chunks) {
+    all.set(c.subarray(0, all.length - at), at);
+    at += c.length;
+    if (at >= all.length) break;
+  }
   return new TextDecoder().decode(all);
 }
 
@@ -162,8 +207,10 @@ export async function importRecipe(req: Request): Promise<Response> {
   } catch {
     return json({ error: 'That doesn’t look like a link.' }, 400);
   }
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') return json({ error: 'That doesn’t look like a web link.' }, 400);
-  if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.|\[)/.test(url.hostname)) return json({ error: 'That link can’t be read.' }, 400);
+  if (url.protocol !== 'https:' && url.protocol !== 'http:')
+    return json({ error: 'That doesn’t look like a web link.' }, 400);
+  if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.|\[)/.test(url.hostname))
+    return json({ error: 'That link can’t be read.' }, 400);
 
   let res: Response;
   try {
@@ -182,6 +229,7 @@ export async function importRecipe(req: Request): Promise<Response> {
   const recipe = findRecipe(await readCapped(res));
   if (!recipe) return json({ error: 'No recipe found on that page.', reason: 'none' }, 422);
   const out = toImported(recipe, res.url || url.toString());
-  if (!out.title || !out.ingredients.length) return json({ error: 'That page’s recipe is missing its ingredients.', reason: 'none' }, 422);
+  if (!out.title || !out.ingredients.length)
+    return json({ error: 'That page’s recipe is missing its ingredients.', reason: 'none' }, 422);
   return json(out);
 }

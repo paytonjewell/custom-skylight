@@ -53,7 +53,12 @@ function WeatherSheet() {
           <SunTile data={data} now={now} />
           <MoonTile data={data} now={now} />
           <StatTile label="Wind" value={W.wind} unit="mph" sub={`${W.windDir} · gusts ${W.gust} mph`} />
-          <StatTile label="Humidity" value={W.humidity} unit="%" sub={`Dew point ${W.dew}° · UV ${W.uv} (${uvLabel(W.uv)})`} />
+          <StatTile
+            label="Humidity"
+            value={W.humidity}
+            unit="%"
+            sub={`Dew point ${W.dew}° · UV ${W.uv} (${uvLabel(W.uv)})`}
+          />
         </section>
       </div>
     </div>
@@ -85,8 +90,12 @@ function Hours({ data, now }: { data: Data; now: Date }) {
 function Days({ data, now, todayCond }: { data: Data; now: Date; todayCond: WxCond }) {
   const W = data.weather!; // the sheet only opens once it has loaded
   const todayP = Math.max(...W.p.slice(now.getHours()));
-  const rows = [{ d: 0, c: todayP >= 50 ? 'rain' : todayCond, hi: W.hi, lo: W.lo, p: todayP }, ...W.daily.filter((r) => r.d >= 1 && r.d <= 3)];
-  const lo = Math.min(...rows.map((r) => r.lo)), hi = Math.max(...rows.map((r) => r.hi));
+  const rows = [
+    { d: 0, c: todayP >= 50 ? 'rain' : todayCond, hi: W.hi, lo: W.lo, p: todayP },
+    ...W.daily.filter((r) => r.d >= 1 && r.d <= 3),
+  ];
+  const lo = Math.min(...rows.map((r) => r.lo)),
+    hi = Math.max(...rows.map((r) => r.hi));
   return (
     <div className={css.days}>
       {rows.map((r) => (
@@ -98,7 +107,9 @@ function Days({ data, now, todayCond }: { data: Data; now: Date; todayCond: WxCo
           <span className={css.dayRain}>{r.p >= 20 ? r.p + '%' : ''}</span>
           <span className={css.dayLo}>{r.lo}°</span>
           <span className={css.bar}>
-            <i style={{ left: ((r.lo - lo) / (hi - lo)) * 100 + '%', width: ((r.hi - r.lo) / (hi - lo)) * 100 + '%' }} />
+            <i
+              style={{ left: ((r.lo - lo) / (hi - lo)) * 100 + '%', width: ((r.hi - r.lo) / (hi - lo)) * 100 + '%' }}
+            />
           </span>
           <span className={css.dayHi}>{r.hi}°</span>
         </div>
@@ -122,11 +133,13 @@ function Times({ a, b }: { a: [string, Date]; b: [string, Date] }) {
 
 /** Sun position along a half-circle arc between sunrise and sunset */
 function SunTile({ data, now }: { data: Data; now: Date }) {
-  const rise = atTime(data.weather!.sunrise, now), set = atTime(data.weather!.sunset, now);
+  const rise = atTime(data.weather!.sunrise, now),
+    set = atTime(data.weather!.sunset, now);
   const t = Math.max(0, Math.min(1, (now.getTime() - rise.getTime()) / (set.getTime() - rise.getTime())));
   const up = now >= rise && now <= set;
   const a = Math.PI * (1 - t);
-  const x = (70 + 56 * Math.cos(a)).toFixed(1), y = (62 - 56 * Math.sin(a)).toFixed(1);
+  const x = (70 + 56 * Math.cos(a)).toFixed(1),
+    y = (62 - 56 * Math.sin(a)).toFixed(1);
   const daylight = Math.round(minutesBetween(rise, set));
   return (
     <div className={css.tile + ' surface'}>
@@ -148,7 +161,9 @@ function SunTile({ data, now }: { data: Data; now: Date }) {
 /** Lit part of the moon: outer half-circle on the lit side + an elliptical terminator */
 function MoonTile({ data, now }: { data: Data; now: Date }) {
   const M = data.weather!.moon;
-  const r = 26, f = M.lit / 100, rx = Math.abs(1 - 2 * f) * r;
+  const r = 26,
+    f = M.lit / 100,
+    rx = Math.abs(1 - 2 * f) * r;
   const d = `M30 ${30 - r} A${r} ${r} 0 0 1 30 ${30 + r} A${rx.toFixed(2)} ${r} 0 0 ${f < 0.5 ? 0 : 1} 30 ${30 - r} Z`;
   return (
     <div className={css.tile + ' surface'}>
@@ -164,7 +179,10 @@ function MoonTile({ data, now }: { data: Data; now: Date }) {
         </span>
       </div>
       <div className={css.sunTimes}>
-        {[['Full moon', M.full], ['New moon', M.new]].map(([label, day]) => (
+        {[
+          ['Full moon', M.full],
+          ['New moon', M.new],
+        ].map(([label, day]) => (
           <span key={label}>
             <small>{label}</small>
             <b>{moonDay(day, now)}</b>
@@ -176,7 +194,8 @@ function MoonTile({ data, now }: { data: Data; now: Date }) {
 }
 
 /** UV index in words (WHO scale) */
-const uvLabel = (uv: number) => (uv < 3 ? 'low' : uv < 6 ? 'moderate' : uv < 8 ? 'high' : uv < 11 ? 'very high' : 'extreme');
+const uvLabel = (uv: number) =>
+  uv < 3 ? 'low' : uv < 6 ? 'moderate' : uv < 8 ? 'high' : uv < 11 ? 'very high' : 'extreme';
 
 /** 'YYYY-MM-DD' → "Today", "Tomorrow", or "Tue, Nov 24" */
 function moonDay(day: string, now: Date): string {

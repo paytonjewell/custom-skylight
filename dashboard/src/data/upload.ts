@@ -38,7 +38,8 @@ export async function preparePhoto(file: File): Promise<PreparedPhoto> {
 
 async function encode(bmp: ImageBitmap, max: number): Promise<{ blob: Blob; w: number; h: number }> {
   const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
-  const w = Math.round(bmp.width * s), h = Math.round(bmp.height * s);
+  const w = Math.round(bmp.width * s),
+    h = Math.round(bmp.height * s);
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;

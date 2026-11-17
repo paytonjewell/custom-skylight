@@ -6,8 +6,16 @@ import { useEffect, useRef, useState } from 'react';
 import type { Data, Grocery } from '../../data/types';
 import { useData } from '../../data/store';
 import {
-  addGrocery, clearGroceries, placeGroceries, removeGrocery, renameGrocery, restoreGrocery, restoreGroceries, setGroceryDone,
-  setGroceryStore, setQty,
+  addGrocery,
+  clearGroceries,
+  placeGroceries,
+  removeGrocery,
+  renameGrocery,
+  restoreGrocery,
+  restoreGroceries,
+  setGroceryDone,
+  setGroceryStore,
+  setQty,
 } from '../../data/actions';
 import { categorize, findGrocery, knownGroceries } from '../../data/select';
 import { haveNote } from '../../data/kitchen';
@@ -118,9 +126,19 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
     const have = haveNote(data.inventory, item.name);
     toast(
       <>
-        {kind === 'more' ? <>Already on the list · now <b>×{item.qty}</b> {item.name}</>
-          : kind === 'revived' ? <>Added back <b>{item.name}</b></>
-          : <>Added <b>{item.name}</b> to {item.cat}</>}
+        {kind === 'more' ? (
+          <>
+            Already on the list · now <b>×{item.qty}</b> {item.name}
+          </>
+        ) : kind === 'revived' ? (
+          <>
+            Added back <b>{item.name}</b>
+          </>
+        ) : (
+          <>
+            Added <b>{item.name}</b> to {item.cat}
+          </>
+        )}
         {have && <> · you have {have}</>}
       </>,
       { icon: 'cart', ms: have ? 5000 : 3000 },
@@ -130,22 +148,40 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
   const check = (g: Grocery) => {
     if (pending.cancel(g.id)) return; // second tap cancels
     pending.start(g.id, () => setGroceryDone(g.id, true));
-    toast(<><b>{g.name}</b> checked off</>, {
-      icon: 'check',
-      undo: () => { if (!pending.cancel(g.id)) setGroceryDone(g.id, false); },
-    });
+    toast(
+      <>
+        <b>{g.name}</b> checked off
+      </>,
+      {
+        icon: 'check',
+        undo: () => {
+          if (!pending.cancel(g.id)) setGroceryDone(g.id, false);
+        },
+      },
+    );
   };
 
   // At one, minus takes the item off the list (with Undo)
   const less = (g: Grocery) => {
     if (g.qty > 1) return setQty(g.id, g.qty - 1);
     const gone = removeGrocery(g.id);
-    if (gone) toast(<>Removed <b>{g.name}</b></>, { icon: 'trash', undo: () => restoreGrocery(gone.item, gone.at) });
+    if (gone)
+      toast(
+        <>
+          Removed <b>{g.name}</b>
+        </>,
+        { icon: 'trash', undo: () => restoreGrocery(gone.item, gone.at) },
+      );
   };
 
   const revive = (g: Grocery) => {
     setGroceryDone(g.id, false);
-    toast(<>Added back <b>{g.name}</b></>, { icon: 'cart', ms: 2500 });
+    toast(
+      <>
+        Added back <b>{g.name}</b>
+      </>,
+      { icon: 'cart', ms: 2500 },
+    );
   };
 
   const clear = () => {
@@ -159,17 +195,40 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
       <PageHeader
         className={css.head}
         onBack={onBack}
-        kicker={status === 'loading' ? 'Loading…' : status === 'error' ? 'Couldn’t load the list' : kitchen ? 'Groceries · food only' : 'Shared list · pinned'}
+        kicker={
+          status === 'loading'
+            ? 'Loading…'
+            : status === 'error'
+              ? 'Couldn’t load the list'
+              : kitchen
+                ? 'Groceries · food only'
+                : 'Shared list · pinned'
+        }
         title={kitchen ? 'Shopping List' : 'Groceries'}
-        meta={<div className={css.count}><span className="num display-num">{open.length}</span> to get</div>}
+        meta={
+          <div className={css.count}>
+            <span className="num display-num">{open.length}</span> to get
+          </div>
+        }
       >
         <div className={css.controls}>
           <Segmented
             className={css.stores}
-            options={[['all', 'All'] as const, ...data.stores.map((s) => [s.id, phone ? s.short ?? s.name : s.name] as const)].map(([id, name]) => [
-              id,
-              <>{name} <span className="num">{id === 'all' ? allOpen.length : allOpen.filter((g) => g.store === id).length}</span></>,
-            ] as const)}
+            options={[
+              ['all', 'All'] as const,
+              ...data.stores.map((s) => [s.id, phone ? (s.short ?? s.name) : s.name] as const),
+            ].map(
+              ([id, name]) =>
+                [
+                  id,
+                  <>
+                    {name}{' '}
+                    <span className="num">
+                      {id === 'all' ? allOpen.length : allOpen.filter((g) => g.store === id).length}
+                    </span>
+                  </>,
+                ] as const,
+            )}
             value={store}
             onChange={setStore}
           />
@@ -228,12 +287,27 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
                 onOpenChange={(side) => setSwiped(side ? { id, side } : null)}
                 // In "All", an item can be moved to the other store
                 moveTo={store === 'all' ? otherStore(g.store) : null}
-                onMove={(to) => { setSwiped(null); setGroceryStore(id, to); toast(<><b>{g.name}</b> moved to {storeName(to)}</>, { icon: 'cart', ms: 2500 }); }}
+                onMove={(to) => {
+                  setSwiped(null);
+                  setGroceryStore(id, to);
+                  toast(
+                    <>
+                      <b>{g.name}</b> moved to {storeName(to)}
+                    </>,
+                    { icon: 'cart', ms: 2500 },
+                  );
+                }}
                 editing={editing === id}
                 forRecipes={kitchen?.forRecipes(g.name)}
                 have={haveNote(data.inventory, g.name)}
-                onEdit={() => { setSwiped(null); setEditing(id); }}
-                onEditDone={(value) => { if (value !== null) renameGrocery(id, value); setEditing(null); }}
+                onEdit={() => {
+                  setSwiped(null);
+                  setEditing(id);
+                }}
+                onEditDone={(value) => {
+                  if (value !== null) renameGrocery(id, value);
+                  setEditing(null);
+                }}
               />
             ) : null;
           })
@@ -272,7 +346,15 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
       {/* the item being dragged, under the finger */}
       {ghost && byId.get(ghost.id) && (
         <div className={css.ghost} style={{ left: ghost.x, top: ghost.y, width: ghost.w, height: ghost.h }}>
-          <Row g={byId.get(ghost.id)!} showStore={store === 'all'} counts={counts} checking={false} flash={false} onCheck={() => {}} onLess={() => {}} />
+          <Row
+            g={byId.get(ghost.id)!}
+            showStore={store === 'all'}
+            counts={counts}
+            checking={false}
+            flash={false}
+            onCheck={() => {}}
+            onLess={() => {}}
+          />
         </div>
       )}
 
@@ -287,7 +369,9 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
               enterKeyHint="done"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') add(query); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') add(query);
+              }}
             />
           </label>
         </div>
@@ -303,7 +387,26 @@ const storeName = (id: string) => STORES.find((s) => s.id === id)?.name ?? id;
 /** The store an item would move to (with two stores, the other one) */
 const otherStore = (id: string) => STORES.find((s) => s.id !== id)?.id ?? null;
 
-function Row({ g, showStore, counts, checking, flash, lifted, props, onCheck, onLess, open = null, onOpenChange, moveTo = null, onMove, editing = false, onEdit, onEditDone, forRecipes, have }: {
+function Row({
+  g,
+  showStore,
+  counts,
+  checking,
+  flash,
+  lifted,
+  props,
+  onCheck,
+  onLess,
+  open = null,
+  onOpenChange,
+  moveTo = null,
+  onMove,
+  editing = false,
+  onEdit,
+  onEditDone,
+  forRecipes,
+  have,
+}: {
   g: Grocery;
   /** Already in the kitchen: how much and where ("1 in the fridge") */
   have?: string | null;
@@ -332,7 +435,11 @@ function Row({ g, showStore, counts, checking, flash, lifted, props, onCheck, on
   onEditDone?: (value: string | null) => void;
 }) {
   const swipe = useSwipeReveal({
-    open, onOpenChange: onOpenChange ?? (() => {}), start: !!onEdit, end: !!moveTo, disabled: lifted || editing || !props,
+    open,
+    onOpenChange: onOpenChange ?? (() => {}),
+    start: !!onEdit,
+    end: !!moveTo,
+    disabled: lifted || editing || !props,
   });
   // The count and action buttons aren't drag handles: holding one shouldn't lift the row
   const noDrag = (e: { stopPropagation(): void }) => e.stopPropagation();
@@ -340,14 +447,23 @@ function Row({ g, showStore, counts, checking, flash, lifted, props, onCheck, on
     'aria-label': label,
     tabIndex: open ? 0 : -1,
     onPointerDown: noDrag,
-    onClick: (e: { stopPropagation(): void }) => { e.stopPropagation(); run(); },
+    onClick: (e: { stopPropagation(): void }) => {
+      e.stopPropagation();
+      run();
+    },
   });
   // While editing, the name is a text field, so the tap area can't be a button
   const Hit = editing ? 'div' : 'button';
   return (
     <div
-      className={css.row + (checking ? ' ' + css.isChecking : '') + (flash ? ' ' + css.isFlash : '') + (lifted ? ' ' + css.isLifted : '') + (forRecipes ? ' ' + css.isForRecipe : '')
-        + (swipe.offset > 0 ? ' ' + css.showStart : swipe.offset < 0 ? ' ' + css.showEnd : '')}
+      className={
+        css.row +
+        (checking ? ' ' + css.isChecking : '') +
+        (flash ? ' ' + css.isFlash : '') +
+        (lifted ? ' ' + css.isLifted : '') +
+        (forRecipes ? ' ' + css.isForRecipe : '') +
+        (swipe.offset > 0 ? ' ' + css.showStart : swipe.offset < 0 ? ' ' + css.showEnd : '')
+      }
       data-id={g.id}
       {...props}
     >
@@ -358,7 +474,10 @@ function Row({ g, showStore, counts, checking, flash, lifted, props, onCheck, on
         </button>
       )}
       {moveTo && onMove && (
-        <button className={css.action + ' ' + css.moveAction} {...action('Move ' + g.name + ' to ' + storeName(moveTo), () => onMove(moveTo))}>
+        <button
+          className={css.action + ' ' + css.moveAction}
+          {...action('Move ' + g.name + ' to ' + storeName(moveTo), () => onMove(moveTo))}
+        >
           <Icon name="cart" size={22} />
           <span>{storeName(moveTo)}</span>
         </button>
@@ -368,7 +487,12 @@ function Row({ g, showStore, counts, checking, flash, lifted, props, onCheck, on
         style={swipe.offset ? { transform: `translateX(${swipe.offset}px)` } : undefined}
         {...swipe.handlers}
       >
-        <Hit className={css.hit} onClick={() => { if (!swipe.consumeSwipe() && !editing) onCheck(g); }}>
+        <Hit
+          className={css.hit}
+          onClick={() => {
+            if (!swipe.consumeSwipe() && !editing) onCheck(g);
+          }}
+        >
           <span className={css.box}>
             <Icon name="check" size={22} />
           </span>
@@ -386,7 +510,9 @@ function Row({ g, showStore, counts, checking, flash, lifted, props, onCheck, on
             {have && <small className={css.have}>Have {have}</small>}
           </span>
           {/* In "All", items for a store other than the usual one are marked */}
-          {showStore && g.store !== STORES[0].id && <span className={css.store + ' label label--sm'}>{storeName(g.store)}</span>}
+          {showStore && g.store !== STORES[0].id && (
+            <span className={css.store + ' label label--sm'}>{storeName(g.store)}</span>
+          )}
         </Hit>
         {counts && (
           <div className={css.qty}>
@@ -405,7 +531,17 @@ function Row({ g, showStore, counts, checking, flash, lifted, props, onCheck, on
 }
 
 /** Typing: catalog matches (+ "Add “…”"). Otherwise: the usual items as quick-add tiles. */
-function Suggest({ data, query, onAdd, planned }: { data: Data; query: string; onAdd: (name: string) => void; planned?: string[] }) {
+function Suggest({
+  data,
+  query,
+  onAdd,
+  planned,
+}: {
+  data: Data;
+  query: string;
+  onAdd: (name: string) => void;
+  planned?: string[];
+}) {
   const q = query.trim().toLowerCase();
   if (q) {
     // Things you've added before come first (most used first), then the starter list
@@ -432,7 +568,9 @@ function Suggest({ data, query, onAdd, planned }: { data: Data; query: string; o
           {!exact && (
             <button className={css.acRow + ' surface ' + css.acRowNew} onClick={() => onAdd(query)}>
               <b>Add “{query.trim()}”</b>
-              <span className="label">{haveNote(data.inventory, query) ? 'Have ' + haveNote(data.inventory, query) : categorize(data, query)}</span>
+              <span className="label">
+                {haveNote(data.inventory, query) ? 'Have ' + haveNote(data.inventory, query) : categorize(data, query)}
+              </span>
               <Icon name="plus" size={26} />
             </button>
           )}
@@ -461,10 +599,21 @@ function Suggest({ data, query, onAdd, planned }: { data: Data; query: string; o
         {data.usuals.map((name) => {
           const on = findGrocery(data, name, false);
           return (
-            <button key={name} className={css.tile + ' surface' + (on ? ' ' + css.isOn : '')} onClick={() => onAdd(name)}>
+            <button
+              key={name}
+              className={css.tile + ' surface' + (on ? ' ' + css.isOn : '')}
+              onClick={() => onAdd(name)}
+            >
               <b>{name}</b>
               <span>
-                {on ? <><Icon name="check" size={16} />On list{on.qty > 1 ? ' ×' + on.qty : ''}</> : categorize(data, name)}
+                {on ? (
+                  <>
+                    <Icon name="check" size={16} />
+                    On list{on.qty > 1 ? ' ×' + on.qty : ''}
+                  </>
+                ) : (
+                  categorize(data, name)
+                )}
               </span>
             </button>
           );

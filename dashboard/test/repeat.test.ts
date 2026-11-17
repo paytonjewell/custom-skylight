@@ -1,7 +1,14 @@
 // Tests for src/lib/repeat.ts. Run: npm test (Node's built-in runner; Node 24 runs .ts directly).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { carriesOver, describeRepeat, nextOccurrence, occursOn, prevOccurrence, type Repeat } from '../src/lib/repeat.ts';
+import {
+  carriesOver,
+  describeRepeat,
+  nextOccurrence,
+  occursOn,
+  prevOccurrence,
+  type Repeat,
+} from '../src/lib/repeat.ts';
 
 /** Every due day from `from` to `to` (inclusive) */
 function dueDays(r: Repeat, from: string, to: string, lastDone?: string): string[] {
@@ -42,7 +49,11 @@ test('weekdays only', () => {
   const r: Repeat = { kind: 'weekly', days: [1, 2, 3, 4, 5], start: '2026-11-01' };
   // Mon Nov 16 – Sun Nov 22
   assert.deepEqual(dueDays(r, '2026-11-16', '2026-11-22'), [
-    '2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20',
+    '2026-11-16',
+    '2026-11-17',
+    '2026-11-18',
+    '2026-11-19',
+    '2026-11-20',
   ]);
   assert.equal(nextOccurrence(r, '2026-11-21'), '2026-11-23'); // Saturday → Monday
   assert.equal(prevOccurrence(r, '2026-11-22'), '2026-11-20'); // Sunday → Friday
@@ -103,7 +114,12 @@ test('nothing is due before start', () => {
 test('daylight saving weeks do not shift days', () => {
   // US DST ends Sun Nov 1 2026 and starts Sun Mar 8 2026
   const daily: Repeat = { kind: 'daily', every: 2, start: '2026-10-30' };
-  assert.deepEqual(dueDays(daily, '2026-10-30', '2026-11-05'), ['2026-10-30', '2026-11-01', '2026-11-03', '2026-11-05']);
+  assert.deepEqual(dueDays(daily, '2026-10-30', '2026-11-05'), [
+    '2026-10-30',
+    '2026-11-01',
+    '2026-11-03',
+    '2026-11-05',
+  ]);
   const sun: Repeat = { kind: 'weekly', days: [0], start: '2026-03-01' };
   assert.deepEqual(dueDays(sun, '2026-03-01', '2026-03-15'), ['2026-03-01', '2026-03-08', '2026-03-15']);
 });

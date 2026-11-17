@@ -14,7 +14,12 @@ export interface DueItem {
 }
 
 /** Parts of the day, in the order they show (Anytime first) */
-export const SLOTS: [Slot, string][] = [['anytime', 'Anytime'], ['morning', 'Morning'], ['afternoon', 'Afternoon'], ['evening', 'Evening']];
+export const SLOTS: [Slot, string][] = [
+  ['anytime', 'Anytime'],
+  ['morning', 'Morning'],
+  ['afternoon', 'Afternoon'],
+  ['evening', 'Evening'],
+];
 
 /** Completions by task id */
 export function doneByTask(done: TaskDone[]): Map<string, TaskDone[]> {
@@ -24,7 +29,8 @@ export function doneByTask(done: TaskDone[]): Map<string, TaskDone[]> {
 }
 
 /** The latest due day it was done for */
-const lastDay = (rows: TaskDone[]) => rows.reduce<string | undefined>((a, r) => (!a || r.day > a ? r.day : a), undefined);
+const lastDay = (rows: TaskDone[]) =>
+  rows.reduce<string | undefined>((a, r) => (!a || r.day > a ? r.day : a), undefined);
 /** The day a completion was checked off (local time) */
 const checkedOn = (r: TaskDone) => dayOf(new Date(r.at));
 
@@ -48,7 +54,8 @@ export function dueItem(t: Task, rows: TaskDone[], day: string, today: string): 
     if (rows.length) return null; // done on another day
     if (t.due === day) return { task: t, day, done: null, overdue: false };
     // Undated, or late: waits on today's list
-    if (day === today && (!t.due || t.due < today)) return { task: t, day: t.due ?? today, done: null, overdue: !!t.due };
+    if (day === today && (!t.due || t.due < today))
+      return { task: t, day: t.due ?? today, done: null, overdue: !!t.due };
     return null;
   }
   if (r.kind === 'afterDone') {
@@ -72,11 +79,13 @@ export function dueOn(tasks: Task[], done: TaskDone[], day: string, today: strin
   return tasks
     .map((t) => dueItem(t, by.get(t.id) ?? [], day, today))
     .filter((x): x is DueItem => !!x)
-    .sort((a, b) =>
-      (a.task.position ?? Infinity) - (b.task.position ?? Infinity) ||
-      Number(b.overdue) - Number(a.overdue) ||
-      (a.task.time ?? '99').localeCompare(b.task.time ?? '99') ||
-      a.task.created.localeCompare(b.task.created));
+    .sort(
+      (a, b) =>
+        (a.task.position ?? Infinity) - (b.task.position ?? Infinity) ||
+        Number(b.overdue) - Number(a.overdue) ||
+        (a.task.time ?? '99').localeCompare(b.task.time ?? '99') ||
+        a.task.created.localeCompare(b.task.created),
+    );
 }
 
 /** Today's list */

@@ -8,7 +8,15 @@ import type { Data, InventoryItem } from '../../data/types';
 import { knownGroceries } from '../../data/select';
 import { dataStore, useData } from '../../data/store';
 import { PLACES, type Place } from '../../data/kitchen';
-import { addInventory, addToGroceries, editInventory, placeFor, removeInventory, restoreInventory, unteachMatch } from '../../data/recipeStore';
+import {
+  addInventory,
+  addToGroceries,
+  editInventory,
+  placeFor,
+  removeInventory,
+  restoreInventory,
+  unteachMatch,
+} from '../../data/recipeStore';
 import { foodKey } from '../../data/names';
 import { onList } from '../../data/recipes';
 import { closeSheet, openSheet, toast } from '../../app/ui';
@@ -33,9 +41,19 @@ export function Inventory() {
     onDrop: (i, place) => {
       if (place === i.place) return;
       editInventory(i.id, { place });
-      toast(<>Moved <b>{i.name}</b> to the {place.toLowerCase()}</>, { icon: 'check', undo: () => editInventory(i.id, { place: i.place }) });
+      toast(
+        <>
+          Moved <b>{i.name}</b> to the {place.toLowerCase()}
+        </>,
+        { icon: 'check', undo: () => editInventory(i.id, { place: i.place }) },
+      );
     },
-    ghost: (i) => <div className={css.ghost}><b>{i.name}</b><span className="num">×{i.qty}</span></div>,
+    ghost: (i) => (
+      <div className={css.ghost}>
+        <b>{i.name}</b>
+        <span className="num">×{i.qty}</span>
+      </div>
+    ),
   });
 
   const sugg = suggestions(data, name);
@@ -43,22 +61,46 @@ export function Inventory() {
     const n = raw.trim();
     if (!n) return;
     // A suggestion picked: its own place (the one typed was for the typed text)
-    const { item, added } = addInventory(n, raw === name ? place ?? undefined : undefined);
+    const { item, added } = addInventory(n, raw === name ? (place ?? undefined) : undefined);
     setName('');
     setChosen(null);
-    toast(added ? <>Added <b>{item.name}</b> to the {item.place.toLowerCase()}</> : <><b>{item.name}</b> · now ×{item.qty}</>, { icon: 'check', ms: 2500 });
+    toast(
+      added ? (
+        <>
+          Added <b>{item.name}</b> to the {item.place.toLowerCase()}
+        </>
+      ) : (
+        <>
+          <b>{item.name}</b> · now ×{item.qty}
+        </>
+      ),
+      { icon: 'check', ms: 2500 },
+    );
   };
 
   return (
     <div className={css.inv}>
-      <PageHeader kicker="Kitchen" title="Inventory" meta={<span className={css.count}><b className="num">{data.inventory.length}</b> on hand</span>}>
+      <PageHeader
+        kicker="Kitchen"
+        title="Inventory"
+        meta={
+          <span className={css.count}>
+            <b className="num">{data.inventory.length}</b> on hand
+          </span>
+        }
+      >
         <div className={css.addBar}>
           {sugg.length > 0 && (
             <ul className={css.sugg} role="listbox" aria-label="Suggestions">
               {sugg.map((x) => (
                 // (pressing doesn't take focus from the field, so the keyboard stays up for the next one)
                 <li key={x.name}>
-                  <button role="option" aria-selected={false} onPointerDown={(e) => e.preventDefault()} onClick={() => add(x.name)}>
+                  <button
+                    role="option"
+                    aria-selected={false}
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={() => add(x.name)}
+                  >
                     <b>{x.name}</b>
                     <span>{x.have ? `In kitchen · ×${x.have}` : `${PLACE_EMOJI[x.place]} ${x.place}`}</span>
                   </button>
@@ -70,11 +112,20 @@ export function Inventory() {
             placeholder="Add something you have…"
             value={name}
             enterKeyHint="done"
-            onChange={(e) => { setName(e.target.value); if (!e.target.value.trim()) setChosen(null); }}
-            onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (!e.target.value.trim()) setChosen(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') add();
+            }}
           />
           {place && (
-            <button className={css.placeBtn} title="Tap to change where it goes" onClick={() => setChosen(nextPlace(place))}>
+            <button
+              className={css.placeBtn}
+              title="Tap to change where it goes"
+              onClick={() => setChosen(nextPlace(place))}
+            >
               {PLACE_EMOJI[place]} {place}
             </button>
           )}
@@ -125,7 +176,10 @@ function suggestions(data: Data, typed: string): { name: string; place: Place; h
   const names: string[] = [];
   const push = (n: string) => {
     const k = n.trim().toLowerCase();
-    if (k && !seen.has(k)) { seen.add(k); names.push(n.trim()); }
+    if (k && !seen.has(k)) {
+      seen.add(k);
+      names.push(n.trim());
+    }
   };
   data.inventory.forEach((i) => push(i.name));
   data.inventoryNames.forEach(([n]) => push(n));
@@ -136,7 +190,11 @@ function suggestions(data: Data, typed: string): { name: string; place: Place; h
   return [...starts, ...inside]
     .filter((n) => n.toLowerCase() !== q)
     .slice(0, 6)
-    .map((n) => ({ name: n, place: placeFor(n), have: data.inventory.find((i) => i.name.toLowerCase() === n.toLowerCase())?.qty ?? 0 }));
+    .map((n) => ({
+      name: n,
+      place: placeFor(n),
+      have: data.inventory.find((i) => i.name.toLowerCase() === n.toLowerCase())?.qty ?? 0,
+    }));
 }
 
 /** Used up (or taken out): gone, with Undo */
@@ -148,7 +206,12 @@ function usedUp(i: InventoryItem): void {
   const gone = removeInventory(i.id);
   if (!gone) return;
   if (onList(dataStore.get().groceries, i.name)) {
-    toast(<>Used up <b>{i.name}</b> · it’s on the shopping list</>, { icon: 'check', undo: () => restoreInventory(gone) });
+    toast(
+      <>
+        Used up <b>{i.name}</b> · it’s on the shopping list
+      </>,
+      { icon: 'check', undo: () => restoreInventory(gone) },
+    );
     return;
   }
   openSheet(() => <AllOut item={gone} />);
@@ -160,14 +223,29 @@ function AllOut({ item }: { item: InventoryItem }) {
       <SheetHeader kicker="Used up" title={`All out of ${item.name}?`} />
       <p className="sheet-p">Add it to the shopping list so it gets picked up.</p>
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={() => { restoreInventory(item); closeSheet(); }}>Put it back</button>
-        <button className="btn btn--ghost" onClick={closeSheet}>No thanks</button>
+        <button
+          className="btn btn--ghost"
+          onClick={() => {
+            restoreInventory(item);
+            closeSheet();
+          }}
+        >
+          Put it back
+        </button>
+        <button className="btn btn--ghost" onClick={closeSheet}>
+          No thanks
+        </button>
         <button
           className="btn btn--solid"
           onClick={() => {
             const undo = addToGroceries([item.name]);
             closeSheet();
-            toast(<>Added <b>{item.name}</b> to the shopping list</>, { icon: 'cart', undo });
+            toast(
+              <>
+                Added <b>{item.name}</b> to the shopping list
+              </>,
+              { icon: 'cart', undo },
+            );
           }}
         >
           <Icon name="cart" size={20} /> Add to Shopping List
@@ -185,7 +263,10 @@ function Row({ i, drag, lifted }: { i: InventoryItem; drag: DragProps; lifted: b
         {i.note && <small>{i.note}</small>}
       </button>
       <div className={css.qty}>
-        <button aria-label={i.qty > 1 ? 'One less' : 'Used up'} onClick={() => (i.qty > 1 ? editInventory(i.id, { qty: i.qty - 1 }) : usedUp(i))}>
+        <button
+          aria-label={i.qty > 1 ? 'One less' : 'Used up'}
+          onClick={() => (i.qty > 1 ? editInventory(i.id, { qty: i.qty - 1 }) : usedUp(i))}
+        >
           <Icon name={i.qty > 1 ? 'minus' : 'trash'} size={18} />
         </button>
         <span className="num">{i.qty}</span>
@@ -218,34 +299,61 @@ function ItemSheet({ id }: { id: string }) {
   };
   return (
     <div className={'sheet-pad ' + css.sheet}>
-      <div className="label">{PLACE_EMOJI[i.place as Place]} {i.place}</div>
-      <input className={css.nameField + ' serif'} value={name} onChange={(e) => setName(e.target.value)} onBlur={save} aria-label="Name" />
+      <div className="label">
+        {PLACE_EMOJI[i.place as Place]} {i.place}
+      </div>
+      <input
+        className={css.nameField + ' serif'}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={save}
+        aria-label="Name"
+      />
       <div className={css.sheetRow}>
         <span className="label">How many</span>
         <div className={css.qty + ' ' + css.qtyBig}>
-          <button aria-label="One less" disabled={i.qty <= 1} onClick={() => editInventory(i.id, { qty: i.qty - 1 })}><Icon name="minus" size={20} /></button>
+          <button aria-label="One less" disabled={i.qty <= 1} onClick={() => editInventory(i.id, { qty: i.qty - 1 })}>
+            <Icon name="minus" size={20} />
+          </button>
           <span className="num">{i.qty}</span>
-          <button aria-label="One more" onClick={() => editInventory(i.id, { qty: i.qty + 1 })}><Icon name="plus" size={20} /></button>
+          <button aria-label="One more" onClick={() => editInventory(i.id, { qty: i.qty + 1 })}>
+            <Icon name="plus" size={20} />
+          </button>
         </div>
       </div>
       <div className={css.sheetRow}>
         <span className="label">Kept in</span>
         <div className="chips">
           {PLACES.map((p) => (
-            <button key={p} className={'chip' + (i.place === p ? ' is-on' : '')} onClick={() => editInventory(i.id, { place: p })}>
+            <button
+              key={p}
+              className={'chip' + (i.place === p ? ' is-on' : '')}
+              onClick={() => editInventory(i.id, { place: p })}
+            >
               {PLACE_EMOJI[p]} {p}
             </button>
           ))}
         </div>
       </div>
-      <input className={css.noteField} placeholder="Note (opened, expires…)" value={note} onChange={(e) => setNote(e.target.value)} onBlur={save} />
+      <input
+        className={css.noteField}
+        placeholder="Note (opened, expires…)"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        onBlur={save}
+      />
       {/* Matches taught with "I have this" on a recipe */}
       {taughtHere.length > 0 && (
         <div className={css.sheetRow}>
           <span className="label">Also counts as</span>
           <div className="chips">
             {taughtHere.map((from) => (
-              <button key={from} className="chip chip--ghost" aria-label={'Stop counting it as ' + from} onClick={() => unteachMatch(from)}>
+              <button
+                key={from}
+                className="chip chip--ghost"
+                aria-label={'Stop counting it as ' + from}
+                onClick={() => unteachMatch(from)}
+              >
                 {from} <Icon name="x" size={14} />
               </button>
             ))}
@@ -253,17 +361,39 @@ function ItemSheet({ id }: { id: string }) {
         </div>
       )}
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={() => { closeSheet(); usedUp(i); }}>
+        <button
+          className="btn btn--ghost"
+          onClick={() => {
+            closeSheet();
+            usedUp(i);
+          }}
+        >
           <Icon name="trash" size={20} /> Used up
         </button>
         <button
           className="btn btn--ghost"
           disabled={listed}
-          onClick={() => { const undo = addToGroceries([i.name]); toast(<>Added <b>{i.name}</b> to the shopping list</>, { icon: 'cart', undo }); }}
+          onClick={() => {
+            const undo = addToGroceries([i.name]);
+            toast(
+              <>
+                Added <b>{i.name}</b> to the shopping list
+              </>,
+              { icon: 'cart', undo },
+            );
+          }}
         >
           <Icon name="cart" size={20} /> {listed ? 'On the list' : 'Add to Shopping List'}
         </button>
-        <button className="btn btn--solid" onClick={() => { save(); closeSheet(); }}>Done</button>
+        <button
+          className="btn btn--solid"
+          onClick={() => {
+            save();
+            closeSheet();
+          }}
+        >
+          Done
+        </button>
       </div>
     </div>
   );

@@ -6,7 +6,14 @@ import { Icon } from './Icon';
  * count); `children` are controls pushed to the right edge. `onBack` adds a back button before the
  * title (a screen within a screen, e.g. one list on the Lists screen).
  */
-export function PageHeader({ kicker, title, meta, className, onBack, children }: {
+export function PageHeader({
+  kicker,
+  title,
+  meta,
+  className,
+  onBack,
+  children,
+}: {
   kicker: ReactNode;
   title: ReactNode;
   meta?: ReactNode;

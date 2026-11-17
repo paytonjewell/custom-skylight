@@ -20,16 +20,46 @@ const body = <T>(req: Request) => req.json<T>().catch(() => null);
 const now = () => new Date().toISOString();
 
 interface TaskRow {
-  id: string; title: string; emoji: string; who: string; repeat: string | null; due: string | null; slot: Slot;
-  time: string | null; habit: number; on_calendar: number; remind: string | null; notify: string;
-  list_id: string | null; list_item_id: string | null; created_at: string; position: number | null;
+  id: string;
+  title: string;
+  emoji: string;
+  who: string;
+  repeat: string | null;
+  due: string | null;
+  slot: Slot;
+  time: string | null;
+  habit: number;
+  on_calendar: number;
+  remind: string | null;
+  notify: string;
+  list_id: string | null;
+  list_item_id: string | null;
+  created_at: string;
+  position: number | null;
 }
-interface DoneRow { task_id: string; day: string; done_at: string; done_by: string | null }
+interface DoneRow {
+  task_id: string;
+  day: string;
+  done_at: string;
+  done_by: string | null;
+}
 
 const toTask = (r: TaskRow): Task => ({
-  id: r.id, title: r.title, emoji: r.emoji, who: r.who, repeat: r.repeat ? JSON.parse(r.repeat) : null, due: r.due,
-  slot: r.slot, time: r.time, habit: !!r.habit, onCalendar: !!r.on_calendar, remind: r.remind,
-  notify: JSON.parse(r.notify), listId: r.list_id, listItemId: r.list_item_id, created: r.created_at,
+  id: r.id,
+  title: r.title,
+  emoji: r.emoji,
+  who: r.who,
+  repeat: r.repeat ? JSON.parse(r.repeat) : null,
+  due: r.due,
+  slot: r.slot,
+  time: r.time,
+  habit: !!r.habit,
+  onCalendar: !!r.on_calendar,
+  remind: r.remind,
+  notify: JSON.parse(r.notify),
+  listId: r.list_id,
+  listItemId: r.list_item_id,
+  created: r.created_at,
   ...(r.position != null ? { position: r.position } : {}),
 });
 const toDone = (r: DoneRow): TaskDone => ({ task: r.task_id, day: r.day, at: r.done_at, by: r.done_by });
@@ -123,7 +153,12 @@ function doneRow(v: unknown): Pick<TaskDone, 'day' | 'at' | 'by'> | null {
 }
 
 const insertDone = (env: Env, id: string, d: Pick<TaskDone, 'day' | 'at' | 'by'>) =>
-  env.DB.prepare('INSERT OR REPLACE INTO task_done (task_id, day, done_at, done_by) VALUES (?, ?, ?, ?)').bind(id, d.day, d.at, d.by);
+  env.DB.prepare('INSERT OR REPLACE INTO task_done (task_id, day, done_at, done_by) VALUES (?, ?, ?, ?)').bind(
+    id,
+    d.day,
+    d.at,
+    d.by,
+  );
 
 /**
  * POST /api/tasks ({ id, ...task, done? }): a new task. `done` (its completions) comes with it when
@@ -144,10 +179,22 @@ export async function addTask(req: Request, env: Env): Promise<Response> {
         `INSERT INTO tasks (id, title, emoji, who, repeat, due, slot, time, habit, on_calendar, remind, notify, list_id, list_item_id, created_at, updated_at, position)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
-        b.id, f.title, f.emoji ?? '', f.who, f.repeat ? JSON.stringify(f.repeat) : null, f.due ?? null, f.slot,
-        f.time ?? null, f.habit ? 1 : 0, f.onCalendar ? 1 : 0, f.remind ?? null, JSON.stringify(f.notify ?? []),
-        f.listId ?? null, f.listItemId ?? null,
-        typeof b.created === 'string' && !isNaN(Date.parse(b.created)) ? new Date(b.created).toISOString() : at, at,
+        b.id,
+        f.title,
+        f.emoji ?? '',
+        f.who,
+        f.repeat ? JSON.stringify(f.repeat) : null,
+        f.due ?? null,
+        f.slot,
+        f.time ?? null,
+        f.habit ? 1 : 0,
+        f.onCalendar ? 1 : 0,
+        f.remind ?? null,
+        JSON.stringify(f.notify ?? []),
+        f.listId ?? null,
+        f.listItemId ?? null,
+        typeof b.created === 'string' && !isNaN(Date.parse(b.created)) ? new Date(b.created).toISOString() : at,
+        at,
         f.position ?? null,
       ),
       ...rows.map((r) => insertDone(env, b.id as string, r!)),
@@ -160,11 +207,20 @@ export async function addTask(req: Request, env: Env): Promise<Response> {
 }
 
 const COLUMNS: Record<string, [string, (v: never) => unknown]> = {
-  title: ['title', (v) => v], emoji: ['emoji', (v) => v], who: ['who', (v) => v],
-  repeat: ['repeat', (v) => (v ? JSON.stringify(v) : null)], due: ['due', (v) => v], slot: ['slot', (v) => v],
-  time: ['time', (v) => v], habit: ['habit', (v) => (v ? 1 : 0)], onCalendar: ['on_calendar', (v) => (v ? 1 : 0)],
-  remind: ['remind', (v) => v], notify: ['notify', (v) => JSON.stringify(v)],
-  listId: ['list_id', (v) => v], listItemId: ['list_item_id', (v) => v], position: ['position', (v) => v],
+  title: ['title', (v) => v],
+  emoji: ['emoji', (v) => v],
+  who: ['who', (v) => v],
+  repeat: ['repeat', (v) => (v ? JSON.stringify(v) : null)],
+  due: ['due', (v) => v],
+  slot: ['slot', (v) => v],
+  time: ['time', (v) => v],
+  habit: ['habit', (v) => (v ? 1 : 0)],
+  onCalendar: ['on_calendar', (v) => (v ? 1 : 0)],
+  remind: ['remind', (v) => v],
+  notify: ['notify', (v) => JSON.stringify(v)],
+  listId: ['list_id', (v) => v],
+  listItemId: ['list_item_id', (v) => v],
+  position: ['position', (v) => v],
 };
 
 /** PATCH /api/tasks/:id (any task fields) */
@@ -174,7 +230,9 @@ export async function editTask(req: Request, env: Env, id: string): Promise<Resp
   if (!f || !keys.length) return bad('Expected task fields');
   const sets = keys.map((k) => COLUMNS[k][0] + ' = ?').join(', ');
   const values = keys.map((k) => COLUMNS[k][1](f[k as keyof Task] as never));
-  const { meta } = await env.DB.prepare(`UPDATE tasks SET ${sets}, updated_at = ? WHERE id = ?`).bind(...values, now(), id).run();
+  const { meta } = await env.DB.prepare(`UPDATE tasks SET ${sets}, updated_at = ? WHERE id = ?`)
+    .bind(...values, now(), id)
+    .run();
   return meta.changes ? done() : bad('No such task', 404);
 }
 

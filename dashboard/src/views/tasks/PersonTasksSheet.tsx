@@ -12,7 +12,17 @@ import { closeSheet, go, openSheet } from '../../app/ui';
 import { Avatar, toneStyle } from '../../ui/people';
 import { Icon } from '../../ui/Icon';
 import { openTaskSheet } from './TaskSheet';
-import { PersonList, SHEET_LIST, ShowSettings, dayName, fmtDate, split, useShowSettings, useTaskDragging, useTaskRows } from './Tasks';
+import {
+  PersonList,
+  SHEET_LIST,
+  ShowSettings,
+  dayName,
+  fmtDate,
+  split,
+  useShowSettings,
+  useTaskDragging,
+  useTaskRows,
+} from './Tasks';
 import css from './PersonTasksSheet.module.css';
 
 /** `who`: a person id, or 'any' for tasks anyone can do */
@@ -50,10 +60,13 @@ function PersonTasks({ who }: { who: string }) {
   const p = person(data, who);
   const name = who === 'any' ? 'Anyone' : p.name;
   const left = tasks.length - done;
-  const summary =
-    !tasks.length ? 'Nothing due'
-    : offset > 0 ? `${tasks.length} due`
-    : left ? `${left} of ${tasks.length} left` : 'All done';
+  const summary = !tasks.length
+    ? 'Nothing due'
+    : offset > 0
+      ? `${tasks.length} due`
+      : left
+        ? `${left} of ${tasks.length} left`
+        : 'All done';
 
   return (
     // data-lane: confetti comes from here when the last task is checked off
@@ -63,20 +76,33 @@ function PersonTasks({ who }: { who: string }) {
         <span className={css.who}>
           <b>{name}</b>
           {/* The day is in the arrows; the full date only when away from today */}
-          <small>{offset ? fmtDate(day) + ' · ' : ''}{summary}</small>
+          <small>
+            {offset ? fmtDate(day) + ' · ' : ''}
+            {summary}
+          </small>
         </span>
         <span className={css.nav}>
           <button className="icon-btn" aria-label="Previous day" onClick={() => setOffset(offset - 1)}>
             <Icon name="left" size={26} />
           </button>
-          <button className={css.dayName} onClick={() => setOffset(0)} disabled={offset === 0} aria-label="Back to today">
+          <button
+            className={css.dayName}
+            onClick={() => setOffset(0)}
+            disabled={offset === 0}
+            aria-label="Back to today"
+          >
             {dayName(offset, day)}
           </button>
           <button className="icon-btn" aria-label="Next day" onClick={() => setOffset(offset + 1)}>
             <Icon name="right" size={26} />
           </button>
         </span>
-        <button className={css.cog + (settings ? ' ' + css.isOn : '')} aria-label="What shows" aria-expanded={settings} onClick={() => setSettings(!settings)}>
+        <button
+          className={css.cog + (settings ? ' ' + css.isOn : '')}
+          aria-label="What shows"
+          aria-expanded={settings}
+          onClick={() => setSettings(!settings)}
+        >
           <Icon name="settings" size={24} />
           {filtered && !settings && <i className={css.cogDot} />}
         </button>
@@ -87,16 +113,34 @@ function PersonTasks({ who }: { who: string }) {
         </div>
       )}
       <div className={css.scroll}>
-        <PersonList who={who} day={day} items={items} sections={sections} show={show} rowProps={rowProps} className={SHEET_LIST} />
+        <PersonList
+          who={who}
+          day={day}
+          items={items}
+          sections={sections}
+          show={show}
+          rowProps={rowProps}
+          className={SHEET_LIST}
+        />
       </div>
       {dragLayer}
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={() => { closeSheet(); go('tasks'); }}>Tasks screen</button>
+        <button
+          className="btn btn--ghost"
+          onClick={() => {
+            closeSheet();
+            go('tasks');
+          }}
+        >
+          Tasks screen
+        </button>
         <button className="btn btn--ghost" onClick={() => openTaskSheet(undefined, { who }, back)}>
           <Icon name="plus" size={20} />
           New task
         </button>
-        <button className="btn btn--solid" onClick={closeSheet}>Done</button>
+        <button className="btn btn--solid" onClick={closeSheet}>
+          Done
+        </button>
       </div>
     </div>
   );

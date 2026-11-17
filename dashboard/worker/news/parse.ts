@@ -24,14 +24,36 @@ const parser = new XMLParser({
 
 // fast-xml-parser hands back strings, or objects with '#text' when an element has attributes
 const text = (v: unknown): string =>
-  typeof v === 'string' ? v : typeof v === 'number' ? String(v) : v && typeof v === 'object' ? text((v as Record<string, unknown>)['#text']) : '';
+  typeof v === 'string'
+    ? v
+    : typeof v === 'number'
+      ? String(v)
+      : v && typeof v === 'object'
+        ? text((v as Record<string, unknown>)['#text'])
+        : '';
 const attr = (v: unknown, name: string): string =>
   v && typeof v === 'object' ? String((v as Record<string, unknown>)['@_' + name] ?? '') : '';
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : v == null ? [] : [v]);
 
 const NAMED: Record<string, string> = {
-  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', hellip: '…', mdash: '—', ndash: '–',
-  rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', bull: '•', middot: '·', copy: '©', reg: '®', trade: '™',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  hellip: '…',
+  mdash: '—',
+  ndash: '–',
+  rsquo: '’',
+  lsquo: '‘',
+  rdquo: '”',
+  ldquo: '“',
+  bull: '•',
+  middot: '·',
+  copy: '©',
+  reg: '®',
+  trade: '™',
 };
 /** Decode HTML entities left in feed text (summaries are often HTML inside CDATA) */
 function decode(s: string): string {
@@ -104,24 +126,35 @@ export function slim(xml: string, limit: number): string {
   let at = -1;
   for (let k = 0; k < limit; k++) {
     const j = xml.indexOf(close, at + 1);
-    if (j < 0) { at = -1; break; }
+    if (j < 0) {
+      at = -1;
+      break;
+    }
     at = j;
   }
   if (at >= 0) xml = xml.slice(0, at + close.length) + (atom ? '</feed>' : '</channel></rss>');
-  return xml.replace(/<(content:encoded|content)(\s[^>]*)?>([\s\S]*?)<\/\1>/g, (_m, tag: string, attrs = '', body: string) => {
-    const raw = body.replace(/^\s*<!\[CDATA\[|\]\]>\s*$/g, '');
-    const html = raw.includes('&lt;') && !raw.includes('<') ? decode(raw) : raw; // Atom: escaped HTML
-    const img = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
-    const snippet = decode(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim().slice(0, 600);
-    return `<${tag}${attrs}>${escapeXml((img ? `<img src="${img}"> ` : '') + snippet)}</${tag}>`;
-  });
+  return xml.replace(
+    /<(content:encoded|content)(\s[^>]*)?>([\s\S]*?)<\/\1>/g,
+    (_m, tag: string, attrs = '', body: string) => {
+      const raw = body.replace(/^\s*<!\[CDATA\[|\]\]>\s*$/g, '');
+      const html = raw.includes('&lt;') && !raw.includes('<') ? decode(raw) : raw; // Atom: escaped HTML
+      const img = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
+      const snippet = decode(html.replace(/<[^>]+>/g, ' '))
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 600);
+      return `<${tag}${attrs}>${escapeXml((img ? `<img src="${img}"> ` : '') + snippet)}</${tag}>`;
+    },
+  );
 }
 
 export function parseFeed(xml: string, feed: Feed): ParsedStory[] {
   const doc = parser.parse(xml) as Record<string, Record<string, unknown>>;
-  const items = (list(doc.rss?.channel && (doc.rss.channel as Record<string, unknown>).item).length
-    ? list((doc.rss.channel as Record<string, unknown>).item)
-    : list(doc.feed?.entry)) as Record<string, unknown>[];
+  const items = (
+    list(doc.rss?.channel && (doc.rss.channel as Record<string, unknown>).item).length
+      ? list((doc.rss.channel as Record<string, unknown>).item)
+      : list(doc.feed?.entry)
+  ) as Record<string, unknown>[];
 
   const out: ParsedStory[] = [];
   for (const item of items) {

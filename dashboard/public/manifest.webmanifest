@@ -36,12 +36,7 @@
       "files": [
         {
           "name": "photos",
-          "accept": [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/*"
-          ]
+          "accept": ["image/jpeg", "image/png", "image/webp", "image/*"]
         }
       ],
       "title": "title",

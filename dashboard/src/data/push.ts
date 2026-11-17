@@ -7,7 +7,8 @@ import { IS_KIOSK } from '../app/layout';
 import { go } from '../app/ui';
 
 /** Phones and computers with the app open in a browser can; the frame's kiosk WebView can't */
-export const pushSupported = !IS_KIOSK && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+export const pushSupported =
+  !IS_KIOSK && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
 interface PushState {
   /** From the server: null until loaded */
@@ -37,9 +38,11 @@ export async function turnOnPush(person: string): Promise<void> {
   const info = state.get().info ?? (await api.push());
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') {
-    throw new Error(permission === 'denied'
-      ? 'Notifications are blocked for this app. Allow them in the phone’s settings, then try again.'
-      : 'Notifications weren’t allowed.');
+    throw new Error(
+      permission === 'denied'
+        ? 'Notifications are blocked for this app. Allow them in the phone’s settings, then try again.'
+        : 'Notifications weren’t allowed.',
+    );
   }
   const reg = await registration();
   const subscribe = () => reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: info.key });

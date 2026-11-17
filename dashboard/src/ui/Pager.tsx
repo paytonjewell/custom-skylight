@@ -23,7 +23,14 @@ const GAP = 24;
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export function Pager({ index, render, onStep, handle, className, pageClass }: {
+export function Pager({
+  index,
+  render,
+  onStep,
+  handle,
+  className,
+  pageClass,
+}: {
   /** The current page's position; changes by ±1 as onStep is applied */
   index: number;
   /** A page: 0 the current one, -1 before, 1 after */
@@ -89,7 +96,8 @@ export function Pager({ index, render, onStep, handle, className, pageClass }: {
           drag.current = null;
           return;
         }
-        const dx = e.clientX - d.x, dy = e.clientY - d.y;
+        const dx = e.clientX - d.x,
+          dy = e.clientY - d.y;
         // Decide once whether this is a sideways swipe or a vertical scroll
         if (d.horiz === null) {
           if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
@@ -110,7 +118,10 @@ export function Pager({ index, render, onStep, handle, className, pageClass }: {
         const fast = Math.abs(d.dx) / Math.max(1, Date.now() - d.t) > FLICK && Math.abs(d.dx) > 30;
         if (Math.abs(d.dx) < TURN && !fast) return place(0, 0, MS); // spring back
         const dir: 1 | -1 = d.dx < 0 ? 1 : -1;
-        if (reduced()) { place(0, 0, 0); return onStep(dir); }
+        if (reduced()) {
+          place(0, 0, 0);
+          return onStep(dir);
+        }
         // The rest of the way takes less time the further the finger already moved it
         settle(dir, Math.round(MS * Math.max(0.4, 1 - Math.abs(d.dx) / w)));
       }}
@@ -126,12 +137,22 @@ export function Pager({ index, render, onStep, handle, className, pageClass }: {
         }
       }}
     >
-      <div ref={strip} style={{ display: 'flex', width: '300%', height: '100%', transform: `translate3d(${-100 / 3}%, 0, 0)` }}>
+      <div
+        ref={strip}
+        style={{ display: 'flex', width: '300%', height: '100%', transform: `translate3d(${-100 / 3}%, 0, 0)` }}
+      >
         {([-1, 0, 1] as const).map((off) => (
           <div
             key={index + off}
             className={pageClass}
-            style={{ width: `${100 / 3}%`, flex: 'none', height: '100%', position: 'relative', padding: `0 ${GAP / 2}px`, boxSizing: 'border-box' }}
+            style={{
+              width: `${100 / 3}%`,
+              flex: 'none',
+              height: '100%',
+              position: 'relative',
+              padding: `0 ${GAP / 2}px`,
+              boxSizing: 'border-box',
+            }}
             aria-hidden={off !== 0}
             inert={off !== 0}
           >

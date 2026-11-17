@@ -33,9 +33,18 @@ test('the moon: phase, light and the next full and new moons', () => {
 });
 
 test('Bible Gateway text becomes plain text', () => {
-  assert.equal(plainVerse('&ldquo;Open my eyes to see the wonderful truths in your instructions.&rdquo;'), 'Open my eyes to see the wonderful truths in your instructions.');
-  assert.equal(plainVerse('[16] For God loved the world so much &#8212; he gave <i>his</i> one and only Son'), 'For God loved the world so much — he gave his one and only Son');
-  assert.equal(plainVerse('The LORD is my shepherd; I have all that I need.'), 'The LORD is my shepherd; I have all that I need.');
+  assert.equal(
+    plainVerse('&ldquo;Open my eyes to see the wonderful truths in your instructions.&rdquo;'),
+    'Open my eyes to see the wonderful truths in your instructions.',
+  );
+  assert.equal(
+    plainVerse('[16] For God loved the world so much &#8212; he gave <i>his</i> one and only Son'),
+    'For God loved the world so much — he gave his one and only Son',
+  );
+  assert.equal(
+    plainVerse('The LORD is my shepherd; I have all that I need.'),
+    'The LORD is my shepherd; I have all that I need.',
+  );
 });
 
 /** Open-Meteo's answer for Nov 16 2026: 48 hours from midnight, rain from 4 PM */
@@ -44,8 +53,16 @@ function sample() {
   const day = (i: number) => `2026-11-${16 + Math.floor(i / 24)}T${String(i % 24).padStart(2, '0')}:00`;
   return {
     current: {
-      time: '2026-11-16T10:15', temperature_2m: 38.4, apparent_temperature: 30.5, relative_humidity_2m: 76, dew_point_2m: 31.5,
-      wind_speed_10m: 9.5, wind_gusts_10m: 19.2, wind_direction_10m: 232, weather_code: 0, is_day: 1,
+      time: '2026-11-16T10:15',
+      temperature_2m: 38.4,
+      apparent_temperature: 30.5,
+      relative_humidity_2m: 76,
+      dew_point_2m: 31.5,
+      wind_speed_10m: 9.5,
+      wind_gusts_10m: 19.2,
+      wind_direction_10m: 232,
+      weather_code: 0,
+      is_day: 1,
     },
     hourly: {
       time: hours.map(day),
@@ -56,14 +73,22 @@ function sample() {
     },
     daily: {
       time: ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20'],
-      weather_code: [61, 3, 73, 0, 0], temperature_2m_max: [49.5, 52.8, 33, 30, 31], temperature_2m_min: [22.6, 31.6, 25, 20, 21],
-      precipitation_probability_max: [80, 10, 60, 0, null], sunrise: ['2026-11-16T06:53'], sunset: ['2026-11-16T16:27'], uv_index_max: [2.3, 2, 1, 1, 1],
+      weather_code: [61, 3, 73, 0, 0],
+      temperature_2m_max: [49.5, 52.8, 33, 30, 31],
+      temperature_2m_min: [22.6, 31.6, 25, 20, 21],
+      precipitation_probability_max: [80, 10, 60, 0, null],
+      sunrise: ['2026-11-16T06:53'],
+      sunset: ['2026-11-16T16:27'],
+      uv_index_max: [2.3, 2, 1, 1, 1],
     },
   };
 }
 
 test('Open-Meteo’s answer becomes our weather', () => {
-  const w = toWeather(sample() as never, new Date('2026-11-16T16:15:00Z'), { name: 'Springfield', tz: 'America/Chicago' });
+  const w = toWeather(sample() as never, new Date('2026-11-16T16:15:00Z'), {
+    name: 'Springfield',
+    tz: 'America/Chicago',
+  });
   assert.equal(w.place, 'Springfield');
   assert.equal(w.day, '2026-11-16');
   assert.deepEqual(w.now, { t: 38, c: 'sun', feels: 31 });
@@ -75,8 +100,12 @@ test('Open-Meteo’s answer becomes our weather', () => {
   assert.equal(w.c[3], 'moon'); // 3 AM, clear
   assert.equal(w.p[3], 0); // no chance given → 0
   assert.equal(w.c[16], 'rain');
-  assert.deepEqual(w.daily.map((d) => d.c), ['rain', 'cloud', 'snow', 'sun', 'sun']);
-  const low = sample(); low.daily.precipitation_probability_max[2] = 5;
+  assert.deepEqual(
+    w.daily.map((d) => d.c),
+    ['rain', 'cloud', 'snow', 'sun', 'sun'],
+  );
+  const low = sample();
+  low.daily.precipitation_probability_max[2] = 5;
   assert.equal(toWeather(low as never, new Date()).daily[2].c, 'cloud'); // snow at 5%: cloudy
 });
 
@@ -95,6 +124,12 @@ test('Today’s weather line: now, rain later, and the hours ahead', () => {
   assert.equal(weatherNow(d, [], new Date(2026, 10, 16, 17, 0)).summary, 'Rain until 8 PM');
   // The next 12 hours run into tomorrow (not back to this morning)
   const h = hourly(d, new Date(2026, 10, 16, 22, 0), 4);
-  assert.deepEqual(h.map((x) => x.label), ['Now', '11p', '12a', '1a']);
-  assert.deepEqual(h.map((x) => x.t), [52, 53, 30, 31]);
+  assert.deepEqual(
+    h.map((x) => x.label),
+    ['Now', '11p', '12a', '1a'],
+  );
+  assert.deepEqual(
+    h.map((x) => x.t),
+    [52, 53, 30, 31],
+  );
 });

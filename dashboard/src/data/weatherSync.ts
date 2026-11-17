@@ -22,8 +22,20 @@ const setVerse = (verse: Verse) => dataStore.set((d) => ({ ...d, verse }));
 
 async function refreshWeather(): Promise<void> {
   await Promise.all([
-    api.weather().then((w) => { setWeather(w); store(WEATHER, JSON.stringify(w)); }, () => {}),
-    api.verse().then((v) => { setVerse(v); store(VERSE, JSON.stringify(v)); }, () => {}),
+    api.weather().then(
+      (w) => {
+        setWeather(w);
+        store(WEATHER, JSON.stringify(w));
+      },
+      () => {},
+    ),
+    api.verse().then(
+      (v) => {
+        setVerse(v);
+        store(VERSE, JSON.stringify(v));
+      },
+      () => {},
+    ),
   ]);
 }
 

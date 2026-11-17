@@ -9,7 +9,15 @@ const sync = createSync({
   load: api.kitchen,
   apply: (k) => {
     setTaught(k.aliases);
-    dataStore.set((d) => ({ ...d, recipes: k.recipes, mealPlan: k.plan, inventory: k.inventory, inventoryNames: k.names, foodAliases: k.aliases, kitchenLoaded: true }));
+    dataStore.set((d) => ({
+      ...d,
+      recipes: k.recipes,
+      mealPlan: k.plan,
+      inventory: k.inventory,
+      inventoryNames: k.names,
+      foodAliases: k.aliases,
+      kitchenLoaded: true,
+    }));
   },
   failMessage: 'Couldn’t save a change in the kitchen',
   keep: 'kitchen.last',

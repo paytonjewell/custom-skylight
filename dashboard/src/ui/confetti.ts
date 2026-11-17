@@ -9,8 +9,23 @@ const cssColor = (name: string) => getComputedStyle(document.documentElement).ge
  * A burst from `from` (e.g. the person's column heading), in their colour. `everyone` = the last
  * person just finished too: a bigger burst from both sides of the screen.
  */
-export function celebrate({ from, tone, everyone = false }: { from?: Element | null; tone: number; everyone?: boolean }): void {
-  const colors = [cssColor(`--t${tone}`), cssColor('--t1'), cssColor('--t2'), cssColor('--t3'), cssColor('--t4'), '#ffffff'].filter(Boolean);
+export function celebrate({
+  from,
+  tone,
+  everyone = false,
+}: {
+  from?: Element | null;
+  tone: number;
+  everyone?: boolean;
+}): void {
+  const colors = [
+    cssColor(`--t${tone}`),
+    cssColor('--t1'),
+    cssColor('--t2'),
+    cssColor('--t3'),
+    cssColor('--t4'),
+    '#ffffff',
+  ].filter(Boolean);
   const base = { colors, disableForReducedMotion: true, zIndex: 100 };
   const r = from?.getBoundingClientRect();
   const origin = r

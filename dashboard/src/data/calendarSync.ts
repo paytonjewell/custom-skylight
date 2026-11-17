@@ -12,7 +12,9 @@ const sync = createSync({
     return { ...info, events };
   },
   apply: ({ configured, accounts, calendars, events }) =>
-    dataStore.set((d) => withEvents({ ...d, googleConfigured: configured, googleAccounts: accounts, calendars, eventRecords: events })),
+    dataStore.set((d) =>
+      withEvents({ ...d, googleConfigured: configured, googleAccounts: accounts, calendars, eventRecords: events }),
+    ),
   failMessage: 'Couldn’t save a change to the calendar',
   keep: 'calendar.last',
 });

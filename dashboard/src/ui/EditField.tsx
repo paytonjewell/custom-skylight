@@ -4,7 +4,12 @@ import { useRef } from 'react';
  * Inline text field for editing a row's text in place (list items, groceries): starts focused with
  * the text selected; Enter or tapping elsewhere saves, Escape cancels (onDone gets null).
  */
-export function EditField({ className, value, label = 'Item text', onDone }: {
+export function EditField({
+  className,
+  value,
+  label = 'Item text',
+  onDone,
+}: {
   className: string;
   value: string;
   label?: string;

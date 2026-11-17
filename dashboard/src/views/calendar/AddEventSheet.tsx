@@ -20,8 +20,20 @@ import { PersonPicker } from '../../ui/PersonPicker';
 import { openCalendarSettings } from './CalendarSettings';
 import css from './AddEventSheet.module.css';
 
-const TIMES = [['08:00', '8 AM'], ['12:00', 'Noon'], ['15:30', '3:30 PM'], ['16:30', '4:30 PM'], ['18:00', '6 PM'], ['19:30', '7:30 PM']];
-const LENGTHS = [[30, '30m'], [60, '1h'], [90, '1½h'], [120, '2h']] as const;
+const TIMES = [
+  ['08:00', '8 AM'],
+  ['12:00', 'Noon'],
+  ['15:30', '3:30 PM'],
+  ['16:30', '4:30 PM'],
+  ['18:00', '6 PM'],
+  ['19:30', '7:30 PM'],
+];
+const LENGTHS = [
+  [30, '30m'],
+  [60, '1h'],
+  [90, '1½h'],
+  [120, '2h'],
+] as const;
 
 /** `onAdded` lets the calendar jump to the new event's day */
 export function openAddEventSheet(onAdded: (start: Date) => void, day?: Date): void {
@@ -36,7 +48,12 @@ export function removeEvent(e: CalEvent): void {
   const r = recordOf(dataStore.get(), e);
   if (!r) return;
   deleteCalEvent(r);
-  toast(<>Deleted <b>{r.title}</b></>, { icon: 'trash', undo: () => restoreCalEvent(r) });
+  toast(
+    <>
+      Deleted <b>{r.title}</b>
+    </>,
+    { icon: 'trash', undo: () => restoreCalEvent(r) },
+  );
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -48,13 +65,27 @@ const at = (day: Date, t: string) => new Date(day.getFullYear(), day.getMonth(),
 /** "3:30 PM" */
 const timeLabel = (t: string) => fmt.time(at(new Date(2000, 0, 1), t));
 
-function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdded?: (start: Date) => void; day?: Date }) {
+function EventForm({
+  event,
+  onAdded,
+  day: startDay,
+}: {
+  event?: CalEvent;
+  onAdded?: (start: Date) => void;
+  day?: Date;
+}) {
   const data = useData();
   const [today] = useState(() => dayStart(clockNow()));
   const record = event ? recordOf(data, event) : undefined;
   /** Calendars it can go on: shown and writable (moving an existing one: same Google account only) */
-  const choices = data.calendars.filter((c) =>
-    c.shown && c.writable && (!record || (c.account === calOf(data.calendars, record.calendar)?.account && (!record.recurring || c.id === record.calendar))));
+  const choices = data.calendars.filter(
+    (c) =>
+      c.shown &&
+      c.writable &&
+      (!record ||
+        (c.account === calOf(data.calendars, record.calendar)?.account &&
+          (!record.recurring || c.id === record.calendar))),
+  );
 
   const init = () => {
     if (event) {
@@ -67,13 +98,21 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
         end: fromMinutes(minutesOf(hhmm(event.start)) + mins),
       };
     }
-    return { day: startDay && startDay >= today ? dayStart(startDay) : today, allDay: false, days: 1, start: '15:30', end: '16:30' };
+    return {
+      day: startDay && startDay >= today ? dayStart(startDay) : today,
+      allDay: false,
+      days: 1,
+      start: '15:30',
+      end: '16:30',
+    };
   };
   const first = useState(init)[0];
   // The title as saved in Google (the event's own may have had a leading emoji split off for showing)
   const [title, setTitle] = useState(record?.title ?? event?.title ?? '');
   const [emoji, setEmoji] = useState(record?.emoji ?? '');
-  const [calendar, setCalendar] = useState(() => record?.calendar ?? (choices.find((c) => c.isDefault) ?? choices[0])?.id ?? '');
+  const [calendar, setCalendar] = useState(
+    () => record?.calendar ?? (choices.find((c) => c.isDefault) ?? choices[0])?.id ?? '',
+  );
   /** People picked here (person ids, or ['family']); null: whose the calendar says */
   const [chosen, setChosen] = useState<string[] | null>(record?.people?.length ? record.people : null);
   const [day, setDay] = useState(first.day);
@@ -98,8 +137,20 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
               : 'Connect Google Calendar to add events.'}
         </p>
         <div className="sheet-actions">
-          <button className="btn btn--ghost" onClick={closeSheet}>Close</button>
-          {!event && <button className="btn btn--solid" onClick={() => { closeSheet(); openCalendarSettings(); }}>Calendar settings</button>}
+          <button className="btn btn--ghost" onClick={closeSheet}>
+            Close
+          </button>
+          {!event && (
+            <button
+              className="btn btn--solid"
+              onClick={() => {
+                closeSheet();
+                openCalendarSettings();
+              }}
+            >
+              Calendar settings
+            </button>
+          )}
         </div>
       </div>
     );
@@ -120,7 +171,8 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
   };
   const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
   /** Kept on the event only when it differs from whose the calendar says ([]: none kept) */
-  const people = !cal || cal.person === 'none' || !chosen || same(who, auto) ? [] : who.length === allIds.length ? ['family'] : who;
+  const people =
+    !cal || cal.person === 'none' || !chosen || same(who, auto) ? [] : who.length === allIds.length ? ['family'] : who;
 
   const length = (minutesOf(end) - minutesOf(start) + 1440) % 1440 || 1440;
   const pickStart = (t: string) => {
@@ -155,7 +207,13 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
     }
     addCalEvent(f);
     onAdded?.(allDay ? day : s);
-    toast(<>Added <b>{name}</b> · {fmt.rel(day, clockNow())}{allDay ? '' : ' ' + fmt.time(s)}</>, { icon: 'calendar' });
+    toast(
+      <>
+        Added <b>{name}</b> · {fmt.rel(day, clockNow())}
+        {allDay ? '' : ' ' + fmt.time(s)}
+      </>,
+      { icon: 'calendar' },
+    );
   };
 
   const chip = (on: boolean) => 'chip' + (on ? ' is-on' : '');
@@ -166,7 +224,11 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
       <div className="label">{event ? 'Edit event' : 'New event'}</div>
       <div className={css.titleRow}>
         {/* Its own emoji, or else the calendar's (🎂 on Birthdays), which it gets without saving one */}
-        <button className={css.emojiBtn + (picking ? ' ' + css.isOn : '')} aria-label={emoji ? 'Change emoji' : 'Add an emoji'} onClick={() => setPicking(!picking)}>
+        <button
+          className={css.emojiBtn + (picking ? ' ' + css.isOn : '')}
+          aria-label={emoji ? 'Change emoji' : 'Add an emoji'}
+          onClick={() => setPicking(!picking)}
+        >
           {emoji || cal?.emoji || <Icon name="smile" size={28} />}
         </button>
         <input
@@ -176,18 +238,35 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
           autoFocus={!event}
           enterKeyHint="done"
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
         />
       </div>
       {picking && (
         <div className={css.picker}>
-          <EmojiPicker onPick={(e) => { setEmoji(e); setPicking(false); }} />
+          <EmojiPicker
+            onPick={(e) => {
+              setEmoji(e);
+              setPicking(false);
+            }}
+          />
           {emoji && (
-            <button className="btn btn--ghost" onClick={() => { setEmoji(''); setPicking(false); }}>No emoji</button>
+            <button
+              className="btn btn--ghost"
+              onClick={() => {
+                setEmoji('');
+                setPicking(false);
+              }}
+            >
+              No emoji
+            </button>
           )}
         </div>
       )}
-      {record?.recurring && <p className={css.note}>This is one occurrence of a repeating event; changes apply to this one only.</p>}
+      {record?.recurring && (
+        <p className={css.note}>This is one occurrence of a repeating event; changes apply to this one only.</p>
+      )}
 
       <div className="label">Calendar</div>
       <div className="chips">
@@ -203,7 +282,9 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
         <>
           <div className="label">
             Who
-            {!chosen && !same(auto, whoFor({ title: '' }, cal, calPeople)) && <span className={css.hint}> · from the name in the title</span>}
+            {!chosen && !same(auto, whoFor({ title: '' }, cal, calPeople)) && (
+              <span className={css.hint}> · from the name in the title</span>
+            )}
           </div>
           <PersonPicker
             people={calPeople}
@@ -224,7 +305,14 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
         ))}
         <button
           className={chip(picked) + ' ' + css.dateChip}
-          onClick={() => { const el = dateInput.current; try { el?.showPicker(); } catch { el?.click(); } }}
+          onClick={() => {
+            const el = dateInput.current;
+            try {
+              el?.showPicker();
+            } catch {
+              el?.click();
+            }
+          }}
         >
           {picked ? fmt.dayShort(day) + ', ' + fmt.monthShort(day) + ' ' + day.getDate() : 'Pick a day'}
           <input
@@ -240,15 +328,23 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
 
       <div className="label">Time</div>
       <div className="chips">
-        <button className={chip(allDay)} onClick={() => setAllDay(true)}>All day</button>
-        <button className={chip(!allDay)} onClick={() => setAllDay(false)}>At a time</button>
+        <button className={chip(allDay)} onClick={() => setAllDay(true)}>
+          All day
+        </button>
+        <button className={chip(!allDay)} onClick={() => setAllDay(false)}>
+          At a time
+        </button>
       </div>
       {allDay ? (
         <div className={css.more}>
           <div className={css.stepper}>
-            <button className="icon-btn" aria-label="Fewer days" onClick={() => setDays(Math.max(1, days - 1))}>−</button>
+            <button className="icon-btn" aria-label="Fewer days" onClick={() => setDays(Math.max(1, days - 1))}>
+              −
+            </button>
             <b className="num">{days}</b>
-            <button className="icon-btn" aria-label="More days" onClick={() => setDays(Math.min(60, days + 1))}>+</button>
+            <button className="icon-btn" aria-label="More days" onClick={() => setDays(Math.min(60, days + 1))}>
+              +
+            </button>
             <span>{days === 1 ? 'day' : 'days'}</span>
           </div>
         </div>
@@ -256,12 +352,20 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
         <div className={css.more}>
           <div className="chips">
             {TIMES.map(([t, label]) => (
-              <button key={t} className={chip(start === t)} onClick={() => pickStart(t)}>{label}</button>
+              <button key={t} className={chip(start === t)} onClick={() => pickStart(t)}>
+                {label}
+              </button>
             ))}
           </div>
           <div className="chips">
             {LENGTHS.map(([m, label]) => (
-              <button key={m} className={chip(length === m) + ' chip--ghost'} onClick={() => setEnd(fromMinutes(minutesOf(start) + m))}>{label}</button>
+              <button
+                key={m}
+                className={chip(length === m) + ' chip--ghost'}
+                onClick={() => setEnd(fromMinutes(minutesOf(start) + m))}
+              >
+                {label}
+              </button>
             ))}
           </div>
           <div className={css.times}>
@@ -273,22 +377,48 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
               <span>Ends</span>
               <input type="time" value={end} required onChange={(e) => e.target.value && setEnd(e.target.value)} />
             </label>
-            <small>{timeLabel(start)} – {timeLabel(end)}{minutesOf(end) <= minutesOf(start) ? ' (next day)' : ''}</small>
+            <small>
+              {timeLabel(start)} – {timeLabel(end)}
+              {minutesOf(end) <= minutesOf(start) ? ' (next day)' : ''}
+            </small>
           </div>
         </div>
       )}
 
       <div className="label">Where</div>
-      <input className={css.field} placeholder="Add a place (optional)" value={loc} onChange={(e) => setLoc(e.target.value)} />
+      <input
+        className={css.field}
+        placeholder="Add a place (optional)"
+        value={loc}
+        onChange={(e) => setLoc(e.target.value)}
+      />
       <div className="label">Notes</div>
-      <textarea className={css.field} rows={2} placeholder="Optional" value={notes} onChange={(e) => setNotes(e.target.value)} />
+      <textarea
+        className={css.field}
+        rows={2}
+        placeholder="Optional"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
 
       <div className="sheet-actions">
         {event && (
-          <button className={'btn btn--ghost ' + css.delete} onClick={() => { closeSheet(); removeEvent(event); }}>Delete</button>
+          <button
+            className={'btn btn--ghost ' + css.delete}
+            onClick={() => {
+              closeSheet();
+              removeEvent(event);
+            }}
+          >
+            Delete
+          </button>
         )}
-        <button className="btn btn--ghost" onClick={closeSheet}>Cancel</button>
-        <button className="btn btn--solid" onClick={save}>{event ? 'Save' : 'Add to calendar'}</button>
+        <button className="btn btn--ghost" onClick={closeSheet}>
+          Cancel
+        </button>
+        <button className="btn btn--solid" onClick={save}>
+          {event ? 'Save' : 'Add to calendar'}
+        </button>
       </div>
     </div>
   );
