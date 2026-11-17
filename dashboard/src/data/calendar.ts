@@ -3,6 +3,7 @@ import { dueOn } from './tasks';
 import { holidayEmoji } from './holidays';
 import { dayOf, shiftDay } from '../lib/repeat';
 import type { Calendar, CalEvent, Data, EventRecord, Person } from './types';
+import { calendarPeople } from './select';
 
 /** 'YYYY-MM-DD' → local midnight that day */
 const localDay = (day: string) => new Date(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10)));
@@ -73,7 +74,7 @@ export function withEvents(d: Data): Data {
     const had = best.get(r.id);
     if (!had || (had.guest && !r.guest)) best.set(r.id, r);
   }
-  return { ...d, events: [...best.values()].map((r) => toCalEvent(r, shown.get(r.calendar)!, d.people)) };
+  return { ...d, events: [...best.values()].map((r) => toCalEvent(r, shown.get(r.calendar)!, calendarPeople(d.people))) };
 }
 
 /** The Worker's copy of a CalEvent from Google */

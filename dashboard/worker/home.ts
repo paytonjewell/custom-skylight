@@ -39,7 +39,9 @@ export const SAMPLE_FAMILY: Person[] = [
  * FAMILY: a JSON list of people, in the order they're shown, e.g.
  * [{"id":"john","name":"John"},{"id":"jacob","name":"Jacob","age":10},{"id":"pets","name":"Pets","pet":true}]
  * Ids are stored with tasks, events and reminders, so don't change one once it's in use. Each person
- * gets the next colour (tone 1–4) unless they name one.
+ * gets the next colour (tone 1–4) unless they name one ("tone": 1–4). "tasks": false keeps someone
+ * off the task screens (calendar only); "calendar": false makes a tasks-only profile, such as a
+ * project's to-do list, that isn't on the calendar or part of "everyone".
  */
 export function family(env: Env): Person[] {
   if (!env.FAMILY) return SAMPLE_FAMILY;
@@ -51,6 +53,8 @@ export function family(env: Env): Person[] {
         id: p.id!, name: p.name!, tone: typeof p.tone === 'number' ? p.tone : (i % 4) + 1,
         ...(typeof p.age === 'number' ? { age: p.age } : {}),
         ...(p.pet ? { pet: true } : {}),
+        ...(p.tasks === false ? { tasks: false as const } : {}),
+        ...(p.calendar === false ? { calendar: false as const } : {}),
       }));
     return people.length ? people : SAMPLE_FAMILY;
   } catch (e) {

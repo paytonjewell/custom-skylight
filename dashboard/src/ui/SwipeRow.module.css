@@ -18,3 +18,6 @@
 .delete { right: 0; background: var(--alert); }
 .showStart .edit,
 .showEnd .delete { visibility: visible; transition: none; }
+
+/* Picked up and being dragged elsewhere (the copy follows the finger) */
+.lifted { opacity: .35; }

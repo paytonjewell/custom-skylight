@@ -137,3 +137,18 @@
 /* A habit's streak (🔥 5), before its count */
 .streak { flex: none; display: inline-flex; align-items: center; gap: 2px; font-size: 14px; color: var(--ink-2); }
 .streak :global(svg) { color: #f08a3c; }
+
+/* A person's list on their sheet from Today (PersonTasksSheet.tsx): the sheet is paper-coloured, so
+   rows are cards, a little roomier than in a column */
+.sheetList { display: flex; flex-direction: column; gap: 14px; }
+.sheetList .task, .sheetList .habit { background: var(--card); }
+.sheetList .task { min-height: 72px; }
+.sheetList .text b { font-size: 18px; }
+
+/* The copy of a task that follows the finger while it's dragged to another column */
+.ghost {
+  display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 8px 14px 8px 8px;
+  border-radius: 14px; background: var(--paper); color: var(--ink); font-size: 17px;
+}
+.ghost b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ghostMark { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--c-tint); }

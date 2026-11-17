@@ -4,6 +4,7 @@
 import { AISLE_ORDER, CATALOG, STORES, USUALS } from './grocery';
 import { stored } from '../lib/store';
 import type { Data, Person, Verse } from './types';
+import { calendarPeople } from './select';
 
 /** Shown when today's verse can't be loaded (KJV, public domain) */
 const VERSES: Verse[] = [
@@ -35,7 +36,7 @@ export function initialData(): Data {
   return {
     people,
     family: { id: 'family', name: 'Family', tone: 0 },
-    ALL: people.map((p) => p.id),
+    ALL: calendarPeople(people).map((p) => p.id),
     events: [], eventRecords: [], calendars: [], googleAccounts: [], googleConfigured: null,
     tasks: [], taskDone: [],
     stores: STORES, catOrder: AISLE_ORDER, groceries: [], catalog: CATALOG, groceryNames: [], usuals: USUALS, lists: [],

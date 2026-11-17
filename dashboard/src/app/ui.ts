@@ -67,6 +67,10 @@ let nextId = 1;
 export function openSheet(render: SheetSpec['render'], opts: { cls?: string; onClose?: () => void } = {}): void {
   patchUI({ sheet: { id: nextId++, render, ...opts } });
 }
+/** Close the open pop-up without running its onClose (e.g. not going back to where it came from) */
+export function dismissSheet(): void {
+  if (ui.get().sheet) patchUI({ sheet: null });
+}
 export function closeSheet(): void {
   const s = ui.get().sheet;
   if (!s) return;

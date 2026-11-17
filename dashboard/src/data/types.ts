@@ -10,6 +10,10 @@ export interface Person {
   color?: string;
   age?: number;
   pet?: boolean;
+  /** false: on the calendar only (no task column, ring or task picker), e.g. a baby */
+  tasks?: false;
+  /** false: for tasks only (not on the calendar or in "everyone"), e.g. a "Dashboard" to-do list */
+  calendar?: false;
 }
 
 export interface CalEvent {

@@ -10,12 +10,13 @@ import { SLOTS } from '../../data/tasks';
 import { dayOf, describeRepeat, shiftDay, weekdayOf, type Repeat, type Unit, type Weekday } from '../../lib/repeat';
 import { now as clockNow } from '../../lib/clock';
 import { peopleWithPhones, usePush } from '../../data/push';
-import { closeSheet, go, openSheet, toast } from '../../app/ui';
+import { closeSheet, dismissSheet, go, openSheet, toast } from '../../app/ui';
 import { openList } from '../lists/Lists';
 import { PersonPicker } from '../../ui/PersonPicker';
 import { EmojiPicker } from '../../ui/EmojiPicker';
 import { Icon } from '../../ui/Icon';
 import css from './TaskSheet.module.css';
+import { phonePeople, taskPeople } from '../../data/select';
 
 type Often = 'once' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'custom';
 type Custom = 'days' | 'weeks' | 'months' | 'nth';
@@ -31,8 +32,9 @@ const OFFSETS: [number, string][] = [[-1, 'Day before'], [0, 'On the day'], [1, 
 /** A reminder's time when it's first turned on, by part of the day */
 const REMIND_AT: Record<Slot, string> = { morning: '08:00', afternoon: '13:00', evening: '18:00', anytime: '09:00' };
 
-export function openTaskSheet(task?: Task, defaults?: Partial<TaskFields>): void {
-  openSheet(() => <TaskSheet task={task} defaults={defaults} />, { cls: 'sheet--wide' });
+/** `back`: what to reopen once the editor closes (saved, cancelled or deleted), e.g. a person's sheet */
+export function openTaskSheet(task?: Task, defaults?: Partial<TaskFields>, back?: () => void): void {
+  openSheet(() => <TaskSheet task={task} defaults={defaults} />, { cls: 'sheet--wide', onClose: back });
 }
 
 /** The controls that describe an existing rule */
@@ -85,7 +87,7 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
   usePush((s) => s.info); // re-render when who has phones loads
   const phones = peopleWithPhones();
   /** People a reminder can go to (not pets) */
-  const humans = data.people.filter((p) => !p.pet);
+  const humans = phonePeople(data.people);
   const turnOnRemind = () => {
     setRemind(REMIND_AT[slot]);
     // To the person it's for if they're a person; otherwise whoever's phone this is
@@ -206,7 +208,8 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
           <button
             className="btn btn--ghost"
             onClick={() => {
-              closeSheet();
+              // Off to the list: don't go back to a sheet this editor was opened from
+              dismissSheet();
               openList(fromList.id);
               go('lists');
             }}
@@ -226,9 +229,10 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
 
       <div className="label">Who</div>
       <PersonPicker
-        people={data.people}
+        people={taskPeople(data.people).filter((p) => p.calendar !== false)}
         everyone={data.family}
         everyoneLabel="Anyone"
+        after={taskPeople(data.people).filter((p) => p.calendar === false)}
         selected={[who === 'any' ? 'family' : who]}
         onPick={(id) => setWho(id === 'family' ? 'any' : id)}
       />

@@ -5,8 +5,10 @@ import { dataStore } from './store';
 import { store } from '../lib/store';
 import { FAMILY_KEY } from './initial';
 import type { Person } from './types';
+import { calendarPeople } from './select';
 
-const setFamily = (people: Person[]) => dataStore.set((d) => ({ ...d, people, ALL: people.map((p) => p.id) }));
+/** ALL: everyone on the calendar ("everyone" events, Anyone's tasks), so not tasks-only profiles */
+const setFamily = (people: Person[]) => dataStore.set((d) => ({ ...d, people, ALL: calendarPeople(people).map((p) => p.id) }));
 
 let started = false;
 export function startFamilySync(): void {

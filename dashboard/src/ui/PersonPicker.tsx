@@ -13,10 +13,12 @@ interface Props {
   everyoneLabel?: string;
   avatarSize?: number;
   big?: boolean;
+  /** Shown after the Everyone button (tasks-only profiles, after Anyone) */
+  after?: Person[];
 }
 
 /** Row of people as big avatar buttons (who's involved / who did it) */
-export function PersonPicker({ people, selected = [], onPick, everyone, everyoneLabel = 'Everyone', avatarSize = 56, big }: Props) {
+export function PersonPicker({ people, selected = [], onPick, everyone, everyoneLabel = 'Everyone', avatarSize = 56, big, after = [] }: Props) {
   const button = (p: Person, label: string) => (
     <button key={p.id} className={css.person + (selected.includes(p.id) ? ' ' + css.isOn : '')} style={toneStyle(p)} onClick={() => onPick(p.id)}>
       <Avatar p={p} size={avatarSize} />
@@ -27,6 +29,7 @@ export function PersonPicker({ people, selected = [], onPick, everyone, everyone
     <div className={css.picker + (big ? ' ' + css.big : '')}>
       {people.map((p) => button(p, p.name))}
       {everyone && button(everyone, everyoneLabel)}
+      {after.map((p) => button(p, p.name))}
     </div>
   );
 }

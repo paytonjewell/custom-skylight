@@ -9,9 +9,23 @@ export function person(d: Data, id: string): Person {
   if (id === 'family' || id === 'any') return d.family;
   return d.people.find((p) => p.id === id) ?? d.family;
 }
+/** People on the calendar (event people, columns, "everyone"): not tasks-only profiles */
+export const calendarPeople = (people: Person[]): Person[] => people.filter((p) => p.calendar !== false);
+/** People with tasks (columns, rings, the task picker): not calendar-only profiles */
+export const taskPeople = (people: Person[]): Person[] => people.filter((p) => p.tasks !== false);
+/**
+ * The columns on the task screens, in order: people, Anyone, then tasks-only profiles (a project's
+ * list like "Dashboard" comes last, after the household)
+ */
+export const taskLanes = (people: Person[]): string[] => {
+  const ps = taskPeople(people);
+  return [...ps.filter((p) => p.calendar !== false).map((p) => p.id), 'any', ...ps.filter((p) => p.calendar === false).map((p) => p.id)];
+};
+/** Who reminders can go to (a phone's owner): people, not pets or tasks-only profiles */
+export const phonePeople = (people: Person[]): Person[] => people.filter((p) => !p.pet && p.calendar !== false);
 
 // ------------------------------------------------------------ calendar
-export const isFamily = (d: Data, e: CalEvent) => e.people.length >= d.people.length;
+export const isFamily = (d: Data, e: CalEvent) => e.people.length >= d.ALL.length;
 export const evColor = (d: Data, e: CalEvent): Person =>
   e.color ? { ...d.family, color: e.color } : isFamily(d, e) ? d.family : person(d, e.people[0]);
 /**

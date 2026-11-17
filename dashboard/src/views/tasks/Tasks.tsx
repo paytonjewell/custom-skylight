@@ -1,17 +1,21 @@
 // Tasks: a column per person (plus Anyone), each with its habits and then its tasks for the day by
 // part of the day (Anytime first). Tapping a column's heading opens that person on their own: tasks
 // on the left, habits on the right. Arrows step to other days: past days show what was due and done,
-// future days what's coming. Tap a task to check it off; swipe right to edit, left to delete. The
-// settings (cog, saved on this device) pick which people and sections show, and whether done tasks do.
+// future days what's coming. Tap a task to check it off; swipe right to edit, left to delete; hold
+// one, then drag it onto another column to give it to them. The
+// settings (cog, saved on this device) pick which people and sections show, and all tasks, only those
+// to do, or only done ones (done ones sit at the bottom of their group).
 import { useEffect, useState } from 'react';
 import type { Data, Slot } from '../../data/types';
 import { useData } from '../../data/store';
-import { deleteTask, restoreTask, setTaskDone } from '../../data/actions';
+import { deleteTask, editTask, restoreTask, setTaskDone } from '../../data/actions';
+import { useDragDrop } from '../../ui/useDragDrop';
+import type { DragProps } from '../../ui/useDragDrop';
 import { useTaskStatus } from '../../data/taskSync';
 import { pushSupported, testPush, turnOffPush, turnOnPush, usePush } from '../../data/push';
 import { SLOTS, doneByTask, doneLate, dueOn, type DueItem } from '../../data/tasks';
 import { habitStats } from '../../data/habits';
-import { person } from '../../data/select';
+import { person, phonePeople, taskLanes, taskPeople } from '../../data/select';
 import { dayDiff, dayOf, describeRepeat, shiftDay } from '../../lib/repeat';
 import { createStore, store, stored, useStore } from '../../lib/store';
 import { useNow } from '../../lib/clock';
@@ -32,8 +36,8 @@ import { Habits } from './Habits';
 import css from './Tasks.module.css';
 
 const CHECK_MS = 350; // let the check animation play before the row changes
-/** A column per person (FAMILY, worker/home.ts), then Anyone */
-const lanesOf = (d: Data): string[] => [...d.people.map((p) => p.id), 'any'];
+/** A column per person (FAMILY, worker/home.ts), then Anyone, then tasks-only profiles */
+const lanesOf = (d: Data): string[] => taskLanes(d.people);
 type Section = Slot | 'habits';
 const SECTIONS: [Section, string][] = [['habits', 'Habits'], ...SLOTS];
 
@@ -57,12 +61,17 @@ function savedIds(key: string) {
   };
 }
 const peopleFilter = savedIds('tasks.people');
+/** Which sections show (saved on this device): shared with a person's sheet on Today */
 const sectionFilter = savedIds('tasks.sections');
-/** Hide tasks once they're done */
-const hideDone = createStore(stored('tasks.hideDone', '0') === '1');
-const setHideDone = (on: boolean) => {
-  hideDone.set(on);
-  store('tasks.hideDone', on ? '1' : '0');
+/** Which tasks show: everything (done ones last in each group), only what's left, or only what's done */
+export type DoneView = 'all' | 'todo' | 'done';
+const DONE_VIEWS: [DoneView, string][] = [['all', 'All'], ['todo', 'To do'], ['done', 'Done']];
+const isDoneView = (v: string): v is DoneView => DONE_VIEWS.some(([k]) => k === v);
+// Saved on this device (also for that sheet). Before this was three-way it was "hide done" on or off.
+const doneView = createStore<DoneView>(((v) => (isDoneView(v) ? v : stored('tasks.hideDone', '0') === '1' ? 'todo' : 'all'))(stored('tasks.doneView', '')));
+const setDoneView = (v: DoneView) => {
+  doneView.set(v);
+  store('tasks.doneView', v);
 };
 const showing = (ids: string[] | null, id: string) => !ids || ids.includes(id);
 
@@ -72,8 +81,7 @@ export function Tasks() {
   const status = useTaskStatus();
   const people = useStore(peopleFilter.store, (s) => s);
   const sections = useStore(sectionFilter.store, (s) => s);
-  const hide = useStore(hideDone, (s) => s);
-  const pending = usePendingAction(CHECK_MS);
+  const show = useStore(doneView, (s) => s);
   /** The person opened on their own (their column's heading was tapped), or null for the columns */
   const [focus, setFocus] = useState<string | null>(null);
   /** One day's tasks, every task, or the habits page */
@@ -83,47 +91,32 @@ export function Tasks() {
   // Leaving the screen goes back to today, so a check-off never lands on a day stepped to earlier
   const onScreen = useUI((s) => s.view) === 'tasks';
   useEffect(() => { if (!onScreen) setOffset(0); }, [onScreen]);
-  /** The row swiped open (one at a time) */
-  const [swiped, setSwiped] = useState<{ id: string; side: SwipeSide } | null>(null);
   const today = dayOf(now);
   const day = shiftDay(today, offset);
   const future = offset > 0;
+  const rowProps = useTaskRows(day, today);
+  // Columns: hold a task, then drag it onto someone else's column to give it to them
+  const dnd = useDragDrop<DueItem>({
+    onDrop: (x, who) => {
+      const from = x.task.who;
+      if (who === from) return;
+      editTask(x.task.id, { who });
+      toast(<>Moved <b>{x.task.title}</b> to {laneName(data, who)}</>, { icon: 'check', undo: () => editTask(x.task.id, { who: from }) });
+    },
+    ghost: (x) => (
+      <div className={css.ghost} style={toneStyle(person(data, x.task.who))}>
+        {x.task.emoji && <span className={css.ghostMark}>{x.task.emoji}</span>}
+        <b>{x.task.title}</b>
+      </div>
+    ),
+  });
+  const laneRowProps = (x: DueItem): RowProps => ({ ...rowProps(x), drag: dnd.bind(x), lifted: dnd.dragging?.task.id === x.task.id });
 
   // Everything due, done or not: counts and "All done!" use all of it, even when done tasks are hidden
   const due = dueOn(data.tasks, data.taskDone, day, today);
   const lanes = lanesOf(data).filter((id) => showing(people, id));
-  // Current streak per habit (shown on its row)
-  const streaks = new Map<string, number>();
-  const doneBy = doneByTask(data.taskDone);
-  for (const t of data.tasks) if (t.habit) streaks.set(t.id, habitStats(t, doneBy.get(t.id) ?? [], today, shiftDay(today, -400)).current);
   const counted = due.filter((x) => !x.task.habit && (focus ? x.task.who === focus : showing(people, x.task.who)));
   const left = counted.filter((x) => !x.done).length;
-
-  const tap = (x: DueItem) => {
-    const id = x.task.id + x.day;
-    if (pending.isPending(id)) return;
-    if (future) return toast('That isn’t due yet', { icon: 'clock' });
-    if (x.done) return setTaskDone(x.task.id, x.day, false);
-    pending.start(id, () => {
-      setTaskDone(x.task.id, x.day, true, x.task.who === 'any' ? null : x.task.who);
-      if (x.task.habit) return;
-      toast(<><b>{x.task.title}</b> done</>, { icon: 'check', undo: () => setTaskDone(x.task.id, x.day, false) });
-      if (day === today) cheerIfFinished(x.task.who, today);
-    });
-  };
-  const remove = (x: DueItem) => {
-    const gone = deleteTask(x.task.id);
-    if (gone) toast(<>Deleted <b>{x.task.title}</b></>, { icon: 'trash', undo: () => restoreTask(gone.task, gone.done) });
-  };
-  const rowProps = (x: DueItem) => ({
-    open: swiped?.id === x.task.id ? swiped.side : null,
-    onOpenChange: (side: SwipeSide | null) => setSwiped(side ? { id: x.task.id, side } : null),
-    onTap: () => tap(x),
-    onEdit: () => openTaskSheet(x.task),
-    onDelete: () => remove(x),
-    checking: pending.isPending(x.task.id + x.day),
-    streak: streaks.get(x.task.id) ?? 0,
-  });
 
   const shownPeople = focus ? [focus] : lanes;
   const allCount = data.tasks.filter((t) => shownPeople.includes(t.who)).length;
@@ -181,7 +174,7 @@ export function Tasks() {
         )}
         <button className={'icon-btn ' + css.cog} aria-label="Task settings" onClick={() => openSheet(() => <SettingsSheet data={data} />)}>
           <Icon name="settings" size={28} />
-          {(people || sections || hide) && <i className={css.cogDot} />}
+          {(people || sections || show !== 'all') && <i className={css.cogDot} />}
         </button>
         <button className="btn btn--solid" onClick={() => openTaskSheet(undefined, focus ? { who: focus } : people?.length === 1 ? { who: people[0] } : undefined)}>
           <Icon name="plus" size={22} />
@@ -193,7 +186,7 @@ export function Tasks() {
       ) : mode === 'habits' ? (
         <Habits data={data} people={shownPeople} today={today} />
       ) : focus ? (
-        <Detail data={data} who={focus} day={day} items={due.filter((x) => x.task.who === focus)} sections={sections} hide={hide} rowProps={rowProps} />
+        <Detail data={data} who={focus} day={day} items={due.filter((x) => x.task.who === focus)} sections={sections} show={show} rowProps={rowProps} />
       ) : (
         <div className={css.lanes} style={{ gridTemplateColumns: `repeat(${lanes.length || 1}, minmax(0, 1fr))` }}>
           {lanes.map((who) => (
@@ -204,18 +197,64 @@ export function Tasks() {
               day={day}
               items={due.filter((x) => x.task.who === who)}
               sections={sections}
-              hide={hide}
-              rowProps={rowProps}
+              show={show}
+              rowProps={laneRowProps}
               onOpen={() => setFocus(who)}
             />
           ))}
         </div>
       )}
+      {dnd.layer}
     </div>
   );
 }
 
-interface RowProps {
+/** A column's name, for "Moved … to Ace" */
+const laneName = (d: Data, who: string) => (who === 'any' ? 'Anyone' : person(d, who).name);
+
+/**
+ * Rows' actions, for the Tasks screen and a person's sheet on Today: tap to check off (habits too),
+ * swipe right to edit, left to delete. `back` reopens the sheet once the task editor closes.
+ */
+export function useTaskRows(day: string, today: string, back?: () => void): (x: DueItem) => RowProps {
+  const data = useData();
+  const pending = usePendingAction(CHECK_MS);
+  /** The row swiped open (one at a time) */
+  const [swiped, setSwiped] = useState<{ id: string; side: SwipeSide } | null>(null);
+  const future = day > today;
+  // Current streak per habit (shown on its row)
+  const streaks = new Map<string, number>();
+  const doneBy = doneByTask(data.taskDone);
+  for (const t of data.tasks) if (t.habit) streaks.set(t.id, habitStats(t, doneBy.get(t.id) ?? [], today, shiftDay(today, -400)).current);
+
+  const tap = (x: DueItem) => {
+    const id = x.task.id + x.day;
+    if (pending.isPending(id)) return;
+    if (future) return toast('That isn’t due yet', { icon: 'clock' });
+    if (x.done) return setTaskDone(x.task.id, x.day, false);
+    pending.start(id, () => {
+      setTaskDone(x.task.id, x.day, true, x.task.who === 'any' ? null : x.task.who);
+      if (x.task.habit) return;
+      toast(<><b>{x.task.title}</b> done</>, { icon: 'check', undo: () => setTaskDone(x.task.id, x.day, false) });
+      if (day === today) cheerIfFinished(x.task.who, today);
+    });
+  };
+  const remove = (x: DueItem) => {
+    const gone = deleteTask(x.task.id);
+    if (gone) toast(<>Deleted <b>{x.task.title}</b></>, { icon: 'trash', undo: () => restoreTask(gone.task, gone.done) });
+  };
+  return (x: DueItem) => ({
+    open: swiped?.id === x.task.id ? swiped.side : null,
+    onOpenChange: (side: SwipeSide | null) => setSwiped(side ? { id: x.task.id, side } : null),
+    onTap: () => tap(x),
+    onEdit: () => openTaskSheet(x.task, undefined, back),
+    onDelete: () => remove(x),
+    checking: pending.isPending(x.task.id + x.day),
+    streak: streaks.get(x.task.id) ?? 0,
+  });
+}
+
+export interface RowProps {
   open: SwipeSide | null;
   onOpenChange: (side: SwipeSide | null) => void;
   onTap: () => void;
@@ -224,30 +263,36 @@ interface RowProps {
   checking: boolean;
   /** Habits: due days in a row done */
   streak: number;
+  /** In the columns: hold to pick up and move to another column */
+  drag?: DragProps;
+  /** It's the one being dragged */
+  lifted?: boolean;
 }
 
 /** A person's tasks for a day, split for showing: counts use them all, rows skip hidden done ones */
-function split(items: DueItem[], sections: string[] | null, hide: boolean) {
+export function split(items: DueItem[], sections: string[] | null, show: DoneView) {
   const tasks = items.filter((x) => !x.task.habit && showing(sections, x.task.slot));
   const done = tasks.filter((x) => x.done).length;
-  const visible = (x: DueItem) => !hide || !x.done;
+  const visible = (x: DueItem) => (show === 'todo' ? !x.done : show === 'done' ? !!x.done : true);
+  // Done ones at the bottom of their group (a stable sort keeps the rest in order)
+  const doneLast = (list: DueItem[]) => list.slice().sort((a, b) => Number(!!a.done) - Number(!!b.done));
   return {
     tasks,
     done,
     all: tasks.length > 0 && done === tasks.length,
-    shownTasks: tasks.filter(visible),
-    shownHabits: showing(sections, 'habits') ? items.filter((x) => x.task.habit && visible(x)) : [],
+    shownTasks: doneLast(tasks.filter(visible)),
+    shownHabits: showing(sections, 'habits') ? doneLast(items.filter((x) => x.task.habit && visible(x))) : [],
   };
 }
 
-function Lane({ data, who, day, items, sections, hide, rowProps, onOpen }: {
-  data: Data; who: string; day: string; items: DueItem[]; sections: string[] | null; hide: boolean;
+function Lane({ data, who, day, items, sections, show, rowProps, onOpen }: {
+  data: Data; who: string; day: string; items: DueItem[]; sections: string[] | null; show: DoneView;
   rowProps: (x: DueItem) => RowProps; onOpen: () => void;
 }) {
   const p = person(data, who);
-  const { tasks, done, all, shownTasks, shownHabits: habits } = split(items, sections, hide);
+  const { tasks, done, all } = split(items, sections, show);
   return (
-    <section className={css.lane + ' surface'} style={toneStyle(p)} data-lane={who}>
+    <section className={css.lane + ' surface'} style={toneStyle(p)} data-lane={who} data-drop={who}>
       <button className={css.head} onClick={onOpen} aria-label={`Open ${who === 'any' ? 'Anyone' : p.name}’s tasks`}>
         <Avatar p={p} size={42} />
         <div>
@@ -259,42 +304,59 @@ function Lane({ data, who, day, items, sections, hide, rowProps, onOpen }: {
           <span className="num">{all ? '✓' : tasks.length ? done + '/' + tasks.length : '–'}</span>
         </div>
       </button>
-      <div className={css.list}>
-        {habits.length > 0 && (
-          <div className={css.group}>
-            <div className={css.groupLabel}>Habits</div>
-            {habits.map((x) => <HabitRow key={x.task.id} x={x} {...rowProps(x)} />)}
-          </div>
-        )}
-        {SLOTS.map(([slot, label]) => {
-          const group = shownTasks.filter((x) => x.task.slot === slot);
-          if (!group.length) return null;
-          return (
-            <div key={slot} className={css.group}>
-              <div className={css.groupLabel}>{label}</div>
-              {group.map((x) => <TaskRow key={x.task.id} x={x} viewing={day} {...rowProps(x)} />)}
-            </div>
-          );
-        })}
-        {!habits.length && !tasks.length && <p className={css.none}>Nothing to do</p>}
-        {all && <div className={css.allDone + ' serif'}>All done<i>!</i></div>}
-      </div>
+      <PersonList day={day} items={items} sections={sections} show={show} rowProps={rowProps} className={css.list} />
     </section>
   );
 }
 
+/** Rows on a sheet, which is paper-coloured: cards stand out on it (PersonTasksSheet) */
+export const SHEET_LIST = css.sheetList;
+
+/**
+ * One person's list for a day: habits, then tasks by part of the day (Anytime first). A column on
+ * the Tasks screen, and the sheet from their ring on Today.
+ */
+export function PersonList({ day, items, sections, show, rowProps, className }: {
+  day: string; items: DueItem[]; sections: string[] | null; show: DoneView; rowProps: (x: DueItem) => RowProps; className?: string;
+}) {
+  const { tasks, all, shownTasks, shownHabits: habits } = split(items, sections, show);
+  return (
+    <div className={className}>
+      {habits.length > 0 && (
+        <div className={css.group}>
+          <div className={css.groupLabel}>Habits</div>
+          {habits.map((x) => <HabitRow key={x.task.id} x={x} {...rowProps(x)} />)}
+        </div>
+      )}
+      {SLOTS.map(([slot, label]) => {
+        const group = shownTasks.filter((x) => x.task.slot === slot);
+        if (!group.length) return null;
+        return (
+          <div key={slot} className={css.group}>
+            <div className={css.groupLabel}>{label}</div>
+            {group.map((x) => <TaskRow key={x.task.id} x={x} viewing={day} {...rowProps(x)} />)}
+          </div>
+        );
+      })}
+      {!habits.length && !tasks.length && <p className={css.none}>Nothing to do</p>}
+      {show === 'done' && !habits.length && !shownTasks.length && tasks.length > 0 && <p className={css.none}>Nothing done yet</p>}
+      {all && show !== 'done' && <div className={css.allDone + ' serif'}>All done<i>!</i></div>}
+    </div>
+  );
+}
+
 /** One person on their own: tasks by part of the day on the left, habits on the right (stacked on phones) */
-function Detail({ data, who, day, items, sections, hide, rowProps }: {
-  data: Data; who: string; day: string; items: DueItem[]; sections: string[] | null; hide: boolean; rowProps: (x: DueItem) => RowProps;
+function Detail({ data, who, day, items, sections, show, rowProps }: {
+  data: Data; who: string; day: string; items: DueItem[]; sections: string[] | null; show: DoneView; rowProps: (x: DueItem) => RowProps;
 }) {
   const p = person(data, who);
-  const { tasks, all, shownTasks, shownHabits: habits } = split(items, sections, hide);
+  const { tasks, all, shownTasks, shownHabits: habits } = split(items, sections, show);
   const habitPanel = showing(sections, 'habits') && (
     <aside className={css.detailHabits}>
       <div className={css.groupLabel}>Habits</div>
       {habits.length
         ? habits.map((x) => <HabitRow key={x.task.id} x={x} {...rowProps(x)} />)
-        : <p className={css.none}>{items.some((x) => x.task.habit) ? 'All done' : 'No habits today'}</p>}
+        : <p className={css.none}>{!items.some((x) => x.task.habit) ? 'No habits today' : show === 'done' ? 'None done yet' : 'All done'}</p>}
     </aside>
   );
   return (
@@ -311,7 +373,8 @@ function Detail({ data, who, day, items, sections, hide, rowProps }: {
           );
         })}
         {!tasks.length && <p className={css.none}>Nothing to do</p>}
-        {all && <div className={css.allDone + ' serif'}>All done<i>!</i></div>}
+        {show === 'done' && !shownTasks.length && tasks.length > 0 && <p className={css.none}>Nothing done yet</p>}
+        {all && show !== 'done' && <div className={css.allDone + ' serif'}>All done<i>!</i></div>}
       </div>
       {habitPanel}
     </div>
@@ -394,47 +457,28 @@ function cheerIfFinished(who: string, today: string): void {
 function SettingsSheet({ data }: { data: Data }) {
   const people = useStore(peopleFilter.store, (s) => s);
   const sections = useStore(sectionFilter.store, (s) => s);
-  const hide = useStore(hideDone, (s) => s);
-  /** Toggle one id in a saved list; all (or none) ticked means "all" */
-  const toggle = (f: typeof peopleFilter, cur: string[] | null, all: string[], id: string) => {
-    const on = cur ?? all;
-    const next = on.includes(id) ? on.filter((x) => x !== id) : [...on, id];
-    f.set(next.length === 0 || next.length === all.length ? null : all.filter((x) => next.includes(x)));
-  };
+  const show = useStore(doneView, (s) => s);
   const onPeople = people ?? lanesOf(data);
-  const chip = (on: boolean) => 'chip' + (on ? ' is-on' : '');
   return (
     <div className="sheet-pad">
       <SheetHeader kicker="Tasks" title="Settings" />
       <div className={'label ' + css.sheetLabel}>People</div>
       <PersonPicker
-        people={data.people}
+        people={taskPeople(data.people).filter((p) => p.calendar !== false)}
         everyone={data.family}
         everyoneLabel="Anyone"
+        after={taskPeople(data.people).filter((p) => p.calendar === false)}
         selected={onPeople.map((id) => (id === 'any' ? 'family' : id))}
-        onPick={(id) => toggle(peopleFilter, people, lanesOf(data), id === 'family' ? 'any' : id)}
+        onPick={(id) => toggleIn(peopleFilter, people, lanesOf(data), id === 'family' ? 'any' : id)}
       />
-      <div className={'label ' + css.sheetLabel}>Sections</div>
-      <div className="chips">
-        {SECTIONS.map(([id, label]) => (
-          <button key={id} className={chip(showing(sections, id))} onClick={() => toggle(sectionFilter, sections, SECTIONS.map(([s]) => s), id)}>
-            {showing(sections, id) && <Icon name="check" size={18} />}
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className={'label ' + css.sheetLabel}>Done tasks</div>
-      <div className="chips">
-        <button className={chip(!hide)} onClick={() => setHideDone(false)}>Show</button>
-        <button className={chip(hide)} onClick={() => setHideDone(true)}>Hide</button>
-      </div>
+      <ShowSettings />
       <div className={'label ' + css.sheetLabel}>Reminders on this phone</div>
       <PhoneReminders data={data} />
       <div className="sheet-actions">
         <button
           className="btn btn--ghost"
-          disabled={!people && !sections && !hide}
-          onClick={() => { peopleFilter.set(null); sectionFilter.set(null); setHideDone(false); }}
+          disabled={!people && !sections && show === 'all'}
+          onClick={() => { peopleFilter.set(null); sectionFilter.set(null); setDoneView('all'); }}
         >
           Reset
         </button>
@@ -444,13 +488,53 @@ function SettingsSheet({ data }: { data: Data }) {
   );
 }
 
+/** A saved list's toggle: all (or none) ticked means "all" */
+function toggleIn(f: ReturnType<typeof savedIds>, cur: string[] | null, all: string[], id: string) {
+  const on = cur ?? all;
+  const next = on.includes(id) ? on.filter((x) => x !== id) : [...on, id];
+  f.set(next.length === 0 || next.length === all.length ? null : all.filter((x) => next.includes(x)));
+}
+
+/** Which sections show, and all tasks, only those to do, or only done ones. Saved on this device, for the Tasks screen and the sheets on Today. */
+export function ShowSettings({ labelClass = css.sheetLabel }: { labelClass?: string }) {
+  const sections = useStore(sectionFilter.store, (s) => s);
+  const show = useStore(doneView, (s) => s);
+  const chip = (on: boolean) => 'chip' + (on ? ' is-on' : '');
+  return (
+    <>
+      <div className={'label ' + labelClass}>Sections</div>
+      <div className="chips">
+        {SECTIONS.map(([id, label]) => (
+          <button key={id} className={chip(showing(sections, id))} onClick={() => toggleIn(sectionFilter, sections, SECTIONS.map(([s]) => s), id)}>
+            {showing(sections, id) && <Icon name="check" size={18} />}
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className={'label ' + labelClass}>Show</div>
+      <div className="chips">
+        {DONE_VIEWS.map(([v, label]) => (
+          <button key={v} className={chip(show === v)} onClick={() => setDoneView(v)}>{label}</button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** The shown sections and which tasks show (see ShowSettings) */
+export function useShowSettings(): { sections: string[] | null; show: DoneView; filtered: boolean } {
+  const sections = useStore(sectionFilter.store, (s) => s);
+  const show = useStore(doneView, (s) => s);
+  return { sections, show, filtered: !!sections || show !== 'all' };
+}
+
 /** Turn phone reminders on or off on this device, and say whose phone it is */
 function PhoneReminders({ data }: { data: Data }) {
   const on = usePush((s) => s.person);
   const [who, setWho] = useState<string | null>(on);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const humans = data.people.filter((p) => !p.pet);
+  const humans = phonePeople(data.people);
   if (!pushSupported) {
     return <p className={css.remindNote}>Reminders go to phones. Open White Lotus HQ on your phone and turn them on here.</p>;
   }
@@ -499,8 +583,8 @@ function PhoneReminders({ data }: { data: Data }) {
 const fmtTime = (hhmm: string) =>
   new Date(`2000-01-01T${hhmm}:00`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 const asDate = (day: string) => new Date(day + 'T12:00:00');
-const fmtDate = (day: string) => asDate(day).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-function dayName(offset: number, day: string): string {
+export const fmtDate = (day: string) => asDate(day).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+export function dayName(offset: number, day: string): string {
   if (offset === 0) return 'Today';
   if (offset === -1) return 'Yesterday';
   if (offset === 1) return 'Tomorrow';

@@ -1,15 +1,18 @@
-// One person's tasks for today, opened from their ring on Today: tap a task to check it off (or back
-// on). Habits aren't listed, as they aren't counted in the rings. "All tasks" opens the Tasks screen.
-import type { DueItem } from '../../data/tasks';
-import { dueToday } from '../../data/tasks';
+// One person's tasks, opened from their ring on Today: a small Tasks screen for just them. Habits,
+// then tasks by part of the day (Anytime first); tap to check off, swipe right to edit, left to
+// delete; arrows step to other days; the cog picks which sections show and all / to do / done tasks
+// (the same settings as the Tasks screen, saved on this device). Editing a task comes back here.
+import { useState } from 'react';
+import { dueOn } from '../../data/tasks';
 import { useData } from '../../data/store';
 import { person } from '../../data/select';
-import { setTaskDone } from '../../data/actions';
-import { describeRepeat, dayOf } from '../../lib/repeat';
+import { dayOf, shiftDay } from '../../lib/repeat';
 import { useNow } from '../../lib/clock';
-import { closeSheet, go, openSheet, toast } from '../../app/ui';
+import { closeSheet, go, openSheet } from '../../app/ui';
 import { Avatar, toneStyle } from '../../ui/people';
-import { EmptyNote } from '../../ui/EmptyNote';
+import { Icon } from '../../ui/Icon';
+import { openTaskSheet } from './TaskSheet';
+import { PersonList, SHEET_LIST, ShowSettings, dayName, fmtDate, split, useShowSettings, useTaskRows } from './Tasks';
 import css from './PersonTasksSheet.module.css';
 
 /** `who`: a person id, or 'any' for tasks anyone can do */
@@ -20,55 +23,64 @@ export function openPersonTasks(who: string): void {
 function PersonTasks({ who }: { who: string }) {
   const data = useData();
   const now = useNow();
-  const list = dueToday(data.tasks, data.taskDone, dayOf(now)).filter((x) => !x.task.habit && x.task.who === who);
+  const { sections, show, filtered } = useShowSettings();
+  const [offset, setOffset] = useState(0);
+  const [settings, setSettings] = useState(false);
+  const today = dayOf(now);
+  const day = shiftDay(today, offset);
+  const back = () => openPersonTasks(who);
+  const rowProps = useTaskRows(day, today, back);
+
+  const items = dueOn(data.tasks, data.taskDone, day, today).filter((x) => x.task.who === who);
+  const { tasks, done } = split(items, sections, show);
   const p = person(data, who);
   const name = who === 'any' ? 'Anyone' : p.name;
-  const left = list.filter((x) => !x.done).length;
-
-  const tap = (x: DueItem) => {
-    if (x.done) return setTaskDone(x.task.id, x.day, false);
-    setTaskDone(x.task.id, x.day, true, who === 'any' ? null : who);
-    toast(<><b>{x.task.title}</b> done</>, { icon: 'check', undo: () => setTaskDone(x.task.id, x.day, false) });
-  };
+  const left = tasks.length - done;
+  const summary =
+    !tasks.length ? 'Nothing due'
+    : offset > 0 ? `${tasks.length} due`
+    : left ? `${left} of ${tasks.length} left` : 'All done';
 
   return (
-    <div className={'sheet-pad ' + css.sheet} style={toneStyle(p)}>
+    // data-lane: confetti comes from here when the last task is checked off
+    <div className={'sheet-pad ' + css.sheet} style={toneStyle(p)} data-lane={who}>
       <header className={css.head}>
         <Avatar p={p} size={48} />
         <span className={css.who}>
           <b>{name}</b>
-          <small>{list.length ? (left ? `${left} of ${list.length} left today` : 'All done today') : 'Nothing today'}</small>
+          {/* The day is in the arrows; the full date only when away from today */}
+          <small>{offset ? fmtDate(day) + ' · ' : ''}{summary}</small>
         </span>
+        <span className={css.nav}>
+          <button className="icon-btn" aria-label="Previous day" onClick={() => setOffset(offset - 1)}>
+            <Icon name="left" size={26} />
+          </button>
+          <button className={css.dayName} onClick={() => setOffset(0)} disabled={offset === 0} aria-label="Back to today">
+            {dayName(offset, day)}
+          </button>
+          <button className="icon-btn" aria-label="Next day" onClick={() => setOffset(offset + 1)}>
+            <Icon name="right" size={26} />
+          </button>
+        </span>
+        <button className={css.cog + (settings ? ' ' + css.isOn : '')} aria-label="What shows" aria-expanded={settings} onClick={() => setSettings(!settings)}>
+          <Icon name="settings" size={24} />
+          {filtered && !settings && <i className={css.cogDot} />}
+        </button>
       </header>
-      {list.length ? (
-        <ul className={css.list}>
-          {list.map((x) => (
-            <li key={x.task.id + x.day}>
-              <button className={css.row + (x.done ? ' ' + css.isDone : '') + (x.overdue ? ' ' + css.isOverdue : '')} onClick={() => tap(x)}>
-                {/* As on the Tasks screen: the emoji on a tinted square, which fills and ticks when done */}
-                <span className={css.mark}>
-                  {x.task.emoji}
-                  <span className={css.check}>
-                    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
-                  </span>
-                </span>
-                <span className={css.text}>
-                  <b>{x.task.title}</b>
-                  {(x.overdue || x.task.repeat) && (
-                    <small>{x.overdue ? 'Overdue' : describeRepeat(x.task.repeat!)}</small>
-                  )}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <EmptyNote className={css.empty}>
-          <i>Nothing</i> for {name} today
-        </EmptyNote>
+      {settings && (
+        <div className={css.settings}>
+          <ShowSettings labelClass={css.settingsLabel} />
+        </div>
       )}
+      <div className={css.scroll}>
+        <PersonList day={day} items={items} sections={sections} show={show} rowProps={rowProps} className={SHEET_LIST} />
+      </div>
       <div className="sheet-actions">
-        <button className="btn btn--ghost" onClick={() => { closeSheet(); go('tasks'); }}>All tasks</button>
+        <button className="btn btn--ghost" onClick={() => { closeSheet(); go('tasks'); }}>Tasks screen</button>
+        <button className="btn btn--ghost" onClick={() => openTaskSheet(undefined, { who }, back)}>
+          <Icon name="plus" size={20} />
+          New task
+        </button>
         <button className="btn btn--solid" onClick={closeSheet}>Done</button>
       </div>
     </div>

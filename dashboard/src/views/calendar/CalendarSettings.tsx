@@ -15,6 +15,7 @@ import { Icon } from '../../ui/Icon';
 import { EmojiPicker } from '../../ui/EmojiPicker';
 import { Avatar, toneStyle } from '../../ui/people';
 import css from './CalendarSettings.module.css';
+import { calendarPeople } from '../../data/select';
 
 export function openCalendarSettings(): void {
   // Up to date when it opens (e.g. Google just set up on the server, or a calendar added in Google)
@@ -42,7 +43,7 @@ export function checkGoogleReturn(): void {
 }
 
 /** Who a calendar can belong to */
-const owners = (d: Data) => [...d.people, d.family];
+const owners = (d: Data) => [...calendarPeople(d.people), d.family];
 /** Colours for calendars that are no one's */
 const COLORS = ['#D9534F', '#F0883E', '#FFCD00', '#7FB069', '#203731', '#3FA7B5', '#4A7BD0', '#8E6CCF', '#D96BA8', '#8D6E63', '#5F6B73'];
 

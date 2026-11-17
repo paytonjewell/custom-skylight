@@ -8,7 +8,7 @@ import type { CalEvent, Calendar } from '../../data/types';
 import { dataStore, useData } from '../../data/store';
 import { addCalEvent, deleteCalEvent, editCalEvent, restoreCalEvent, type EventFields } from '../../data/actions';
 import { recordOf, whoFor } from '../../data/calendar';
-import { person } from '../../data/select';
+import { calendarPeople, person } from '../../data/select';
 import { addDays, dayStart, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow } from '../../lib/clock';
@@ -106,9 +106,10 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
   }
 
   const cal = calOf(data.calendars, calendar);
-  const allIds = data.people.map((p) => p.id);
+  const calPeople = calendarPeople(data.people);
+  const allIds = calPeople.map((p) => p.id);
   /** Whose the calendar says it is, from the title as it is now */
-  const auto = cal ? whoFor({ title }, cal, data.people) : [];
+  const auto = cal ? whoFor({ title }, cal, calPeople) : [];
   const who = chosen ? (chosen.includes('family') ? allIds : chosen) : auto;
   const pickWho = (id: string) => {
     if (id === 'family') return setChosen(['family']);
@@ -202,10 +203,10 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
         <>
           <div className="label">
             Who
-            {!chosen && !same(auto, whoFor({ title: '' }, cal, data.people)) && <span className={css.hint}> · from the name in the title</span>}
+            {!chosen && !same(auto, whoFor({ title: '' }, cal, calPeople)) && <span className={css.hint}> · from the name in the title</span>}
           </div>
           <PersonPicker
-            people={data.people}
+            people={calPeople}
             everyone={data.family}
             avatarSize={44}
             selected={who.length === allIds.length ? ['family'] : who}

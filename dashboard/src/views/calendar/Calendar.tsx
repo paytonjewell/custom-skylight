@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent,
 import type { CalEvent } from '../../data/types';
 import { useData } from '../../data/store';
 import { useCalendarEvents as useEvents } from '../../data/hooks';
-import { allDayOn, evLabel, isFamily, leaveBy, timedOn } from '../../data/select';
+import { allDayOn, calendarPeople, evLabel, isFamily, leaveBy, timedOn } from '../../data/select';
 import { addDays, dayStart, DAY_MS, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow, useNow } from '../../lib/clock';
@@ -300,8 +300,9 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
   const timed = timedOn(events, date);
   const allDay = allDayOn(events, date);
   const s = dayStart(date);
-  const ids = data.people.map((p) => p.id);
-  const cols = single ? 1 : data.people.length;
+  const lanes = calendarPeople(data.people);
+  const ids = lanes.map((p) => p.id);
+  const cols = single ? 1 : lanes.length;
   return (
     <div className={css.day}>
       {allDay.length > 0 && (
@@ -330,8 +331,8 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
             </div>
           </div>
         ) : (
-        <div className={css.lanes} style={{ gridTemplateColumns: `repeat(${data.people.length}, 1fr)` }}>
-          {data.people.map((p) => (
+        <div className={css.lanes} style={{ gridTemplateColumns: `repeat(${lanes.length}, 1fr)` }}>
+          {lanes.map((p) => (
             <div key={p.id} className={css.lane} style={toneStyle(p)}>
               <Blocks list={timedOn(events, date, p.id).filter((e) => !isFamily(data, e))} day={date} now={now} lane={p.id} />
             </div>
