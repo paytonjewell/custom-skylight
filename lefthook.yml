@@ -1,0 +1,21 @@
+# Git hooks for the dashboard (installed by `npm install` in dashboard/). Skip once with LEFTHOOK=0.
+pre-commit:
+  parallel: true
+  jobs:
+    # Format and lint what's being committed, and add the fixes to the commit
+    - name: biome
+      root: dashboard/
+      glob: '*.{ts,tsx,js,mjs,json,jsonc,css,html}'
+      run: npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+    - name: typecheck
+      root: dashboard/
+      glob: '*.{ts,tsx}'
+      run: npm run -s typecheck
+
+# Everything CI runs, before it leaves this machine
+pre-push:
+  jobs:
+    - name: check
+      root: dashboard/
+      run: npm run -s check
