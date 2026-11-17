@@ -60,7 +60,7 @@ function Grid({ lists }: { lists: Checklist[] }) {
   const kicker =
     status === 'loading' ? 'Loading lists…'
     : status === 'error' ? 'Couldn’t load your lists'
-    : `${lists.length + 1} ${pluralize(lists.length + 1, 'list')}${lists.length > 1 ? ' · hold and drag to reorder' : ''}`;
+    : `${lists.length + 1} ${pluralize(lists.length + 1, 'list')}`;
 
   const create = () => openList(addList().id);
 

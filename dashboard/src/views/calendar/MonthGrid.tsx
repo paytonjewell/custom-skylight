@@ -13,6 +13,7 @@ import { useLayout } from '../../app/layout';
 import { Icon } from '../../ui/Icon';
 import { eventStyle } from '../../ui/people';
 import { openEventSheet } from './EventSheet';
+import { dayKey, useEventDrag } from './eventDrag';
 import css from './MonthGrid.module.css';
 
 /** Row heights (px): the date line, and one lane of chips (frame / phone) */
@@ -63,6 +64,7 @@ export function MonthGrid({ start, weeks, now, month, onDay }: {
   onDay: (d: Date) => void;
 }) {
   const data = useData();
+  const drag = useEventDrag();
   const events = useCalendarEvents();
   const phone = useLayout() === 'phone';
   const lane = phone ? LANE.phone : LANE.frame;
@@ -112,6 +114,7 @@ export function MonthGrid({ start, weeks, now, month, onDay }: {
                       className={css.day + (out ? ' ' + css.isOut : '') + (past ? ' ' + css.isPast : '')}
                       aria-label={fmt.day(d) + ' ' + fmt.month(d) + ' ' + d.getDate()}
                       onClick={() => onDay(d)}
+                      data-drop={'d:' + dayKey(d)}
                     >
                       <span className={css.head}>
                         {wx && !past && !phone ? <Icon name={wx} size={18} /> : <i />}
@@ -128,8 +131,9 @@ export function MonthGrid({ start, weeks, now, month, onDay }: {
               {placed.filter((p) => p.lane < shown).map((p) => (
                 <button
                   key={p.e.id}
-                  className={css.chip + (p.e.allDay ? ' ' + css.isAllDay : '') + (p.e.end <= now ? ' ' + css.isPast : '')}
-                  style={eventStyle(data, p.e, { gridColumn: `${p.a + 1} / ${p.b + 1}`, gridRow: p.lane + 2 })}
+                  {...drag.bind(p.e)}
+                  className={css.chip + (p.e.allDay ? ' ' + css.isAllDay : '') + (p.e.end <= now ? ' ' + css.isPast : '') + (drag.lifted(p.e) ? ' ' + css.isLifted : '')}
+                  style={eventStyle(data, p.e, { gridColumn: `${p.a + 1} / ${p.b + 1}`, gridRow: p.lane + 2, ...drag.bind(p.e).style })}
                   onClick={() => openEventSheet(p.e)}
                 >
                   {!phone && !p.e.allDay && <small>{fmt.time(p.e.start).replace(':00', '')}</small>}

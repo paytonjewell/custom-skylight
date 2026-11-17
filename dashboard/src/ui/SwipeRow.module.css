@@ -16,8 +16,11 @@
 .action:active { filter: brightness(.9); }
 .edit { left: 0; background: var(--accent); }
 .delete { right: 0; background: var(--alert); }
+/* Move to tomorrow: beside Delete, when the row has it */
+.later { right: 88px; background: var(--ink-2); }
 .showStart .edit,
-.showEnd .delete { visibility: visible; transition: none; }
+.showEnd .delete,
+.showEnd .later { visibility: visible; transition: none; }
 
 /* Picked up and being dragged elsewhere (the copy follows the finger) */
 .lifted { opacity: .35; }

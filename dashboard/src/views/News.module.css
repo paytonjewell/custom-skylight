@@ -3,14 +3,17 @@
    under :global(.phone) &, since html.phone is set by src/app/layout.ts. */
 
 .news {
-  height: 100%; display: flex; flex-direction: column;
+  /* positioned: a topic tab being moved is drawn in it */
+  position: relative; height: 100%; display: flex; flex-direction: column;
 
   :global(.phone) & { height: auto; }
 }
 
-/* Topic tabs (the shared Segmented control) */
+/* Topic tabs (the shared Segmented control); hold one and drag it to reorder */
 .topics {
+  position: relative;
   & button { padding: 0 16px; }
+  & button:global(.is-lifted) { visibility: hidden; }
 
   /* Phone: six topics in a row that scrolls sideways rather than squeezing. Exactly screen-wide
      (edge to edge, past the page padding) so the chips scroll inside it; as a flex item it would
@@ -146,4 +149,11 @@
   display: flex; flex-direction: column; gap: 4px; font-size: 16px; color: var(--mute);
 
   & b { font-size: 19px; font-weight: 600; color: var(--ink); }
+}
+
+/* The topic tab under the finger while it's moved */
+.tabGhost {
+  position: absolute; z-index: 30; pointer-events: none; display: grid; place-items: center;
+  border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 16px; font-weight: 500;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .25); transform: scale(1.05);
 }

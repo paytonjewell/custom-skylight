@@ -3,7 +3,8 @@ import { useRef, useState } from 'react';
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
 import { useEvents } from '../data/hooks';
-import { countdowns, person, taskLanes, verseOfDay, weatherNow } from '../data/select';
+import { countdowns, person, verseOfDay, weatherNow } from '../data/select';
+import { useTaskLanes } from './tasks/Tasks';
 import { dayOf } from '../lib/repeat';
 import { dueToday } from '../data/tasks';
 import { fmt } from '../lib/fmt';
@@ -116,7 +117,8 @@ function Weather({ events, now }: { events: CalEvent[]; now: Date }) {
 function TasksCard({ now }: { now: Date }) {
   const data = useData();
   const due = dueToday(data.tasks, data.taskDone, dayOf(now)).filter((x) => !x.task.habit);
-  const who = taskLanes(data.people);
+  // In the order of the Tasks screen's columns (dragged there, saved on this device)
+  const who = useTaskLanes(data);
   const left = due.filter((x) => !x.done).length;
   // On a phone the rings can be wider than the card: they scroll sideways, edges fading like the countdowns
   const rings = useRef<HTMLDivElement>(null);

@@ -1,7 +1,8 @@
 /* Tasks: a column per person (plus Anyone) side by side on the frame, stacked on phones. Each column
    has its habits, then its tasks by part of the day. */
 .tasks {
-  height: 100%; display: flex; flex-direction: column;
+  /* positioned: a column being moved is drawn in it (useHoldReorder) */
+  position: relative; height: 100%; display: flex; flex-direction: column;
 
   :global(.phone) & { height: auto; }
 }
@@ -30,7 +31,8 @@
 
 /* ---------------------------------------------------------------- columns */
 .lanes {
-  flex: 1; min-height: 0; display: grid; gap: 12px;
+  /* positioned: columns are measured from it while one is moved */
+  position: relative; flex: 1; min-height: 0; display: grid; gap: 12px;
 
   /* !important: the column count is set inline */
   :global(.phone) & { flex: none; grid-template-columns: 1fr !important; }
@@ -45,7 +47,9 @@
 .ring { position: relative; width: 46px; height: 46px; flex: none; }
 .ring :global(.ring-bg) { stroke: rgba(255, 255, 255, .3); }
 .ring :global(.ring-fg) { stroke: var(--c-ink); }
-.ring :global(.num) { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: grid; place-items: center; font-size: 15px; }
+.ring :global(.num) { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: grid; place-items: center; font-size: 15px; font-feature-settings: 'case'; }
+/* "12/25" and the like: smaller, so it stays inside the ring */
+.ring :global(.num).long { font-size: 12.5px; letter-spacing: -.02em; }
 
 .list {
   flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px;
@@ -152,3 +156,12 @@
 }
 .ghost b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ghostMark { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--c-tint); }
+
+/* Moving a column (hold its heading): an empty slot where it will land, and the column under the finger */
+.laneLifted { background: transparent !important; box-shadow: inset 0 0 0 2px var(--line); }
+.laneLifted > * { visibility: hidden; }
+.laneGhost { position: absolute; z-index: 30; pointer-events: none; display: flex; transform: scale(1.02); }
+.laneGhost > .lane { flex: 1; box-shadow: 0 18px 40px rgba(0, 0, 0, .25); }
+
+/* An empty part of the day, shown while a task is dragged, to drop it into */
+.dropHere { min-height: 52px; border-radius: 14px; display: grid; place-items: center; font-size: 14px; color: var(--mute); box-shadow: inset 0 0 0 2px var(--line); }

@@ -4,9 +4,14 @@
 // the finger, the target under it is marked (`data-drop-over` on it), and letting go drops it there.
 // Near the top or bottom of the screen it scrolls, so a target out of view can be reached.
 //
-//   const dnd = useDragDrop<Item>({ onDrop: (item, target) => … , ghost: (item) => <Row …/> });
+//   const dnd = useDragDrop<Item>({ onDrop: (item, target, at) => … , ghost: (item, at) => <Row …/> });
 //   <div data-drop="Fridge">…<button {...dnd.bind(item)}>…</button></div>
 //   {dnd.layer}
+//
+// `at` says where it landed: the target element and the finger (client px), plus where in the item
+// it was held, so a drop can work out a time from a position (the calendar) or a place in a list.
+// A target with `data-drop-sides` also gets `data-drop-side="before"|"after"` while hovered (which
+// half the finger is over), for an insertion line.
 import { useEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -48,19 +53,46 @@ interface Live<T> extends Drag<T> {
   raf: number;
 }
 
-/** The drop target under a point: the nearest [data-drop] (its value) */
-function targetAt(x: number, y: number): { el: HTMLElement; value: string } | null {
-  const el = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-drop]');
-  return el ? { el, value: el.dataset.drop! } : null;
+/** Where a drag is, for onDrop and the ghost: the target under the finger, the finger, and the grab offset */
+export interface DropAt {
+  el: HTMLElement;
+  value: string;
+  x: number;
+  y: number;
+  /** Where in the item it was held (client px from its top-left) */
+  dx: number;
+  dy: number;
+  /** For targets with data-drop-sides: which half the finger is over */
+  side: 'before' | 'after';
 }
+
+const sideOf = (el: HTMLElement, y: number): 'before' | 'after' => {
+  const r = el.getBoundingClientRect();
+  return y < r.top + r.height / 2 ? 'before' : 'after';
+};
+
+/**
+ * The drop target under a point: the nearest [data-drop] of the topmost thing there that's in one.
+ * Things over a target that aren't in it themselves (the calendar's event chips over its days) don't
+ * hide it.
+ */
+function targetAt(x: number, y: number): { el: HTMLElement; value: string } | null {
+  for (const hit of document.elementsFromPoint(x, y)) {
+    const el = hit.closest<HTMLElement>('[data-drop]');
+    if (el) return { el, value: el.dataset.drop! };
+  }
+  return null;
+}
+/** While something is dragged, <html data-dragging>: swipes (the calendar's pages, pull-to-refresh) stand aside */
+const flagDragging = (on: boolean) => document.documentElement.toggleAttribute('data-dragging', on);
 
 /** What `bind` puts on something that can be picked up */
 export type DragProps = ReturnType<ReturnType<typeof useDragDrop>['bind']>;
 
 export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }: {
-  onDrop: (item: T, target: string) => void;
-  /** What follows the finger */
-  ghost: (item: T) => ReactNode;
+  onDrop: (item: T, target: string, at: DropAt) => void;
+  /** What follows the finger (`at`: where it is now, or null when it's over no target) */
+  ghost: (item: T, at: DropAt | null) => ReactNode;
   holdMs?: number;
   /** The copy is only as wide as it needs, held near its left end (so what's under it stays in view),
    *  instead of the picked-up thing's size held where it was grabbed */
@@ -75,11 +107,17 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
   const drop = useRef(onDrop);
   drop.current = onDrop;
 
-  const mark = (el: HTMLElement | null) => {
+  const mark = (el: HTMLElement | null, y = 0) => {
+    if (el && el.hasAttribute('data-drop-sides')) el.setAttribute('data-drop-side', sideOf(el, y));
     if (over.current === el) return;
     over.current?.removeAttribute('data-drop-over');
+    over.current?.removeAttribute('data-drop-side');
     el?.setAttribute('data-drop-over', '');
     over.current = el;
+  };
+  const atOf = (d: Drag<T>): DropAt | null => {
+    const t = targetAt(d.x, d.y);
+    return t ? { ...t, x: d.x, y: d.y, dx: d.dx, dy: d.dy, side: sideOf(t.el, d.y) } : null;
   };
 
   useEffect(() => {
@@ -95,20 +133,23 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
       d.x = e.clientX;
       d.y = e.clientY;
       setDrag({ ...d });
-      mark(targetAt(e.clientX, e.clientY)?.el ?? null);
+      mark(targetAt(e.clientX, e.clientY)?.el ?? null, e.clientY);
     };
     const end = (e: PointerEvent) => {
       if (pending.current) { clearTimeout(pending.current.timer); pending.current = null; }
       const d = live.current;
       if (!d) return;
-      const t = e.type === 'pointerup' ? targetAt(e.clientX, e.clientY) : null;
+      d.x = e.clientX;
+      d.y = e.clientY;
+      const at = e.type === 'pointerup' ? atOf(d) : null;
       cancelAnimationFrame(d.raf);
       live.current = null;
+      flagDragging(false);
       setDrag(null);
       mark(null);
       justDragged.current = true;
       setTimeout(() => { justDragged.current = false; }, 50);
-      if (t) drop.current(d.item, t.value);
+      if (at) drop.current(d.item, at.value, at);
     };
     // While dragging, a finger moving mustn't scroll the page
     const noScroll = (ev: TouchEvent) => { if (live.current && ev.cancelable) ev.preventDefault(); };
@@ -138,6 +179,7 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
           navigator.vibrate?.(12);
           const d: Live<T> = { item, x, y, dx: x - r.left, dy: y - r.top, w: r.width, sc: scrollerOf(el), raf: 0 };
           live.current = d;
+          flagDragging(true);
           setDrag({ ...d });
           // Near the top or bottom of what's showing, scroll (faster nearer the edge); what slides
           // under the finger becomes the target
@@ -149,7 +191,10 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
             if (v) {
               const before = cur.sc.scrollTop;
               cur.sc.scrollTop += Math.max(-1, Math.min(1, v)) * SCROLL_SPEED;
-              if (cur.sc.scrollTop !== before) mark(targetAt(cur.x, cur.y)?.el ?? null);
+              if (cur.sc.scrollTop !== before) {
+                mark(targetAt(cur.x, cur.y)?.el ?? null, cur.y);
+                setDrag({ ...cur });
+              }
             }
             cur.raf = requestAnimationFrame(step);
           };
@@ -171,7 +216,7 @@ export function useDragDrop<T>({ onDrop, ghost, holdMs = 350, compact = false }:
           className={'drag-ghost' + (compact ? ' drag-ghost--compact' : '')}
           style={compact ? { left: drag.x - 24, top: drag.y - 24 } : { left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.w }}
         >
-          {ghost(drag.item)}
+          {ghost(drag.item, atOf(drag))}
         </div>,
         document.body,
       )

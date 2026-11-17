@@ -2,13 +2,15 @@
 // part of the day (Anytime first). Tapping a column's heading opens that person on their own: tasks
 // on the left, habits on the right. Arrows step to other days: past days show what was due and done,
 // future days what's coming. Tap a task to check it off; swipe right to edit, left to delete; hold
-// one, then drag it onto another column to give it to them. The
+// one, then drag it onto another column to give it to them; hold a column's heading to move the
+// column (the order is saved on this device, and Today's rings follow it). The
 // settings (cog, saved on this device) pick which people and sections show, and all tasks, only those
 // to do, or only done ones (done ones sit at the bottom of their group).
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useHoldReorder } from '../../ui/useHoldReorder';
 import type { Data, Slot } from '../../data/types';
 import { useData } from '../../data/store';
-import { deleteTask, editTask, restoreTask, setTaskDone } from '../../data/actions';
+import { deleteTask, editTask, restoreTask, setTaskDone, type TaskFields } from '../../data/actions';
 import { useDragDrop } from '../../ui/useDragDrop';
 import type { DragProps } from '../../ui/useDragDrop';
 import { useTaskStatus } from '../../data/taskSync';
@@ -75,6 +77,16 @@ const setDoneView = (v: DoneView) => {
 };
 const showing = (ids: string[] | null, id: string) => !ids || ids.includes(id);
 
+/** The columns' order, as dragged by their headings (saved on this device); null: the usual order */
+const laneOrder = savedIds('tasks.order');
+/** Columns in the saved order; ones it doesn't mention (someone new) keep their usual place at the end */
+const inOrder = (ids: string[], saved: string[] | null): string[] =>
+  !saved ? ids : [...saved.filter((id) => ids.includes(id)), ...ids.filter((id) => !saved.includes(id))];
+/** Today's rings and the Tasks columns, in the order chosen on the Tasks screen */
+export function useTaskLanes(d: Data): string[] {
+  return inOrder(lanesOf(d), useStore(laneOrder.store, (s) => s));
+}
+
 export function Tasks() {
   const data = useData();
   const now = useNow();
@@ -94,27 +106,21 @@ export function Tasks() {
   const today = dayOf(now);
   const day = shiftDay(today, offset);
   const future = offset > 0;
-  const rowProps = useTaskRows(day, today);
-  // Columns: hold a task, then drag it onto someone else's column to give it to them
-  const dnd = useDragDrop<DueItem>({
-    onDrop: (x, who) => {
-      const from = x.task.who;
-      if (who === from) return;
-      editTask(x.task.id, { who });
-      toast(<>Moved <b>{x.task.title}</b> to {laneName(data, who)}</>, { icon: 'check', undo: () => editTask(x.task.id, { who: from }) });
-    },
-    ghost: (x) => (
-      <div className={css.ghost} style={toneStyle(person(data, x.task.who))}>
-        {x.task.emoji && <span className={css.ghostMark}>{x.task.emoji}</span>}
-        <b>{x.task.title}</b>
-      </div>
-    ),
-  });
-  const laneRowProps = (x: DueItem): RowProps => ({ ...rowProps(x), drag: dnd.bind(x), lifted: dnd.dragging?.task.id === x.task.id });
+  const { rowProps, layer: dragLayer } = useTaskRows(day, today);
 
   // Everything due, done or not: counts and "All done!" use all of it, even when done tasks are hidden
   const due = dueOn(data.tasks, data.taskDone, day, today);
-  const lanes = lanesOf(data).filter((id) => showing(people, id));
+  const allLanes = useTaskLanes(data);
+  const lanes = allLanes.filter((id) => showing(people, id));
+  // Hold a column's heading, then drag it to another place (the order of hidden columns is kept)
+  const root = useRef<HTMLDivElement>(null);
+  const grid = useRef<HTMLDivElement>(null);
+  const reorder = useHoldReorder({
+    ids: lanes,
+    onCommit: (next) => laneOrder.set([...next, ...allLanes.filter((id) => !next.includes(id))]),
+    container: root,
+    scroller: grid,
+  });
   const counted = due.filter((x) => !x.task.habit && (focus ? x.task.who === focus : showing(people, x.task.who)));
   const left = counted.filter((x) => !x.done).length;
 
@@ -129,7 +135,7 @@ export function Tasks() {
     : `${focus ? (focus === 'any' ? 'Anyone' : person(data, focus).name) + ' · ' : ''}${fmtDate(day)} · ${counted.length ? (future ? `${counted.length} due` : left ? `${left} left` : 'all done') : 'nothing due'}`;
 
   return (
-    <div className={css.tasks}>
+    <div className={css.tasks} ref={root}>
       <PageHeader
         kicker={kicker}
         title={mode !== 'day' ? (
@@ -188,8 +194,8 @@ export function Tasks() {
       ) : focus ? (
         <Detail data={data} who={focus} day={day} items={due.filter((x) => x.task.who === focus)} sections={sections} show={show} rowProps={rowProps} />
       ) : (
-        <div className={css.lanes} style={{ gridTemplateColumns: `repeat(${lanes.length || 1}, minmax(0, 1fr))` }}>
-          {lanes.map((who) => (
+        <div className={css.lanes} ref={grid} style={{ gridTemplateColumns: `repeat(${lanes.length || 1}, minmax(0, 1fr))` }}>
+          {reorder.order.map((who) => (
             <Lane
               key={who}
               data={data}
@@ -198,13 +204,30 @@ export function Tasks() {
               items={due.filter((x) => x.task.who === who)}
               sections={sections}
               show={show}
-              rowProps={laneRowProps}
+              rowProps={rowProps}
               onOpen={() => setFocus(who)}
+              move={reorder.itemProps(who)}
+              lifted={reorder.ghost?.id === who}
             />
           ))}
         </div>
       )}
-      {dnd.layer}
+      {/* The column being moved, under the finger */}
+      {reorder.ghost && !focus && mode === 'day' && (
+        <div className={css.laneGhost} style={{ left: reorder.ghost.x, top: reorder.ghost.y, width: reorder.ghost.w, height: reorder.ghost.h }}>
+          <Lane
+            data={data}
+            who={reorder.ghost.id}
+            day={day}
+            items={due.filter((x) => x.task.who === reorder.ghost!.id)}
+            sections={sections}
+            show={show}
+            rowProps={rowProps}
+            onOpen={() => {}}
+          />
+        </div>
+      )}
+      {dragLayer}
     </div>
   );
 }
@@ -216,8 +239,13 @@ const laneName = (d: Data, who: string) => (who === 'any' ? 'Anyone' : person(d,
  * Rows' actions, for the Tasks screen and a person's sheet on Today: tap to check off (habits too),
  * swipe right to edit, left to delete. `back` reopens the sheet once the task editor closes.
  */
-export function useTaskRows(day: string, today: string, back?: () => void): (x: DueItem) => RowProps {
+/** A task is being dragged (anywhere): lists show every part of the day, so there's somewhere to drop it */
+const draggingTask = createStore(false);
+export const useTaskDragging = () => useStore(draggingTask, (v) => v);
+
+export function useTaskRows(day: string, today: string, back?: () => void): { rowProps: (x: DueItem) => RowProps; layer: ReactNode } {
   const data = useData();
+  const { sections, show } = useShowSettings();
   const pending = usePendingAction(CHECK_MS);
   /** The row swiped open (one at a time) */
   const [swiped, setSwiped] = useState<{ id: string; side: SwipeSide } | null>(null);
@@ -243,15 +271,81 @@ export function useTaskRows(day: string, today: string, back?: () => void): (x: 
     const gone = deleteTask(x.task.id);
     if (gone) toast(<>Deleted <b>{x.task.title}</b></>, { icon: 'trash', undo: () => restoreTask(gone.task, gone.done) });
   };
-  return (x: DueItem) => ({
+  /** A one-off that isn't done: due the day after the one showing (an overdue one: tomorrow) */
+  const later = (x: DueItem) => {
+    const was = x.task.due;
+    const to = shiftDay(day < today ? today : day, 1);
+    editTask(x.task.id, { due: to });
+    toast(<><b>{x.task.title}</b> moved to {to === shiftDay(today, 1) ? 'tomorrow' : fmtDate(to)}</>, { icon: 'later', undo: () => editTask(x.task.id, { due: was }) });
+  };
+
+  // Hold a task, then drag it: within its group to put it in order, into another part of the day,
+  // or onto someone else's column (or a group or row in it) to give it to them
+  const dnd = useDragDrop<DueItem>({
+    onDrop: (x, target, at) => moveTask(x, target, at.side),
+    ghost: (x) => (
+      <div className={css.ghost} style={toneStyle(person(data, x.task.who))}>
+        {x.task.emoji && <span className={css.ghostMark}>{x.task.emoji}</span>}
+        <b>{x.task.title}</b>
+      </div>
+    ),
+  });
+  /**
+   * A drop: `target` is "who" (a column), "who|slot" (a group in it; 'habits' for habits) or
+   * "who|slot|taskId" (a row, with the dragged one going before or after it)
+   */
+  const moveTask = (x: DueItem, target: string, side: 'before' | 'after') => {
+    const t = x.task;
+    const [who, group, rowId] = target.split('|');
+    const change: Partial<TaskFields> = {};
+    if (who !== t.who) change.who = who;
+    // A habit stays a habit and a task a task: a drop on the other kind's group just changes whose it is
+    const fits = group && (group === 'habits') === t.habit;
+    if (fits && !t.habit && group !== t.slot) change.slot = group as Slot;
+    // Its place among what's showing in that group now (others there keep their order)
+    const edits = new Map<string, Partial<TaskFields>>();
+    if (fits) {
+      const showingThere = split(dueOn(data.tasks, data.taskDone, day, today).filter((y) => y.task.who === who), sections, show);
+      const list = (t.habit ? showingThere.shownHabits : showingThere.shownTasks.filter((y) => y.task.slot === group))
+        .map((y) => y.task).filter((y) => y.id !== t.id);
+      let at = rowId ? list.findIndex((y) => y.id === rowId) : list.length;
+      if (at < 0) at = list.length;
+      else if (rowId && side === 'after') at++;
+      list.splice(at, 0, t);
+      list.forEach((y, i) => { if (y.position !== i + 1) edits.set(y.id, { position: i + 1 }); });
+    }
+    if (Object.keys(change).length) edits.set(t.id, { ...edits.get(t.id), ...change });
+    if (!edits.size) return;
+    // Undo puts back what each one had
+    const before = [...edits.keys()].map((id) => {
+      const y = data.tasks.find((z) => z.id === id)!;
+      const was: Partial<TaskFields> = {};
+      for (const k of Object.keys(edits.get(id)!) as (keyof TaskFields)[]) (was as Record<string, unknown>)[k] = y[k] ?? null;
+      return [id, was] as const;
+    });
+    for (const [id, p] of edits) editTask(id, p);
+    const undo = () => before.forEach(([id, p]) => editTask(id, p));
+    if (change.who) toast(<>Moved <b>{t.title}</b> to {laneName(data, who)}</>, { icon: 'check', undo });
+    else if (change.slot) toast(<>Moved <b>{t.title}</b> to {SLOTS.find(([s]) => s === change.slot)![1]}</>, { icon: 'check', undo });
+  };
+
+  const lifted = !!dnd.dragging;
+  useEffect(() => { if (lifted) { draggingTask.set(true); return () => draggingTask.set(false); } }, [lifted]);
+
+  const rowProps = (x: DueItem): RowProps => ({
     open: swiped?.id === x.task.id ? swiped.side : null,
     onOpenChange: (side: SwipeSide | null) => setSwiped(side ? { id: x.task.id, side } : null),
     onTap: () => tap(x),
     onEdit: () => openTaskSheet(x.task, undefined, back),
     onDelete: () => remove(x),
+    onLater: !x.task.habit && !x.task.repeat && !x.done ? () => later(x) : undefined,
     checking: pending.isPending(x.task.id + x.day),
     streak: streaks.get(x.task.id) ?? 0,
+    drag: dnd.bind(x),
+    lifted: dnd.dragging?.task.id === x.task.id,
+    drop: `${x.task.who}|${x.task.habit ? 'habits' : x.task.slot}|${x.task.id}`,
   });
+  return { rowProps, layer: dnd.layer };
 }
 
 export interface RowProps {
@@ -260,6 +354,8 @@ export interface RowProps {
   onTap: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  /** Move it to tomorrow (one-offs that aren't done) */
+  onLater?: () => void;
   checking: boolean;
   /** Habits: due days in a row done */
   streak: number;
@@ -267,6 +363,8 @@ export interface RowProps {
   drag?: DragProps;
   /** It's the one being dragged */
   lifted?: boolean;
+  /** Its drop target value (who|group|id): another can be dropped above or below it */
+  drop?: string;
 }
 
 /** A person's tasks for a day, split for showing: counts use them all, rows skip hidden done ones */
@@ -285,15 +383,34 @@ export function split(items: DueItem[], sections: string[] | null, show: DoneVie
   };
 }
 
-function Lane({ data, who, day, items, sections, show, rowProps, onOpen }: {
+/** What useHoldReorder puts on a column: the column is measured, its heading picks it up */
+interface LaneMove {
+  ref: (el: HTMLElement | null) => void;
+  onPointerDown: (e: ReactPointerEvent) => void;
+  onContextMenu: (e: { preventDefault(): void }) => void;
+  onClickCapture: (e: { preventDefault(): void; stopPropagation(): void }) => void;
+}
+
+function Lane({ data, who, day, items, sections, show, rowProps, onOpen, move, lifted }: {
   data: Data; who: string; day: string; items: DueItem[]; sections: string[] | null; show: DoneView;
   rowProps: (x: DueItem) => RowProps; onOpen: () => void;
+  /** Hold the heading to move the column (absent on the copy being dragged) */
+  move?: LaneMove;
+  /** This column is being moved: an empty slot shows where it will go */
+  lifted?: boolean;
 }) {
   const p = person(data, who);
   const { tasks, done, all } = split(items, sections, show);
   return (
-    <section className={css.lane + ' surface'} style={toneStyle(p)} data-lane={who} data-drop={who}>
-      <button className={css.head} onClick={onOpen} aria-label={`Open ${who === 'any' ? 'Anyone' : p.name}’s tasks`}>
+    <section ref={move?.ref} className={css.lane + ' surface' + (lifted ? ' ' + css.laneLifted : '')} style={toneStyle(p)} data-lane={who} data-drop={who}>
+      <button
+        className={css.head}
+        onClick={onOpen}
+        onPointerDown={move?.onPointerDown}
+        onContextMenu={move?.onContextMenu}
+        onClickCapture={move?.onClickCapture}
+        aria-label={`Open ${who === 'any' ? 'Anyone' : p.name}’s tasks (hold to move the column)`}
+      >
         <Avatar p={p} size={42} />
         <div>
           <b>{who === 'any' ? 'Anyone' : p.name}</b>
@@ -301,10 +418,13 @@ function Lane({ data, who, day, items, sections, show, rowProps, onOpen }: {
         </div>
         <div className={css.ring}>
           <Ring done={done} total={tasks.length || 1} size={46} />
-          <span className="num">{all ? '✓' : tasks.length ? done + '/' + tasks.length : '–'}</span>
+          {(() => {
+            const label = all ? '✓' : tasks.length ? done + '/' + tasks.length : '–';
+            return <span className={'num' + (label.length > 3 ? ' ' + css.long : '')}>{label}</span>;
+          })()}
         </div>
       </button>
-      <PersonList day={day} items={items} sections={sections} show={show} rowProps={rowProps} className={css.list} />
+      <PersonList who={who} day={day} items={items} sections={sections} show={show} rowProps={rowProps} className={css.list} />
     </section>
   );
 }
@@ -316,25 +436,28 @@ export const SHEET_LIST = css.sheetList;
  * One person's list for a day: habits, then tasks by part of the day (Anytime first). A column on
  * the Tasks screen, and the sheet from their ring on Today.
  */
-export function PersonList({ day, items, sections, show, rowProps, className }: {
-  day: string; items: DueItem[]; sections: string[] | null; show: DoneView; rowProps: (x: DueItem) => RowProps; className?: string;
+export function PersonList({ who, day, items, sections, show, rowProps, className }: {
+  who: string; day: string; items: DueItem[]; sections: string[] | null; show: DoneView; rowProps: (x: DueItem) => RowProps; className?: string;
 }) {
   const { tasks, all, shownTasks, shownHabits: habits } = split(items, sections, show);
+  const dragging = useStore(draggingTask, (v) => v);
   return (
     <div className={className}>
       {habits.length > 0 && (
-        <div className={css.group}>
+        <div className={css.group} data-drop={who + '|habits'}>
           <div className={css.groupLabel}>Habits</div>
           {habits.map((x) => <HabitRow key={x.task.id} x={x} {...rowProps(x)} />)}
         </div>
       )}
       {SLOTS.map(([slot, label]) => {
         const group = shownTasks.filter((x) => x.task.slot === slot);
-        if (!group.length) return null;
+        // While a task is dragged, empty parts of the day show too, as places to drop it
+        if (!group.length && !(dragging && showing(sections, slot))) return null;
         return (
-          <div key={slot} className={css.group}>
+          <div key={slot} className={css.group} data-drop={who + '|' + slot}>
             <div className={css.groupLabel}>{label}</div>
             {group.map((x) => <TaskRow key={x.task.id} x={x} viewing={day} {...rowProps(x)} />)}
+              {!group.length && <div className={css.dropHere}>Drop here</div>}
           </div>
         );
       })}
@@ -351,8 +474,9 @@ function Detail({ data, who, day, items, sections, show, rowProps }: {
 }) {
   const p = person(data, who);
   const { tasks, all, shownTasks, shownHabits: habits } = split(items, sections, show);
+  const dragging = useStore(draggingTask, (v) => v);
   const habitPanel = showing(sections, 'habits') && (
-    <aside className={css.detailHabits}>
+    <aside className={css.detailHabits} data-drop={who + '|habits'}>
       <div className={css.groupLabel}>Habits</div>
       {habits.length
         ? habits.map((x) => <HabitRow key={x.task.id} x={x} {...rowProps(x)} />)
@@ -364,11 +488,12 @@ function Detail({ data, who, day, items, sections, show, rowProps }: {
       <div className={css.detailTasks}>
         {SLOTS.filter(([slot]) => showing(sections, slot)).map(([slot, label]) => {
           const group = shownTasks.filter((x) => x.task.slot === slot);
-          if (!group.length) return null;
+          if (!group.length && !dragging) return null;
           return (
-            <div key={slot} className={css.group}>
+            <div key={slot} className={css.group} data-drop={who + '|' + slot}>
               <div className={css.groupLabel}>{label}</div>
               {group.map((x) => <TaskRow key={x.task.id} x={x} viewing={day} {...rowProps(x)} />)}
+              {!group.length && <div className={css.dropHere}>Drop here</div>}
             </div>
           );
         })}

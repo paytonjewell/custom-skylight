@@ -83,6 +83,12 @@ export function Pager({ index, render, onStep, handle, className, pageClass }: {
       onPointerMove={(e) => {
         const d = drag.current;
         if (!d) return;
+        // Something was picked up (held, then dragged): the finger is moving that, not the pages
+        if (document.documentElement.hasAttribute('data-dragging')) {
+          if (d.horiz) place(0, 0, MS);
+          drag.current = null;
+          return;
+        }
         const dx = e.clientX - d.x, dy = e.clientY - d.y;
         // Decide once whether this is a sideways swipe or a vertical scroll
         if (d.horiz === null) {

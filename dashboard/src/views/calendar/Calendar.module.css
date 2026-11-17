@@ -244,3 +244,13 @@
 
 /* ---------------------------------------------------------------- month (MonthGrid.module.css) */
 .month { height: 100%; min-height: 0; }
+
+/* ---------------------------------------------------------------- moving an event (eventDrag.tsx) */
+.isLifted { opacity: .35; }
+/* The copy under the finger, with where it would land */
+.dragEv {
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 14px; border-radius: 12px; min-width: 180px;
+  background: var(--c-fill, var(--c)); color: var(--c-ink); font-size: 16px;
+}
+.dragEv b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dragEv small { font-size: 14px; font-weight: 600; opacity: .9; }

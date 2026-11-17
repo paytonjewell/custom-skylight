@@ -38,15 +38,27 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
   const [filter, setFilter] = useState('All');
   const ready = whatCanWeMake(data.recipes, data.inventory);
   const missingFor = new Map(ready.map((x) => [x.recipe.id, x.missing.map((i) => i.name)]));
-  // Hold a recipe, drag it onto a day this week to plan it
-  const dnd = useDragDrop<Recipe>({
-    onDrop: (rec, day) => {
+  // Hold a recipe, drag it onto a day this week to plan it; or hold a planned dinner and drag it to
+  // another day (onto a day that has one, the two swap)
+  const dnd = useDragDrop<{ rec: Recipe; from?: string }>({
+    onDrop: ({ rec, from }, day) => {
       const before = data.mealPlan[day];
-      if (before === rec.id) return;
+      // Already that dinner there (or dropped back where it was): nothing to do
+      if (before === rec.id || from === day) return;
       planDinner(day, rec.id);
-      toast(<>Planned <b>{rec.title}</b> for {dayLabel(day, today).toLowerCase()}</>, { icon: 'calendar', undo: () => planDinner(day, before ?? null) });
+      const when = dayLabel(day, today).toLowerCase();
+      if (from) {
+        planDinner(from, before ?? null);
+        const other = before ? data.recipes.find((x) => x.id === before) : undefined;
+        toast(other ? <>Swapped <b>{rec.title}</b> and <b>{other.title}</b></> : <>Moved <b>{rec.title}</b> to {when}</>, {
+          icon: 'calendar',
+          undo: () => { planDinner(from, rec.id); planDinner(day, before ?? null); },
+        });
+        return;
+      }
+      toast(<>Planned <b>{rec.title}</b> for {when}</>, { icon: 'calendar', undo: () => planDinner(day, before ?? null) });
     },
-    ghost: (rec) => (
+    ghost: ({ rec }) => (
       <div className={css.dragCard} style={toneStyle({ tone: rec.tone })}>
         <span>{rec.emoji}</span>
         <b>{rec.title}</b>
@@ -85,7 +97,7 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
         </button>
       )}
       <div className={css.scroll}>
-        <WeekPlan days={week} today={today} />
+        <WeekPlan days={week} today={today} drag={(rec, from) => dnd.bind({ rec, from })} lifted={dnd.dragging?.from} />
         <FromKitchen ready={ready} hasInventory={data.inventory.length > 0} onInventory={onInventory} />
 
         <div className={'chips ' + css.filters}>
@@ -102,7 +114,7 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
             {list.map((r) => (
               <RecipeCard
                 key={r.id} r={r} today={today} planned={plannedDays.get(r.id) ?? []} missing={data.inventory.length ? missingFor.get(r.id) : undefined}
-                drag={dnd.bind(r)} lifted={dnd.dragging?.id === r.id}
+                drag={dnd.bind({ rec: r })} lifted={!dnd.dragging?.from && dnd.dragging?.rec.id === r.id}
               />
             ))}
           </div>
@@ -118,7 +130,13 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
 }
 
 // ------------------------------------------------------------ this week's dinners
-function WeekPlan({ days, today }: { days: string[]; today: string }) {
+function WeekPlan({ days, today, drag, lifted }: {
+  days: string[]; today: string;
+  /** Hold a planned dinner to drag it to another day */
+  drag: (rec: Recipe, from: string) => DragProps;
+  /** The day whose dinner is being dragged */
+  lifted?: string;
+}) {
   const data = useData();
   const planned = plannedFor(data, days);
   const toBuy = shoppingFor(planned, data.groceries, data.inventory).filter((x) => !x.listed && !x.pantry && !x.optional && !x.have).length;
@@ -138,8 +156,9 @@ function WeekPlan({ days, today }: { days: string[]; today: string }) {
             <button
               key={day}
               data-drop={day}
-              className={css.day + (r ? ' ' + css.isPlanned : '') + (day === today ? ' ' + css.isToday : '')}
-              style={r ? toneStyle({ tone: r.tone }) : undefined}
+              className={css.day + (r ? ' ' + css.isPlanned : '') + (day === today ? ' ' + css.isToday : '') + (lifted === day ? ' ' + css.isLifted : '')}
+              {...(r ? drag(r, day) : {})}
+              style={r ? { ...drag(r, day).style, ...toneStyle({ tone: r.tone }) } : undefined}
               onClick={() => (r ? openRecipe(r.id, day) : pickDinner(day))}
             >
               <span className={css.dayName}>{dayLabel(day, today)}</span>

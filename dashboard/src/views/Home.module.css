@@ -169,7 +169,9 @@
 
   :global(.phone) & { flex: none; }
 }
-.ring :global(.num) { position: absolute; top: 0; left: 0; width: 64px; height: 64px; display: grid; place-items: center; font-size: 18px; }
+/* Over the ring: as wide as the button (the ring is centred in it, and a long name makes the button
+   wider than the ring); 'case' lifts the "–" (nothing today) to the middle of the digits */
+.ring :global(.num) { position: absolute; top: 0; left: 0; right: 0; height: 64px; display: grid; place-items: center; font-size: 18px; font-feature-settings: 'case'; }
 .ring span { font-size: var(--fs-min); color: var(--ink-2); }
 .ring.isDone :global(.ring-bg) { fill: var(--c); }
 .ring.isDone :global(.num) { color: var(--c-ink); }

@@ -122,6 +122,8 @@ export interface Task {
   listItemId: string | null;
   /** ISO time it was made */
   created: string;
+  /** Its place in its group, when dragged into one (lower first); null/absent: the usual order */
+  position?: number | null;
 }
 
 /** One completion of a task */

@@ -59,3 +59,6 @@
 
   .isPhone & { height: 14px; margin: 0 1px; padding: 0; font-size: 9px; line-height: 1; text-align: center; color: var(--mute); }
 }
+
+/* An event being moved to another day (eventDrag.tsx) */
+.chip.isLifted { opacity: .35; }

@@ -149,3 +149,6 @@
 }
 .dragCard span { font-size: 22px; flex: none; }
 .dragCard b { min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* A planned dinner being dragged to another day */
+.day.isLifted { opacity: .35; }

@@ -2,7 +2,7 @@
 // Render with <Icon name="home" />. To add one: find it on lucide.dev, import it here, give it a name.
 // Only the icons imported here end up in the bundle.
 import {
-  Asterisk, Bell, Calendar, ChefHat, Link, Heart, Search, Timer, Car, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Cloud, CloudFog, CloudLightning, CloudRain, CloudSun, Diff, Ellipsis, Flame, FoldVertical, House,
+  Asterisk, Bell, Calendar, ChefHat, Link, Heart, Search, Timer, Car, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, ChevronUp, Clock, Cloud, CloudFog, CloudLightning, CloudRain, CloudSun, Diff, Ellipsis, Flame, FoldVertical, House,
   Image, Leaf, ListChecks, MapPin, Minus, Moon, Newspaper, Palette, PawPrint, Pencil, Pin, Plus, RefreshCw, Settings, Smile, ShoppingCart,
   Snowflake, Sparkles, SquareCheckBig, Star, Sun, Trash2, UnfoldVertical, Undo2, User, X, Zap, type LucideIcon,
 } from 'lucide-react';
@@ -31,6 +31,8 @@ export const ICONS = {
   minus: Minus,
   left: ChevronLeft,
   right: ChevronRight,
+  /** Move to tomorrow (a task's swipe action) */
+  later: ChevronsRight,
   x: X,
   check: Check,
   more: Ellipsis,

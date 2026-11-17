@@ -30,7 +30,8 @@ import { checkGoogleReturn } from '../views/calendar/CalendarSettings';
 import { openThemeSheet } from './ThemeSheet';
 import { THEMES, useApplyTheme, useTheme } from './theme';
 import { IS_KIOSK, isPhone, useLayout, viewportSize } from './layout';
-import { VIEWS, closeSheet, go, goFromHash, idleTick, resetIdle, setMode, ui, useUI, type ViewName } from './ui';
+import { VIEWS, closeSheet, go, goFromHash, idleTick, resetIdle, setMode, toast, ui, useUI, type ViewName } from './ui';
+import { store, stored } from '../lib/store';
 import css from './App.module.css';
 
 const SCREENS: Record<ViewName, { label: string; icon: IconName; component: ComponentType<{ active: boolean }> }> = {
@@ -74,6 +75,8 @@ export function App() {
   useEffect(checkSharedRecipe, []);
   // Photos shared to the installed app from another app (public/sw.js)
   useEffect(() => { if (!IS_KIOSK) void receiveSharedPhotos(); }, []);
+
+  useDragTips(view);
 
   useEffect(() => {
     window.addEventListener('hashchange', goFromHash);
@@ -320,6 +323,30 @@ function useStageFit(ref: RefObject<HTMLDivElement | null>, phone: boolean) {
  * backlight down. The photo frame turns into the sleep screen when the sleep hours start, and back
  * when they end. The current screen stays put underneath, so waking returns to it.
  */
+/**
+ * Things can be moved by holding them, then dragging. The first time each screen with that is opened
+ * on this device, a tip says what can be dragged there (once; saved on the device).
+ */
+const DRAG_TIPS: Partial<Record<ViewName, string>> = {
+  tasks: 'Hold a task to drag it to another time of day or person, or a column’s heading to move the column',
+  calendar: 'Hold an event to drag it to another time or day',
+  lists: 'Hold a list or an item to drag it into a new order',
+  kitchen: 'Hold a recipe or a planned dinner to drag it onto a day',
+  news: 'Hold a topic to drag it into a new order',
+  photos: 'Hold a photo to drag it into a new order',
+};
+function useDragTips(view: ViewName) {
+  useEffect(() => {
+    const tip = DRAG_TIPS[view];
+    if (!tip || stored('tip.drag.' + view, '') === '1') return;
+    const t = setTimeout(() => {
+      store('tip.drag.' + view, '1');
+      toast(<><b>Tip:</b> {tip}</>, { icon: 'bolt', ms: 7000 });
+    }, 900);
+    return () => clearTimeout(t);
+  }, [view]);
+}
+
 /** Seconds without a touch before the photo frame takes over */
 const IDLE_AFTER = 120;
 

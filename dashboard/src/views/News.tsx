@@ -1,7 +1,9 @@
 // News: a lead s plus a scrollable list of headlines, by topic. Stories come from the news feeds
 // the Worker collects (worker/news/feeds.ts). Tap a s for its summary; "Read full s" opens
 // the article, and on the frame layout a QR code takes it to your phone.
-import { useEffect, useState, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import { createStore, store, stored, useStore } from "../lib/store";
+import { useHoldReorder } from "../ui/useHoldReorder";
 import type { NewsStory } from "../data/types";
 import { useData } from "../data/store";
 import { useNewsStatus, useNewsUpdated } from "../data/newsSync";
@@ -38,12 +40,34 @@ const Img = ({ src }: { src: string }) => (
   />
 );
 
+/** The topic tabs' order, saved on this device (ids; null: the server's order) */
+const topicOrder = createStore<string[] | null>((() => {
+  try {
+    const v = JSON.parse(stored('news.order', 'null'));
+    return Array.isArray(v) ? v : null;
+  } catch {
+    return null;
+  }
+})());
+const setTopicOrder = (ids: string[]) => {
+  topicOrder.set(ids);
+  store('news.order', JSON.stringify(ids));
+};
+const inOrder = (topics: [string, string][], saved: string[] | null): [string, string][] =>
+  !saved ? topics : [...saved.flatMap((id) => topics.filter((t) => t[0] === id)), ...topics.filter((t) => !saved.includes(t[0]))];
+
 export function News() {
   const data = useData();
   const now = useNow();
   const status = useNewsStatus();
   const updated = useNewsUpdated();
-  const topics = data.newsTopics;
+  // In the order dragged on this device (hold a tab, then drag it); new topics go at the end
+  const saved = useStore(topicOrder, (o) => o);
+  const topics = inOrder(data.newsTopics, saved);
+  const root = useRef<HTMLDivElement>(null);
+  const tabs = useRef<HTMLDivElement>(null);
+  const reorder = useHoldReorder({ ids: topics.map((t) => t[0]), onCommit: setTopicOrder, container: root, scroller: tabs });
+  const shownTopics = reorder.order.map((id) => topics.find((t) => t[0] === id)!).filter(Boolean);
   const [picked, setPicked] = useState("top");
   // The topic list comes from the server; fall back to the first if the picked one went away
   const topic = topics.some((t) => t[0] === picked)
@@ -71,17 +95,25 @@ export function News() {
         : `Updated ${updated ? fmt.time(updated) : "–"} · ${list.length} stories`;
 
   return (
-    <div className={css.news}>
+    <div className={css.news} ref={root}>
       <PageHeader kicker={head} title="News">
         {topics.length > 0 && (
           <Segmented
             className={css.topics}
-            options={topics}
+            options={shownTopics}
             value={topic}
             onChange={setPicked}
+            move={reorder.itemProps}
+            lifted={reorder.ghost?.id}
+            boxRef={tabs}
           />
         )}
       </PageHeader>
+      {reorder.ghost && (
+        <div className={css.tabGhost} style={{ left: reorder.ghost.x, top: reorder.ghost.y, width: reorder.ghost.w, height: reorder.ghost.h }}>
+          {topicName(reorder.ghost.id)}
+        </div>
+      )}
       {!lead ? (
         status !== "loading" && (
           <EmptyNote large className={css.empty}>
