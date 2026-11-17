@@ -377,7 +377,7 @@ export function toRecord(e: GEvent, calendar: string): EventRecord | null {
 }
 
 /** Copy a calendar's events (the kept window) from Google */
-async function syncCalendar(env: Env, c: CalendarRow, a: AccountRow): Promise<void> {
+async function syncCalendar(env: Env, c: Pick<CalendarRow, 'id' | 'google_id'>, a: AccountRow): Promise<void> {
   const min = new Date(Date.now() - BACK_DAYS * 864e5).toISOString();
   const max = new Date(Date.now() + AHEAD_DAYS * 864e5).toISOString();
   const out: EventRecord[] = [];
@@ -413,21 +413,31 @@ async function syncCalendar(env: Env, c: CalendarRow, a: AccountRow): Promise<vo
 export async function syncCalendars(env: Env, maxAge = 0): Promise<void> {
   if (!configured(env)) return;
   const since = new Date(Date.now() - maxAge).toISOString();
-  const cals = (
+  const rows = (
     await env.DB.prepare(
-      `SELECT c.* FROM calendars c JOIN google_accounts a ON a.id = c.account_id
-     WHERE c.shown = 1 AND a.error IS NULL AND (c.synced_at IS NULL OR c.synced_at < ?)`,
+      `SELECT c.id, c.google_id, c.name, c.account_id, a.email, a.refresh_token, a.access_token, a.expires_at
+       FROM calendars c JOIN google_accounts a ON a.id = c.account_id
+       WHERE c.shown = 1 AND a.error IS NULL AND (c.synced_at IS NULL OR c.synced_at < ?)`,
     )
       .bind(maxAge ? since : '9999')
-      .all<CalendarRow>()
+      .all<Pick<CalendarRow, 'id' | 'google_id' | 'name' | 'account_id'> & Omit<AccountRow, 'id' | 'error'>>()
   ).results;
+  // One object per account, so an access token refreshed for one calendar is reused for the next
   const accounts = new Map<string, AccountRow>();
-  for (const c of cals) {
+  for (const c of rows) {
     let a = accounts.get(c.account_id);
     if (!a) {
-      a = (await env.DB.prepare('SELECT * FROM google_accounts WHERE id = ?').bind(c.account_id).first<AccountRow>())!;
+      a = {
+        id: c.account_id,
+        email: c.email,
+        refresh_token: c.refresh_token,
+        access_token: c.access_token,
+        expires_at: c.expires_at,
+        error: null,
+      };
       accounts.set(a.id, a);
     }
+    // Google turned the account away while syncing an earlier calendar of it
     if (a.error) continue;
     await syncCalendar(env, c, a).catch((e) => console.warn('Calendar sync failed', c.name, e));
   }
