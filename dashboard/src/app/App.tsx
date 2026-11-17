@@ -29,7 +29,7 @@ import { startCalendarSync } from '../data/calendarSync';
 import { checkGoogleReturn } from '../views/calendar/CalendarSettings';
 import { openThemeSheet } from './ThemeSheet';
 import { THEMES, useApplyTheme, useTheme } from './theme';
-import { IS_KIOSK, isPhone, useLayout } from './layout';
+import { IS_KIOSK, isPhone, useLayout, viewportSize } from './layout';
 import { VIEWS, closeSheet, go, goFromHash, idleTick, resetIdle, setMode, ui, useUI, type ViewName } from './ui';
 import css from './App.module.css';
 
@@ -302,8 +302,8 @@ function useStageFit(ref: RefObject<HTMLDivElement | null>, phone: boolean) {
       // The visible area, not innerWidth/innerHeight: those follow the layout viewport, which grows
       // to fit content that overflows it. The stage itself overflows before its scale applies, so
       // the Skylight Calendar 2 (WebView 124, 1280×720) reported 1315×740 and the stage spilled off
-      // both edges.
-      const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+      // both edges. In local dev, the frame-sized preview box (layout.ts).
+      const { w: vw, h: vh } = viewportSize();
       const w = Math.max(STAGE_MIN_W, Math.round((STAGE_H * vw) / vh));
       el.style.setProperty('--stage-w', w + 'px');
       const s = Math.min(vw / w, vh / STAGE_H);

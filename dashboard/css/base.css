@@ -4,6 +4,16 @@
 /* ---------------------------------------------------------------- reset */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--shell); }
+
+/* Local dev: the frame's exact screen (1280×720), boxed in the browser window (FRAME_PREVIEW in
+   src/app/layout.ts). zoom, not transform, so pointer positions inside still line up. */
+html.frame-preview, html.frame-preview body { background: #1b1b1b; }
+html.frame-preview body { display: grid; place-items: center; }
+html.frame-preview #root {
+  position: relative; width: 1280px; height: 720px; overflow: hidden; flex: none;
+  zoom: var(--preview-zoom, 1);
+  box-shadow: 0 0 0 1px #3a3a3a, 0 20px 60px rgba(0, 0, 0, .5);
+}
 body {
   font-family: var(--sans);
   font-size: var(--fs-body);

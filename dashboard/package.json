@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "frame": "node scripts/frame-chrome.mjs",
+    "frame:shot": "node scripts/frame-shot.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
     "test": "node --import ./test/resolve.mjs --test 'test/*.test.ts'",
     "build": "npm run typecheck && vite build",
