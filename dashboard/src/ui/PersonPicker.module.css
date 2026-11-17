@@ -18,3 +18,5 @@
 :global(.phone) .big .person { padding: 10px 4px; font-size: var(--fs-md); }
 /* !important: the avatar's size is set inline */
 :global(.phone) .big :global(.avatar) { width: 64px !important; height: 64px !important; font-size: var(--fs-3xl) !important; }
+/* A long name ("Dashboard") is cut short rather than spilling out of its card on a phone */
+.name { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

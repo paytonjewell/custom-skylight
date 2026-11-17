@@ -63,7 +63,7 @@ function PersonButton({
   return (
     <button className={css.person + (on ? ' ' + css.isOn : '')} style={toneStyle(p)} onClick={() => onPick(p.id)}>
       <Avatar p={p} size={size} />
-      <span>{label}</span>
+      <span className={css.name}>{label}</span>
     </button>
   );
 }

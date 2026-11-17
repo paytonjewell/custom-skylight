@@ -13,6 +13,10 @@ screen on a Skylight Calendar 2 through the kiosk app in `kiosk/`, and as a phon
 - `npm run deploy`: builds, applies new migrations to the remote database, then deploys. For the dev
   server, apply them with `npm run db:migrate:local`.
 - `npm run frame` / `npm run frame:shot -- out.png '#tasks' --js "<code>"`: see below.
+- `npm run frame:sweep -- phone` and `npm run frame:sweep -- frame`: after any UI change. Opens every
+  screen and sheet (without changing data) and fails on text spilling out of its box, running into
+  other text or icons, wrapped button labels, or sideways overflow. Add a case to
+  `scripts/frame-sweep.mjs` when adding a screen or sheet.
 
 ## The frame is Chrome 124
 

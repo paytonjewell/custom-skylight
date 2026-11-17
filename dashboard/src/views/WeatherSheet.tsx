@@ -1,6 +1,6 @@
 // Weather details: opened by tapping the weather on Today. Current conditions, the next 12 hours,
 // today + 3 days, and sun / moon / wind / humidity tiles.
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import type { WxCond } from '../data/types';
 import { useData } from '../data/store';
 import { useEvents } from '../data/hooks';
@@ -10,6 +10,7 @@ import { fmt } from '../lib/fmt';
 import { useNow } from '../lib/clock';
 import { openSheet } from '../app/ui';
 import { Icon } from '../ui/Icon';
+import { useEdgeFade } from '../ui/hooks';
 import css from './WeatherSheet.module.css';
 
 export function openWeatherSheet(): void {
@@ -33,7 +34,11 @@ function WeatherSheet() {
         <span className={css.meta}>
           <b>{WX_LABELS[w.cond]}</b>
           <span>
-            Feels like {w.feels}° · H {W.hi}° L {W.lo}°
+            {/* kept in pieces that don't break apart */}
+            <span className={css.nowrap}>Feels like {w.feels}°</span> ·{' '}
+            <span className={css.nowrap}>
+              H {W.hi}° L {W.lo}°
+            </span>
           </span>
         </span>
       </header>
@@ -69,8 +74,11 @@ function Hours({ data, now }: { data: WeatherData; now: Date }) {
   const list = hourly(data, now, 12);
   // Room for rain chances only when there are some
   const wet = list.some((h) => h.p >= 20);
+  // On a phone the hours scroll sideways; the edges fade where there's more
+  const row = useRef<HTMLDivElement>(null);
+  useEdgeFade(row, list.length);
   return (
-    <div className={css.hours + ' surface'}>
+    <div className={css.hours + ' surface'} ref={row}>
       {list.map((h) => {
         return (
           <div key={h.label} className={css.hr + (h.p >= 50 ? ' ' + css.isWet : '')}>
@@ -202,7 +210,8 @@ function moonDay(day: string, now: Date): string {
   const [y, m, d] = day.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   const n = daysBetween(now, date);
-  return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : fmt.dayShort(date) + ', ' + fmt.monthShort(date) + ' ' + d;
+  // "Nov 24": the weekday isn't much use for the moon, and two of these share half a card on a phone
+  return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : fmt.monthShort(date) + ' ' + d;
 }
 
 function StatTile({ label, value, unit, sub }: { label: string; value: ReactNode; unit: string; sub: string }) {

@@ -51,7 +51,8 @@ button.card:active { transform: scale(.99); }
 
 /* ---------------------------------------------------------------- buttons */
 .btn {
-  min-height: var(--tap); padding: 0 26px;
+  /* nowrap: a label never breaks onto a second line inside its pill */
+  min-height: var(--tap); padding: 0 26px; white-space: nowrap;
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   border-radius: 999px; background: var(--paper-2);
   font-size: var(--fs-md); font-weight: 500;
@@ -110,7 +111,7 @@ a.btn--solid { color: var(--on-ink); }
 /* ---------------------------------------------------------------- chips and pills */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
-  min-height: 52px; padding: 0 18px;
+  min-height: 52px; padding: 0 18px; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 10px;
   border-radius: 999px; background: var(--paper-2);
   font-size: var(--fs-md); font-weight: 400;
@@ -225,7 +226,8 @@ a.btn--solid { color: var(--on-ink); }
     flex-wrap: wrap;
     margin: 20px -18px -20px; padding: 12px 18px 16px;
   }
-  .phone & .btn { flex: 1; }
+  /* Phone: buttons share the row, but keep their labels whole; one that doesn't fit takes the next row */
+  .phone & .btn { flex: 1 0 auto; }
 }
 
 /* Pager (src/ui/Pager.tsx): sideways drags page, so scroll areas inside it only scroll up and down.

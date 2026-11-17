@@ -6,13 +6,12 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { dueOn } from '../../data/tasks';
 import { useData } from '../../data/store';
 import { person, laneName } from '../../data/select';
-import { dayOf, shiftDay } from '../../lib/repeat';
+import { dayOf } from '../../lib/repeat';
 import { useNow } from '../../lib/clock';
 import { closeSheet, go, openSheet } from '../../app/ui';
 import { Avatar, toneStyle } from '../../ui/people';
 import { Icon } from '../../ui/Icon';
 import { openTaskSheet } from './TaskSheet';
-import { dayName, fmtDate } from '../../lib/days';
 import { PersonList, SHEET_LIST } from './PersonList';
 import { split, useShowSettings } from './settings';
 import { ShowSettings } from './TaskSettingsSheet';
@@ -28,10 +27,10 @@ function PersonTasks({ who }: { who: string }) {
   const data = useData('family', 'people', 'taskDone', 'tasks');
   const now = useNow();
   const { sections, show, filtered } = useShowSettings();
-  const [offset, setOffset] = useState(0);
   const [settings, setSettings] = useState(false);
+  // Always today: this is "what's left for me now" from Today (other days are on the Tasks screen)
   const today = dayOf(now);
-  const day = shiftDay(today, offset);
+  const day = today;
   const back = () => openPersonTasks(who);
   const { rowProps, layer: dragLayer } = useTaskRows(day, today, back);
   // While a task is dragged, empty parts of the day show up as places to drop it. Keep the sheet the
@@ -55,12 +54,10 @@ function PersonTasks({ who }: { who: string }) {
   const name = laneName(data, who);
   const left = tasks.length - done;
   const summary = !tasks.length
-    ? 'Nothing due'
-    : offset > 0
-      ? `${tasks.length} due`
-      : left
-        ? `${left} of ${tasks.length} left`
-        : 'All done';
+    ? 'Nothing due today'
+    : left
+      ? `${left} of ${tasks.length} left today`
+      : 'All done today';
 
   return (
     // data-lane: confetti comes from here when the last task is checked off
@@ -69,27 +66,7 @@ function PersonTasks({ who }: { who: string }) {
         <Avatar p={p} size={48} />
         <span className={css.who}>
           <b>{name}</b>
-          {/* The day is in the arrows; the full date only when away from today */}
-          <small>
-            {offset ? fmtDate(day) + ' · ' : ''}
-            {summary}
-          </small>
-        </span>
-        <span className={css.nav}>
-          <button className="icon-btn" aria-label="Previous day" onClick={() => setOffset(offset - 1)}>
-            <Icon name="left" size={26} />
-          </button>
-          <button
-            className={css.dayName}
-            onClick={() => setOffset(0)}
-            disabled={offset === 0}
-            aria-label="Back to today"
-          >
-            {dayName(offset, day)}
-          </button>
-          <button className="icon-btn" aria-label="Next day" onClick={() => setOffset(offset + 1)}>
-            <Icon name="right" size={26} />
-          </button>
+          <small>{summary}</small>
         </span>
         <button
           className={css.cog + (settings ? ' ' + css.isOn : '')}

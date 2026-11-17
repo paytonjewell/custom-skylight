@@ -8,6 +8,7 @@
     "prepare": "cd .. && lefthook install",
     "frame": "node scripts/frame-chrome.mjs",
     "frame:shot": "node scripts/frame-shot.mjs",
+    "frame:sweep": "node scripts/frame-sweep.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p worker && tsc --noEmit -p test/worker",
     "test": "vitest run",
     "lint": "biome check",
