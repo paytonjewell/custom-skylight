@@ -51,7 +51,6 @@
 .theme { margin-top: auto; height: 60px; }
 .theme :global(.i) { width: 22px; height: 22px; }
 .clock { padding: 10px 0; width: 100%; text-align: center; line-height: 1; position: relative; overflow: hidden; border-radius: 12px; }
-.clock.isHolding { background: var(--paper-2); }
 .clock b { display: block; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .clock span { font-size: 11px; font-weight: 500; letter-spacing: .12em; color: var(--mute); }
 
@@ -143,9 +142,3 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes rise { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-/* ---------------------------------------------------------------- night dashboard (tap on night clock): dim, inverted greyscale */
-.stage[data-mode="nightdash"] > .rail,
-.stage[data-mode="nightdash"] > .views {
-  filter: var(--nightdash);
-}
-.stage[data-mode="nightdash"] { background: #000; }

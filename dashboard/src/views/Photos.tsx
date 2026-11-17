@@ -22,7 +22,7 @@ export function Photos({ active }: { active: boolean }) {
   const [previewing, setPreviewing] = useState(false);
   const idle = useUI((s) => s.mode !== "day");
 
-  // Leaving the screen, or the real photo frame (or night clock) taking over, ends the preview,
+  // Leaving the screen, or the real photo frame taking over, ends the preview,
   // so coming back always starts at the grid
   useEffect(() => {
     if (!active || idle) setPreviewing(false);

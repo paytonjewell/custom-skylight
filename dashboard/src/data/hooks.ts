@@ -1,18 +1,13 @@
 import { useMemo } from 'react';
 import { useNow } from '../lib/clock';
-import { useUI } from '../app/ui';
 import { useData } from './store';
-import { visibleEvents } from './select';
 import type { CalEvent } from './types';
 import { taskEvents } from './calendar';
 import { dayOf } from '../lib/repeat';
 
-/** Calendar events to show right now (respects the demo's calendar mode). */
+/** Calendar events to show */
 export function useEvents(): CalEvent[] {
-  const data = useData();
-  const calMode = useUI((s) => s.calMode);
-  const now = useNow();
-  return useMemo(() => visibleEvents(data, calMode, now), [data, calMode, now]);
+  return useData().events;
 }
 
 /** What the Calendar screen shows: events, and tasks marked "Show on calendar" */

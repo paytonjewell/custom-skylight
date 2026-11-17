@@ -6,7 +6,7 @@ import { useCalendarEvents as useEvents } from '../../data/hooks';
 import { allDayOn, evColor, evLabel, isFamily, leaveBy, timedOn } from '../../data/select';
 import { addDays, dayStart, DAY_MS, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
-import { now as clockNow, useNow, useOnDemoTimeChange } from '../../lib/clock';
+import { now as clockNow, useNow } from '../../lib/clock';
 import { Icon } from '../../ui/Icon';
 import { Dots, toneStyle } from '../../ui/people';
 import { Segmented } from '../../ui/Segmented';
@@ -88,9 +88,6 @@ export function Calendar({ active }: { active: boolean }) {
   const [date, setDate] = useState(() => dayStart(clockNow()));
   /** Counts jumps to another date (Today, a picked day), not steps */
   const [jumps, setJumps] = useState(0);
-
-  // The demo clock jumped: start over from today
-  useOnDemoTimeChange(() => { setDate(dayStart(clockNow())); setJumps((j) => j + 1); });
 
   // Asked to show a day (openCalendarAt)
   const asked = useStore(target, (t) => t);

@@ -43,40 +43,6 @@ export function usePendingAction(delay: number) {
 }
 
 /**
- * Press-and-hold: spread the returned props on an element. `done` fires after `ms` of holding;
- * `cancel` fires if the finger lifts early. `holding` is true while the hold is in progress.
- */
-export function useHold(ms: number, done: () => void, cancel?: () => void) {
-  const timer = useRef<number | null>(null);
-  const [holding, setHolding] = useState(false);
-  const stop = (lifted: boolean) => {
-    if (timer.current == null) return;
-    clearTimeout(timer.current);
-    timer.current = null;
-    setHolding(false);
-    if (lifted) cancel?.();
-  };
-  useEffect(() => () => { if (timer.current != null) clearTimeout(timer.current); }, []);
-  return {
-    holding,
-    props: {
-      style: { '--hold': ms + 'ms' } as CSSProperties,
-      onPointerDown: () => {
-        setHolding(true);
-        timer.current = window.setTimeout(() => {
-          timer.current = null;
-          setHolding(false);
-          done();
-        }, ms);
-      },
-      onPointerUp: () => stop(true),
-      onPointerLeave: () => stop(false),
-      onPointerCancel: () => stop(false),
-    },
-  };
-}
-
-/**
  * Horizontal scrollers: fade an edge only when there is more content past it. Sets --fade-l /
  * --fade-r on the element (see .h-cds). Re-checks when `deps` change.
  */

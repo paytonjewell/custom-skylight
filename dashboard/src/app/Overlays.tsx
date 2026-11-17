@@ -1,13 +1,6 @@
-// Layers above the screens: pop-up sheets, toasts, the idle photo frame and the night clock.
+// Layers above the screens: pop-up sheets, toasts, the idle photo frame and the sleep screen.
 import { useEffect, useRef, type CSSProperties, type RefObject } from 'react';
-import { useData } from '../data/store';
-import { useEvents } from '../data/hooks';
-import { person, timedOn, weatherNow } from '../data/select';
-import { addDays } from '../lib/dates';
-import { fmt } from '../lib/fmt';
-import { useNow } from '../lib/clock';
 import { Icon } from '../ui/Icon';
-import { usePixelShift } from '../ui/hooks';
 import { PhotoFrame } from '../views/PhotoFrame';
 import { useSwipeNav, type SlideshowHandle } from '../views/Slideshow';
 import { closeSheet, dismissToast, setMode, useUI } from './ui';
@@ -143,34 +136,7 @@ export function Ambient({ active }: { active: boolean }) {
   );
 }
 
-/** Dim night clock with tomorrow's first event. Tap for the dimmed dashboard. */
-export function Night({ active }: { active: boolean }) {
-  const data = useData();
-  const events = useEvents();
-  const now = useNow();
-  const shift = usePixelShift(active, now);
-  if (!active) return <div className={css.night} />;
-  const first = timedOn(events, addDays(now, now.getHours() < 6 ? 0 : 1))[0];
-  const w = weatherNow(data, events, now);
-  return (
-    <div className={css.night} onClick={() => setMode('nightdash')}>
-      <div className={css.inner} style={shift}>
-        <div className={css.time + ' num display-num'}>{fmt.time(now, false)}</div>
-        <div className={css.line}>
-          {w && (
-            <>
-              <Icon name={w.cond} size={26} /> {w.temp}° ·{' '}
-            </>
-          )}
-          {first ? (
-            <>
-              First up {fmt.rel(first.start, now).toLowerCase()}: <b>{first.title}</b> {fmt.time(first.start)} · {person(data, first.people[0]).name}
-            </>
-          ) : (
-            'Nothing early tomorrow'
-          )}
-        </div>
-      </div>
-    </div>
-  );
+/** Sleep hours (sleep.ts): nothing on screen, backlight down. A tap wakes the dashboard. */
+export function Sleep() {
+  return <div className={css.sleep} onClick={() => setMode('day')} />;
 }

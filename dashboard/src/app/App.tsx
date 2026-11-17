@@ -1,5 +1,5 @@
 // App shell. On the frame: the 1280×800 stage, sidebar rail, screens and overlays, plus idle → photo
-// frame → night. On a phone (src/app/layout.ts): full-screen scrolling screens and a bottom tab bar.
+// frame (or a black sleep screen during the sleep hours). On a phone (src/app/layout.ts): full-screen scrolling screens and a bottom tab bar.
 import { Kitchen } from '../views/recipes/Kitchen';
 import { checkSharedRecipe } from '../views/recipes/AddRecipeSheet';
 import { startKitchenSync } from '../data/kitchenSync';
@@ -8,14 +8,14 @@ import { fmt } from '../lib/fmt';
 import { now as clockNow, useNow } from '../lib/clock';
 import { Icon } from '../ui/Icon';
 import type { IconName } from '../ui/icons';
-import { useHold } from '../ui/hooks';
 import { Home } from '../views/Home';
 import { Calendar } from '../views/calendar/Calendar';
 import { Tasks } from '../views/tasks/Tasks';
 import { Lists } from '../views/lists/Lists';
-import { News } from '../views/News';import { Photos, receiveSharedPhotos } from '../views/Photos';
-import { Ambient, Night, SheetHost, Toasts } from './Overlays';
-import { Demo } from './Demo';
+import { News } from '../views/News';
+import { Photos, receiveSharedPhotos } from '../views/Photos';
+import { Ambient, SheetHost, Sleep, Toasts } from './Overlays';
+import { isSleepTime, setBacklight } from './sleep';
 import { Diag, diagEnabled } from './Diag';
 import { startPhotoSync } from '../data/photoSync';
 import { startNewsSync } from '../data/newsSync';
@@ -30,9 +30,7 @@ import { checkGoogleReturn } from '../views/calendar/CalendarSettings';
 import { openThemeSheet } from './ThemeSheet';
 import { THEMES, useApplyTheme, useTheme } from './theme';
 import { IS_KIOSK, isPhone, useLayout } from './layout';
-import {
-  VIEWS, closeSheet, go, goFromHash, idleTick, resetIdle, setDemoOpen, setMode, toast, ui, useUI, type ViewName,
-} from './ui';
+import { VIEWS, closeSheet, go, goFromHash, idleTick, resetIdle, setMode, ui, useUI, type ViewName } from './ui';
 import css from './App.module.css';
 
 const SCREENS: Record<ViewName, { label: string; icon: IconName; component: ComponentType<{ active: boolean }> }> = {
@@ -80,12 +78,9 @@ export function App() {
   useEffect(() => {
     window.addEventListener('hashchange', goFromHash);
     document.addEventListener('pointerdown', resetIdle, true);
-    // The demo controls hang off the frame's sidebar clock; phones have neither
-    const tip = isPhone() ? 0 : setTimeout(() => toast(<>Tip: press and hold the <b>clock</b> in the sidebar for demo controls</>, { ms: 6000, icon: 'bolt' }), 1200);
     return () => {
       window.removeEventListener('hashchange', goFromHash);
       document.removeEventListener('pointerdown', resetIdle, true);
-      clearTimeout(tip);
     };
   }, []);
 
@@ -112,8 +107,7 @@ export function App() {
       <Toasts />
       <SheetHost />
       <Ambient active={mode === 'ambient'} />
-      <Night active={mode === 'night'} />
-      {!phone && <Demo />}
+      <Sleep />
       {SHOW_DIAG && <Diag />}
     </div>
   );
@@ -122,7 +116,6 @@ export function App() {
 function Rail({ view }: { view: ViewName }) {
   const theme = THEMES[useTheme()];
   const now = useNow();
-  const hold = useHold(700, () => setDemoOpen(true));
   return (
     <nav className={css.rail} aria-label="Sections">
       <span className={css.logo} role="img" aria-label="White Lotus HQ" />
@@ -142,10 +135,10 @@ function Rail({ view }: { view: ViewName }) {
         <Icon name={theme.icon} size={24} />
         <span>{theme.label}</span>
       </button>
-      <button className={css.clock + (hold.holding ? ' ' + css.isHolding : '')} aria-label="Clock — press and hold for demo controls" {...hold.props}>
+      <div className={css.clock}>
         <b>{fmt.time(now, false)}</b>
         <span>{fmt.ampm(now)}</span>
-      </button>
+      </div>
     </nav>
   );
 }
@@ -323,10 +316,13 @@ function useStageFit(ref: RefObject<HTMLDivElement | null>, phone: boolean) {
 }
 
 /**
- * No touch for two minutes: the photo frame (or the night clock late at night). The current screen
- * stays put underneath, so waking returns to it. The dimmed night dashboard falls back to the night
- * clock after 20 seconds.
+ * No touch for two minutes: the photo frame, or during the sleep hours a black screen with the
+ * backlight down. The photo frame turns into the sleep screen when the sleep hours start, and back
+ * when they end. The current screen stays put underneath, so waking returns to it.
  */
+/** Seconds without a touch before the photo frame takes over */
+const IDLE_AFTER = 120;
+
 function useIdle() {
   useEffect(() => {
     const t = setInterval(() => {
@@ -334,14 +330,18 @@ function useIdle() {
       if (isPhone()) return;
       const s = ui.get();
       const sec = idleTick();
-      if (s.mode === 'nightdash' && sec >= 20) return setMode('night');
-      if (s.mode !== 'day') return;
-      if (sec >= s.idleAfter) {
+      const sleepy = isSleepTime(clockNow());
+      if (s.mode === 'ambient' && sleepy) return setMode('sleep');
+      if (s.mode === 'sleep' && !sleepy) return setMode('ambient');
+      if (s.mode === 'day' && sec >= IDLE_AFTER) {
         closeSheet();
-        const h = clockNow().getHours();
-        setMode(h >= 22 || h < 6 ? 'night' : 'ambient');
+        setMode(sleepy ? 'sleep' : 'ambient');
       }
     }, 1000);
     return () => clearInterval(t);
   }, []);
+
+  // The kiosk dims the backlight while the sleep screen is up
+  const sleeping = useUI((s) => s.mode === 'sleep');
+  useEffect(() => setBacklight(sleeping ? 0 : -1), [sleeping]);
 }

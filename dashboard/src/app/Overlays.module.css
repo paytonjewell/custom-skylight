@@ -1,4 +1,4 @@
-/* Overlays over the screens: toasts, the idle photo frame (Ambient) and the night clock.
+/* Overlays over the screens: toasts, the idle photo frame (Ambient) and the sleep screen.
    Sheets are shared building blocks, styled in css/components.css. */
 
 /* ---------------------------------------------------------------- toasts */
@@ -51,10 +51,7 @@
 /* data-mode is on the stage (App.tsx) */
 [data-mode="ambient"] .ambient { display: block; }
 
-/* ---------------------------------------------------------------- night (dim clock), kept above a minimum readable brightness */
-.night { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 66; background: #000; display: none; place-items: center; cursor: pointer; }
-[data-mode="night"] .night { display: grid; }
-.inner { text-align: center; color: var(--night-2); }
-.time { font-size: 240px; font-weight: 600; line-height: .8; letter-spacing: -.03em; color: var(--night); }
-.line { margin-top: 34px; font-size: 26px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--night-3); }
-.line b { color: var(--night); font-weight: 500; }
+/* ---------------------------------------------------------------- sleep (black; the kiosk turns the backlight down) */
+.sleep { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 66; background: #000; display: none; cursor: none; touch-action: none; }
+[data-mode="sleep"] .sleep { display: block; }
+

@@ -1,4 +1,4 @@
-/* Theme picker: a live mini-preview of each theme, plus the "dark after sunset" switch */
+/* Theme picker: a live mini-preview of each theme, plus the "dark after sunset" switch and the frame's sleep hours */
 .grid {
   display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px;
 
@@ -48,3 +48,13 @@
 .switch::after { content: ''; position: absolute; left: 4px; top: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--mute); }
 .auto.isOn .switch { background: var(--accent); box-shadow: none; }
 .auto.isOn .switch::after { left: 28px; background: #fff; }
+
+/* Sleep hours: the switch row, then From / Until steppers */
+.sleep { margin-top: 12px; border-radius: 16px; }
+.sleep .auto { margin-top: 0; background: none; }
+.times { display: flex; gap: 12px; padding: 0 20px 18px 58px; flex-wrap: wrap; }
+.time { display: inline-flex; align-items: center; gap: 6px; }
+.time small { font-size: 14px; color: var(--mute); margin-right: 4px; }
+.time b { min-width: 92px; text-align: center; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.time button { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--paper-2); }
+.time button:active { background: var(--line); }

@@ -5,6 +5,8 @@ import { useNow } from '../lib/clock';
 import { Icon } from '../ui/Icon';
 import { SheetHeader } from '../ui/headers';
 import { openSheet } from './ui';
+import { useLayout } from './layout';
+import { setSleep, useSleepSettings } from './sleep';
 import { THEMES, setAutoDark, setThemeChoice, useThemeSettings, type ThemeName } from './theme';
 import css from './ThemeSheet.module.css';
 
@@ -53,6 +55,47 @@ function ThemeSheet() {
         </span>
         <i className={css.switch} />
       </button>
+      {useLayout() === 'frame' && <SleepSetting />}
+    </div>
+  );
+}
+
+/** Minutes after midnight → "10:00 PM" */
+const clockLabel = (m: number) => fmt.time(new Date(2000, 0, 1, Math.floor(m / 60), m % 60));
+const STEP = 30;
+const nudge = (m: number, d: number) => (m + d * STEP + 1440) % 1440;
+
+/** Sleep hours, saved on this frame (sleep.ts) */
+function SleepSetting() {
+  const { on, from, to } = useSleepSettings();
+  const stepper = (label: string, value: number, key: 'from' | 'to') => (
+    <span className={css.time}>
+      <small>{label}</small>
+      <button aria-label={label + ' earlier'} onClick={() => setSleep({ [key]: nudge(value, -1) })}>
+        <Icon name="minus" size={20} />
+      </button>
+      <b>{clockLabel(value)}</b>
+      <button aria-label={label + ' later'} onClick={() => setSleep({ [key]: nudge(value, 1) })}>
+        <Icon name="plus" size={20} />
+      </button>
+    </span>
+  );
+  return (
+    <div className={css.sleep + ' surface'}>
+      <button className={css.auto + (on ? ' ' + css.isOn : '')} role="switch" aria-checked={on} onClick={() => setSleep({ on: !on })}>
+        <Icon name="moon" size={24} />
+        <span>
+          <b>Sleep at night</b>
+          <small>When nobody is using the frame, the screen goes dark instead of showing photos. Tap to wake it.</small>
+        </span>
+        <i className={css.switch} />
+      </button>
+      {on && (
+        <div className={css.times}>
+          {stepper('From', from, 'from')}
+          {stepper('Until', to, 'to')}
+        </div>
+      )}
     </div>
   );
 }

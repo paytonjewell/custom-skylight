@@ -1,13 +1,12 @@
-// App-wide UI state: current screen, display mode, the open pop-up, the toast, demo settings.
+// App-wide UI state: current screen, display mode, the open pop-up and the toast.
 import type { ReactNode } from 'react';
 import { createStore, useStore } from '../lib/store';
-import type { CalMode } from '../data/select';
 import type { IconName } from '../ui/icons';
 
 export const VIEWS = ['home', 'calendar', 'tasks', 'lists', 'kitchen', 'news', 'photos'] as const;
 export type ViewName = (typeof VIEWS)[number];
-/** day = dashboard; ambient = idle photo frame; night = dim clock; nightdash = dimmed dashboard at night */
-export type Mode = 'day' | 'ambient' | 'night' | 'nightdash';
+/** day = dashboard; ambient = idle photo frame; sleep = black screen during the sleep hours (sleep.ts) */
+export type Mode = 'day' | 'ambient' | 'sleep';
 
 export interface SheetSpec {
   id: number;
@@ -25,12 +24,8 @@ export interface ToastSpec {
 interface UIState {
   view: ViewName;
   mode: Mode;
-  calMode: CalMode;
   sheet: SheetSpec | null;
   toast: ToastSpec | null;
-  demoOpen: boolean;
-  /** Seconds without a touch before the photo frame (or night clock) takes over */
-  idleAfter: number;
 }
 
 const isView = (v: string): v is ViewName => (VIEWS as readonly string[]).includes(v);
@@ -42,11 +37,8 @@ const viewFromHash = (): ViewName => {
 export const ui = createStore<UIState>({
   view: viewFromHash(),
   mode: 'day',
-  calMode: 'normal',
   sheet: null,
   toast: null,
-  demoOpen: false,
-  idleAfter: 120,
 });
 export const useUI = <U>(select: (s: UIState) => U): U => useStore(ui, select);
 const patchUI = (p: Partial<UIState>) => ui.set((s) => ({ ...s, ...p }));
@@ -68,9 +60,6 @@ export function setMode(mode: Mode): void {
   patchUI({ mode });
   resetIdle();
 }
-export const setCalMode = (calMode: CalMode) => patchUI({ calMode });
-export const setFastIdle = (fast: boolean) => patchUI({ idleAfter: fast ? 15 : 120 });
-export const setDemoOpen = (demoOpen: boolean) => patchUI({ demoOpen });
 
 // ------------------------------------------------------------ pop-ups (one at a time) + toasts
 let nextId = 1;

@@ -160,6 +160,14 @@ Host regression checks cover late errors, probe completion and retry ordering. F
 captive-portal recovery on this revision, and other Android versions, remain untested on hardware.
 Keep a working Settings route and the existing signing key when updating an installed kiosk.
 
+## Screen brightness from the page
+
+The kiosk gives the page a `window.HomeHQ.setBrightness(level)` bridge. `0` turns this window's
+backlight to the lowest the panel allows and `-1` hands it back to the system setting; the screen
+stays on, so a tap still reaches the page. The dashboard uses it for its sleep hours (Theme →
+Sleep at night). Brightness goes back to normal whenever a page starts loading or the offline
+screen shows. In a browser, or on a kiosk built before the bridge, the page just shows black.
+
 ## Screen density
 
 The dashboard is laid out for 1280×800 at density 160. On wider screens, such as 1920×1080 frames,

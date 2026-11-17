@@ -1,5 +1,5 @@
 // Read-only helpers over the data. Pure functions: pass in what they need (data, events, now).
-import { addDays, atTime, dayStart, daysBetween, sameDay } from '../lib/dates';
+import { addDays, atTime, dayStart, daysBetween } from '../lib/dates';
 import { OTHER } from './grocery';
 import { fmt } from '../lib/fmt';
 import type { CalEvent, Data, Person, Verse, Weather, WxCond } from './types';
@@ -11,33 +11,6 @@ export function person(d: Data, id: string): Person {
 }
 
 // ------------------------------------------------------------ calendar
-export type CalMode = 'normal' | 'empty' | 'busy';
-
-/** Events to show; the demo's calendar modes add an overloaded day or clear today. */
-export function visibleEvents(d: Data, calMode: CalMode, now: Date): CalEvent[] {
-  if (calMode === 'busy') return d.events.concat(busyDay(d, now));
-  if (calMode === 'empty') return d.events.filter((e) => e.allDay || !sameDay(e.start, now));
-  return d.events;
-}
-
-/** The demo's overloaded day: made-up events today, shared out among the people */
-function busyDay(d: Data, now: Date): CalEvent[] {
-  const ids = d.people.map((p) => p.id);
-  if (!ids.length) return [];
-  const at = (hm: string) => {
-    const [h, m] = hm.split(':').map(Number);
-    const x = dayStart(now);
-    x.setHours(h, m);
-    return x;
-  };
-  const rows: [string, string, string][] = [
-    ['10:00', '11:00', 'Plumber window'], ['11:00', '11:30', 'Call with the bank'], ['14:30', '15:30', 'Library volunteer'],
-    ['15:30', '16:00', 'Snack prep'], ['16:00', '16:45', 'Math tutor'], ['16:15', '17:00', 'Vet follow-up'],
-    ['19:45', '20:30', 'Bake sale prep'], ['20:30', '21:30', 'Hockey'],
-  ];
-  return rows.map(([s, e, title], i) => ({ id: 'busy' + i, start: at(s), end: at(e), title, people: [ids[i % ids.length]] }));
-}
-
 export const isFamily = (d: Data, e: CalEvent) => e.people.length >= d.people.length;
 export const evColor = (d: Data, e: CalEvent): Person =>
   e.color ? { ...d.family, color: e.color } : isFamily(d, e) ? d.family : person(d, e.people[0]);

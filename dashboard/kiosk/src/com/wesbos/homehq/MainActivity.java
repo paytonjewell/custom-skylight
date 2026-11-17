@@ -30,6 +30,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -217,6 +218,7 @@ public class MainActivity extends Activity {
     // Keep navigation inside the kiosk. When the kiosk starts at boot before Wi-Fi is up, the
     // first load fails and would stay on the error page, so retry failed main-frame loads.
     // The offline screen covers WebView's error page until a load succeeds.
+    web.addJavascriptInterface(new PageBridge(), "HomeHQ");
     web.setWebViewClient(new WebViewClient() {
       @Override
       public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
@@ -227,6 +229,8 @@ public class MainActivity extends Activity {
       public void onPageStarted(WebView view, String url, Bitmap icon) {
         pageFailed = false;
         mainUrl = url;
+        // A new page starts at normal brightness; the dashboard dims again if it's asleep
+        setWindowBrightness(-1f);
       }
 
       @Override
@@ -452,6 +456,29 @@ public class MainActivity extends Activity {
 
   // Some WebViews report the page's certificate error before onPageStarted, so remember the
   // page here too.
+  /**
+   * Page → kiosk bridge, as window.HomeHQ. The dashboard's sleep screen calls setBrightness(0) and
+   * setBrightness(-1) on waking. Only this window's brightness changes, never the system setting,
+   * and the screen stays on, so a tap still reaches the page.
+   */
+  private final class PageBridge {
+    @JavascriptInterface
+    public void setBrightness(float level) {
+      runOnUiThread(() -> setWindowBrightness(level));
+    }
+  }
+
+  /** 0..1 for this window, or below 0 for the system brightness */
+  private void setWindowBrightness(float level) {
+    WindowManager.LayoutParams lp = getWindow().getAttributes();
+    float v = level < 0 || Float.isNaN(level)
+        ? WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+        : Math.min(1f, level);
+    if (lp.screenBrightness == v) return;
+    lp.screenBrightness = v;
+    getWindow().setAttributes(lp);
+  }
+
   private void load(String url) {
     mainUrl = url;
     web.loadUrl(url);
@@ -719,6 +746,7 @@ public class MainActivity extends Activity {
   }
 
   private void showOffline() {
+    setWindowBrightness(-1f);
     boolean wifi = setOfflineText();
     offline.setVisibility(View.VISIBLE);
     // On Wi-Fi, a sign-in page may be what's blocking the dashboard.

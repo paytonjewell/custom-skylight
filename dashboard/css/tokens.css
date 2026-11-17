@@ -75,11 +75,6 @@
   --alert: #D9708F;     /* now-line, overdue */
   --warm: #FFD9B0;      /* "On this day" highlight on photos */
 
-  /* night clock + dimmed night dashboard */
-  --night: #6C5F99;
-  --night-2: #5A4F80;
-  --night-3: #4E4570;
-  --nightdash: invert(1) grayscale(1) brightness(.5);
 }
 
 /* ---------------------------------------------------------------- Earth */
@@ -114,10 +109,6 @@
   --alert: #9C5F43;
   --warm: #F2D9A6;
 
-  --night: #7A5A40;
-  --night-2: #6A513D;
-  --night-3: #5E4836;
-  --nightdash: invert(1) grayscale(1) sepia(.7) brightness(.5);
 }
 
 /* ---------------------------------------------------------------- Nordic */
@@ -152,10 +143,6 @@
   --alert: #B5655A;
   --warm: #F2D58A;
 
-  --night: #5F7690;
-  --night-2: #50657C;
-  --night-3: #44576B;
-  --nightdash: invert(1) grayscale(1) brightness(.5);
 }
 
 /* ---------------------------------------------------------------- Dark */
@@ -190,10 +177,6 @@
   --alert: #E0839F;
   --warm: #FFD9B0;
 
-  --night: #6A6680;
-  --night-2: #5A5670;
-  --night-3: #4E4B60;
-  --nightdash: brightness(.55);
 }
 
 /* ---------------------------------------------------------------- Glass */
@@ -233,10 +216,6 @@
   --alert: #E5487A;
   --warm: #FFD6E6;
 
-  --night: #8A6FB8;
-  --night-2: #745CA0;
-  --night-3: #614D88;
-  --nightdash: invert(1) grayscale(1) brightness(.5);
 }
 
 /* ---------------------------------------------------------------- phone layout
