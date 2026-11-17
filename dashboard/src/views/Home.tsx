@@ -79,7 +79,7 @@ export function Home({ active }: { active: boolean }) {
 /** Countdown chips fill the space between the clock and the weather; they scroll if they overflow */
 function Countdowns({ list, active }: { list: CalEvent[]; active: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEdgeFade(ref, [list.length, active]);
+  useEdgeFade(ref, `${list.length}:${active}`);
   return (
     <div className={css.cds} ref={ref}>
       {list.map((e) => (
@@ -126,7 +126,7 @@ function TasksCard({ now }: { now: Date }) {
   const left = due.filter((x) => !x.done).length;
   // On a phone the rings can be wider than the card: they scroll sideways, edges fading like the countdowns
   const rings = useRef<HTMLDivElement>(null);
-  useEdgeFade(rings, [due.length]);
+  useEdgeFade(rings, due.length);
   return (
     <div className={css.chores + ' card'}>
       {/* The heading opens Tasks; each ring opens that person's tasks for today */}

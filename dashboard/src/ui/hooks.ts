@@ -59,9 +59,10 @@ export function usePendingAction(delay: number) {
 
 /**
  * Horizontal scrollers: fade an edge only when there is more content past it. Sets --fade-l /
- * --fade-r on the element (see .h-cds). Re-checks when `deps` change.
+ * --fade-r on the element (see .h-cds). Re-checks when `key` changes (pass what changes the content's
+ * width, e.g. a count).
  */
-export function useEdgeFade(ref: RefObject<HTMLElement | null>, deps: unknown[]) {
+export function useEdgeFade(ref: RefObject<HTMLElement | null>, key: string | number) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -77,8 +78,7 @@ export function useEdgeFade(ref: RefObject<HTMLElement | null>, deps: unknown[])
       el.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [ref, key]);
 }
 
 /** Nudge static content a few px every minute so nothing sits still for hours (image retention) */

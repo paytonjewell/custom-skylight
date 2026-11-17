@@ -205,12 +205,14 @@ function StorySheet({ s, topic }: { s: NewsStory; topic: string }) {
   );
 }
 
+const loadQr = () => import('qrcode-generator');
+
 /** A QR code for the article, to open it on a phone (the QR library loads only on the frame) */
 function ScanToRead({ url }: { url: string }) {
   const [svg, setSvg] = useState('');
   useEffect(() => {
     let live = true;
-    void import('qrcode-generator').then(({ default: qrcode }) => {
+    void loadQr().then(({ default: qrcode }) => {
       const qr = qrcode(0, 'M');
       qr.addData(url);
       qr.make();

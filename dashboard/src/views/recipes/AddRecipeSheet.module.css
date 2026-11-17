@@ -45,4 +45,4 @@
 .importErr button, .pasteLink { font-weight: 600; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .pasteLink { align-self: flex-start; font-size: 14px; padding-left: 4px; }
 .import .area { background: var(--paper); }
-.useBtn { align-self: flex-start; }
+.pasteBtn { align-self: flex-start; }

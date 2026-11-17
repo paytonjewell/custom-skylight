@@ -1,7 +1,7 @@
 // Google Calendar events and tasks as the calendar shows them. Pure functions.
 import { doneByTask, dueOn } from './tasks';
 import { holidayEmoji } from './holidays';
-import { dayOf, shiftDay } from '../lib/repeat';
+import { shiftDay } from '../lib/repeat';
 import type { Calendar, CalEvent, Data, EventRecord, Person } from './types';
 import { calendarPeople } from './select';
 
@@ -92,10 +92,9 @@ const TASK_DAYS = 62;
  * Tasks with "Show on calendar", as all-day items for each day they're due (from two months back to
  * two months ahead). Tapping one checks it off (src/views/calendar/EventSheet.tsx).
  */
-export function taskEvents(d: Pick<Data, 'tasks' | 'taskDone' | 'ALL'>, now: Date): CalEvent[] {
+export function taskEvents(d: Pick<Data, 'tasks' | 'taskDone' | 'ALL'>, today: string): CalEvent[] {
   const tasks = d.tasks.filter((t) => t.onCalendar);
   if (!tasks.length) return [];
-  const today = dayOf(now);
   const by = doneByTask(d.taskDone);
   const out: CalEvent[] = [];
   for (let i = -TASK_DAYS; i <= TASK_DAYS; i++) {

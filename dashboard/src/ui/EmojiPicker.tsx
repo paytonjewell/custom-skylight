@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLayout } from '../app/layout';
 import { useTheme } from '../app/theme';
+import { useLatest } from './hooks';
 import css from './EmojiPicker.module.css';
 
 /** Sizes by layout: buttons per row, button and emoji size (px) */
@@ -12,19 +13,21 @@ const SIZES = {
   phone: { perLine: 7, emojiButtonSize: 46, emojiSize: 30 },
 };
 
+/** The picker and its emoji data, loaded only when a picker is first opened */
+const loadPicker = () => Promise.all([import('emoji-mart'), import('@emoji-mart/data')]);
+
 export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const layout = useLayout();
   const dark = useTheme() === 'dark';
   const [ready, setReady] = useState(false);
   // The latest onPick, so the picker doesn't need rebuilding when it changes
-  const pick = useRef(onPick);
-  pick.current = onPick;
+  const pick = useLatest(onPick);
 
   useEffect(() => {
     let picker: HTMLElement | null = null;
     let cancelled = false;
-    void Promise.all([import('emoji-mart'), import('@emoji-mart/data')]).then(([{ Picker }, data]) => {
+    void loadPicker().then(([{ Picker }, data]) => {
       if (cancelled || !host.current) return;
       picker = new Picker({
         data: data.default,

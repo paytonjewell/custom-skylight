@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import babel from '@rolldown/plugin-babel';
 import { cloudflare } from '@cloudflare/vite-plugin';
 
 // Build targets stay conservative so the bundle also runs on older Android WebViews (the BIUFRAME
@@ -19,8 +20,20 @@ import { cloudflare } from '@cloudflare/vite-plugin';
 // `.row b {}` then `:global(.phone) .row b {}`.
 const CSS_TARGETS = { chrome: 61 << 16 }; // Lightning CSS encodes versions as major << 16
 
+// React Compiler memoizes components and hooks, so a store change only redraws what it affects (the
+// frame's MT8786 is slow). A component it can't compile still works, just unmemoized: those are listed
+// in the dev server and build output so they can be fixed.
+const compilerLogger = {
+  logEvent(file: string | null, e: { kind: string; fnLoc?: { start: { line: number } } | null; detail?: unknown }) {
+    if (e.kind !== 'CompileError' && e.kind !== 'PipelineError') return;
+    const d = e.detail as { reason?: string; options?: { reason?: string } } | undefined;
+    const where = `${file?.slice(file.indexOf('/src/') + 1)}:${e.fnLoc?.start.line ?? '?'}`;
+    console.warn(`[react-compiler] skipped ${where}: ${d?.reason ?? d?.options?.reason ?? e.kind}`);
+  },
+};
+
 export default defineConfig({
-  plugins: [react(), cloudflare()],
+  plugins: [react(), babel({ presets: [reactCompilerPreset({ logger: compilerLogger })] }), cloudflare()],
   css: {
     transformer: 'lightningcss',
     lightningcss: {

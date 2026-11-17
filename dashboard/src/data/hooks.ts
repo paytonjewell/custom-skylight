@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useNow } from '../lib/clock';
 import { useData } from './store';
 import type { CalEvent } from './types';
@@ -14,9 +13,7 @@ export function useEvents(): CalEvent[] {
 export function useCalendarEvents(): CalEvent[] {
   const events = useEvents();
   const data = useData('ALL', 'taskDone', 'tasks');
-  const now = useNow();
-  const day = dayOf(now);
-  // Recomputed when tasks change or the day does, not on every clock tick
-  const tasks = useMemo(() => taskEvents(data, now), [data.tasks, data.taskDone, data.ALL, day]);
-  return useMemo(() => (tasks.length ? events.concat(tasks) : events), [events, tasks]);
+  // By day, not the clock's minute: React Compiler then recomputes them only when the tasks or the day change
+  const tasks = taskEvents(data, dayOf(useNow()));
+  return tasks.length ? events.concat(tasks) : events;
 }

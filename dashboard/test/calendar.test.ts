@@ -159,7 +159,7 @@ test('tasks marked "show on calendar" appear on the days they are due', () => {
     taskDone: [{ task: 't', day: '2026-12-02', at: '2026-12-02T20:00:00Z', by: null }],
     ALL: ['john'],
   } as unknown as Data;
-  const evs = taskEvents(d, new Date(2026, 10, 16, 12));
+  const evs = taskEvents(d, '2026-11-16');
   const days = evs.map((e) => `${e.start.getMonth() + 1}/${e.start.getDate()}`);
   assert.ok(days.includes('12/2'), days.join(' ')); // Wed before Thu Dec 3
   // Nov 4 wasn't done: it waits on today as overdue (checking it off counts for Nov 4)

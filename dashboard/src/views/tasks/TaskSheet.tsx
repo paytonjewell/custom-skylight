@@ -2,7 +2,8 @@
 // repeats are one tap (Once, Daily, Weekdays, Weekly, Monthly); the rest (every few days, weeks or
 // months; the 1st Thursday, or the day before it) are under Custom. Repeats can count from the due
 // date (the calendar) or from when it was last done ("1 week after it's done").
-import { useRef, useState } from 'react';
+import { Chip, DateChip } from '../../ui/Chip';
+import { useState } from 'react';
 import type { Slot, Task } from '../../data/types';
 import { useData } from '../../data/store';
 import { addTask, deleteTask, editTask, restoreTask, type TaskFields } from '../../data/actions';
@@ -110,7 +111,6 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
   const [offset, setOffset] = useState(r?.offset ?? 0);
   const [slot, setSlot] = useState<Slot>(task?.slot ?? defaults?.slot ?? 'anytime');
   const [habit, setHabit] = useState(task?.habit ?? defaults?.habit ?? false);
-  const dateInput = useRef<HTMLInputElement>(null);
   const [emoji, setEmoji] = useState(task?.emoji ?? defaults?.emoji ?? '');
   const [picking, setPicking] = useState(false);
   const [onCalendar, setOnCalendar] = useState(task?.onCalendar ?? defaults?.onCalendar ?? false);
@@ -216,7 +216,6 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
       );
   };
 
-  const chip = (on: boolean) => 'chip' + (on ? ' is-on' : '');
   const toggleDay = (d: Weekday) => setDays((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
   const step = (label: string, value: number, set: (n: number) => void, min = 1, max = 365) => (
     <div className={css.stepper}>
@@ -233,9 +232,9 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
   const weekdays = (
     <div className="chips">
       {WEEK.map(([d, label]) => (
-        <button key={d} className={chip(days.includes(d))} onClick={() => toggleDay(d)}>
+        <Chip key={d} on={days.includes(d)} onClick={() => toggleDay(d)}>
           {label}
-        </button>
+        </Chip>
       ))}
     </div>
   );
@@ -320,47 +319,32 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
       <div className="label">How often</div>
       <div className="chips">
         {OFTEN.map(([id, label]) => (
-          <button key={id} className={chip(mode === id)} onClick={() => setMode(id)}>
+          <Chip key={id} on={mode === id} onClick={() => setMode(id)}>
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
 
       {mode === 'once' && (
         <div className={css.more}>
           <div className="chips">
-            <button className={chip(!due)} onClick={() => setDue(null)}>
+            <Chip on={!due} onClick={() => setDue(null)}>
               Whenever
-            </button>
-            <button className={chip(due === today)} onClick={() => setDue(today)}>
+            </Chip>
+            <Chip on={due === today} onClick={() => setDue(today)}>
               Today
-            </button>
-            <button className={chip(due === tomorrow)} onClick={() => setDue(tomorrow)}>
+            </Chip>
+            <Chip on={due === tomorrow} onClick={() => setDue(tomorrow)}>
               Tomorrow
-            </button>
-            <button
-              className={chip(!!due && due !== today && due !== tomorrow) + ' ' + css.dateChip}
-              onClick={() => {
-                // Opens the date picker (a tap on a hidden date field doesn't, in desktop Chrome)
-                const el = dateInput.current;
-                try {
-                  el?.showPicker();
-                } catch {
-                  el?.click();
-                }
-              }}
+            </Chip>
+            <DateChip
+              on={!!due && due !== today && due !== tomorrow}
+              value={due ?? ''}
+              min={today}
+              onChange={(v) => setDue(v || null)}
             >
               {due && due !== today && due !== tomorrow ? fmtDay(due) : 'Pick a day'}
-              <input
-                ref={dateInput}
-                type="date"
-                tabIndex={-1}
-                aria-hidden
-                value={due ?? ''}
-                min={today}
-                onChange={(e) => setDue(e.target.value || null)}
-              />
-            </button>
+            </DateChip>
           </div>
         </div>
       )}
@@ -368,12 +352,12 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
         <div className={css.basis}>
           <span>Repeat from</span>
           <div className="chips">
-            <button className={chip(basis === 'due')} onClick={() => setBasis('due')}>
+            <Chip on={basis === 'due'} onClick={() => setBasis('due')}>
               The due date
-            </button>
-            <button className={chip(basis === 'done')} onClick={() => setBasis('done')}>
+            </Chip>
+            <Chip on={basis === 'done'} onClick={() => setBasis('done')}>
               When it’s done
-            </button>
+            </Chip>
           </div>
         </div>
       )}
@@ -385,9 +369,9 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
         <div className={css.more}>
           <div className="chips">
             {CUSTOM.map(([id, label]) => (
-              <button key={id} className={chip(custom === id) + ' chip--ghost'} onClick={() => setCustom(id)}>
+              <Chip key={id} on={custom === id} className="chip--ghost" onClick={() => setCustom(id)}>
                 {label}
-              </button>
+              </Chip>
             ))}
           </div>
           {custom === 'days' && step(every === 1 ? 'day' : 'days', every, setEvery)}
@@ -419,23 +403,23 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
             <>
               <div className="chips">
                 {NTHS.map(([n, label]) => (
-                  <button key={n} className={chip(nth === n)} onClick={() => setNth(n)}>
+                  <Chip key={n} on={nth === n} onClick={() => setNth(n)}>
                     {label}
-                  </button>
+                  </Chip>
                 ))}
               </div>
               <div className="chips">
                 {WEEK.map(([d, label]) => (
-                  <button key={d} className={chip(nthDay === d)} onClick={() => setNthDay(d)}>
+                  <Chip key={d} on={nthDay === d} onClick={() => setNthDay(d)}>
                     {label}
-                  </button>
+                  </Chip>
                 ))}
               </div>
               <div className="chips">
                 {OFFSETS.map(([o, label]) => (
-                  <button key={o} className={chip(offset === o) + ' chip--ghost'} onClick={() => setOffset(o)}>
+                  <Chip key={o} on={offset === o} className="chip--ghost" onClick={() => setOffset(o)}>
                     {label}
-                  </button>
+                  </Chip>
                 ))}
               </div>
             </>
@@ -447,9 +431,9 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
       <div className="label">When</div>
       <div className="chips">
         {SLOTS.map(([id, label]) => (
-          <button key={id} className={chip(slot === id)} onClick={() => setSlot(id)}>
+          <Chip key={id} on={slot === id} onClick={() => setSlot(id)}>
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
 

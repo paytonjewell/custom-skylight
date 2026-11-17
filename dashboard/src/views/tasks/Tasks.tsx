@@ -6,6 +6,7 @@
 // column (the order is saved on this device, and Today's rings follow it). The
 // settings (cog, saved on this device) pick which people and sections show, and all tasks, only those
 // to do, or only done ones (done ones sit at the bottom of their group).
+import { Chip } from '../../ui/Chip';
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { useHoldReorder } from '../../ui/useHoldReorder';
 import type { Data, Slot } from '../../data/types';
@@ -833,15 +834,14 @@ function toggleIn(f: ReturnType<typeof savedIds>, cur: string[] | null, all: str
 export function ShowSettings({ labelClass = css.sheetLabel }: { labelClass?: string }) {
   const sections = useStore(sectionFilter.store, (s) => s);
   const show = useStore(doneView, (s) => s);
-  const chip = (on: boolean) => 'chip' + (on ? ' is-on' : '');
   return (
     <>
       <div className={'label ' + labelClass}>Sections</div>
       <div className="chips">
         {SECTIONS.map(([id, label]) => (
-          <button
+          <Chip
             key={id}
-            className={chip(showing(sections, id))}
+            on={showing(sections, id)}
             onClick={() =>
               toggleIn(
                 sectionFilter,
@@ -853,15 +853,15 @@ export function ShowSettings({ labelClass = css.sheetLabel }: { labelClass?: str
           >
             {showing(sections, id) && <Icon name="check" size={18} />}
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
       <div className={'label ' + labelClass}>Show</div>
       <div className="chips">
         {DONE_VIEWS.map(([v, label]) => (
-          <button key={v} className={chip(show === v)} onClick={() => setDoneView(v)}>
+          <Chip key={v} on={show === v} onClick={() => setDoneView(v)}>
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
     </>

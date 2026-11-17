@@ -139,20 +139,6 @@ export function Slideshow({ interval, active, ref }: Props) {
 }
 
 function SlideView({ photo: p, pos, onLoad }: { photo: Photo; pos: -1 | 0 | 1; onLoad: (id: string) => void }) {
-  // Fallback look if an image can't load (offline): hide it, the dark slide shows through
-  const img = (cls?: string) => (
-    <img
-      className={cls}
-      src={photoSrc(p.id)}
-      alt=""
-      draggable={false}
-      onLoad={() => onLoad(p.id)}
-      onError={(e) => {
-        e.currentTarget.classList.add('is-broken');
-        onLoad(p.id);
-      }}
-    />
-  );
   // Landscape fills the screen; portrait is shown whole, centred
   return (
     <div
@@ -160,8 +146,31 @@ function SlideView({ photo: p, pos, onLoad }: { photo: Photo; pos: -1 | 0 | 1; o
       style={pos ? { transform: `translateX(${pos * 100}%)` } : undefined}
       aria-hidden={pos !== 0}
     >
-      {p.o === 'p' ? img(css.fitImg) : <div className={css.kb}>{img()}</div>}
+      {p.o === 'p' ? (
+        <SlideImg id={p.id} className={css.fitImg} onLoad={onLoad} />
+      ) : (
+        <div className={css.kb}>
+          <SlideImg id={p.id} onLoad={onLoad} />
+        </div>
+      )}
     </div>
+  );
+}
+
+function SlideImg({ id, className, onLoad }: { id: string; className?: string; onLoad: (id: string) => void }) {
+  return (
+    <img
+      className={className}
+      src={photoSrc(id)}
+      alt=""
+      draggable={false}
+      onLoad={() => onLoad(id)}
+      onError={(e) => {
+        // Fallback look if an image can't load (offline): hide it, the dark slide shows through
+        e.currentTarget.classList.add('is-broken');
+        onLoad(id);
+      }}
+    />
   );
 }
 

@@ -361,7 +361,7 @@ function FromKitchen({
   const data = useData('groceries');
   const close = ready.filter((x) => x.missing.length <= CLOSE).slice(0, 8);
   const row = useRef<HTMLDivElement>(null);
-  useEdgeFade(row, [close.length, hasInventory]);
+  useEdgeFade(row, `${close.length}:${hasInventory}`);
   if (!hasInventory) {
     return (
       <button className={css.kitchenHint} onClick={onInventory}>

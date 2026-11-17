@@ -47,5 +47,12 @@ hide layout bugs the frame has (e.g. Chrome 124 gives `<button>` `align-items: f
 - Styles: CSS modules beside each component; theme tokens in `css/tokens.css`. Phone styles sit
   inside each rule under `:global(.phone) &`.
 - Comments explain why, in plain sentences; keep the style of the file you're in.
+- Data: read it with `useData('tasks', 'taskDone')`, naming only the keys the component uses; helpers it's
+  passed to take `Pick<Data, …>`. Each kind of data syncs through `createSync` (`src/data/sync.ts`);
+  everything starts once from `src/app/start.ts`.
+- React Compiler memoizes components, so there's no need for `useMemo`/`useCallback`. A component it
+  can't compile is printed as `[react-compiler] skipped …` by the dev server and build: keep that at zero.
+- Shared pieces live in `src/ui/` (`Chip`/`DateChip`, `PersonPicker`, `SheetHeader`…): reuse them
+  rather than copying markup and CSS between sheets.
 - Dragging: `ui/useDragDrop.tsx` (drop onto targets) and `ui/useHoldReorder.ts` (reorder in place),
   both press-and-hold. Swipe rows: `ui/SwipeRow.tsx`.

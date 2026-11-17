@@ -3,7 +3,8 @@
 // Who it's for starts as whose the calendar says (names in the title, on one that goes by names) and
 // can be changed; a change is kept on the event. The title is saved exactly as typed.
 // Editing one occurrence of a repeating event changes just that occurrence.
-import { useRef, useState } from 'react';
+import { Chip, DateChip } from '../../ui/Chip';
+import { useState } from 'react';
 import type { CalEvent, Calendar } from '../../data/types';
 import { dataStore, useData } from '../../data/store';
 import { addCalEvent, deleteCalEvent, editCalEvent, restoreCalEvent, type EventFields } from '../../data/actions';
@@ -123,7 +124,6 @@ function EventForm({
   const [loc, setLoc] = useState(event?.loc ?? '');
   const [notes, setNotes] = useState(event?.notes ?? '');
   const [picking, setPicking] = useState(false);
-  const dateInput = useRef<HTMLInputElement>(null);
 
   if (!choices.length) {
     return (
@@ -216,7 +216,6 @@ function EventForm({
     );
   };
 
-  const chip = (on: boolean) => 'chip' + (on ? ' is-on' : '');
   const dayChoices = [0, 1, 2, 3, 4].map((i) => addDays(today, i));
   const picked = !dayChoices.some((d) => sameDay(d, day));
   return (
@@ -271,10 +270,10 @@ function EventForm({
       <div className="label">Calendar</div>
       <div className="chips">
         {choices.map((c) => (
-          <button key={c.id} className={chip(calendar === c.id) + ' ' + css.calChip} onClick={() => setCalendar(c.id)}>
+          <Chip key={c.id} on={calendar === c.id} className={css.calChip} onClick={() => setCalendar(c.id)}>
             <CalendarMark c={c} />
             {c.name}
-          </button>
+          </Chip>
         ))}
       </div>
 
@@ -299,41 +298,23 @@ function EventForm({
       <div className="label">Day</div>
       <div className="chips">
         {dayChoices.map((d, i) => (
-          <button key={i} className={chip(sameDay(d, day))} onClick={() => setDay(d)}>
+          <Chip key={i} on={sameDay(d, day)} onClick={() => setDay(d)}>
             {i < 2 ? fmt.rel(d, today) : fmt.dayShort(d) + ' ' + d.getDate()}
-          </button>
+          </Chip>
         ))}
-        <button
-          className={chip(picked) + ' ' + css.dateChip}
-          onClick={() => {
-            const el = dateInput.current;
-            try {
-              el?.showPicker();
-            } catch {
-              el?.click();
-            }
-          }}
-        >
+        <DateChip on={picked} value={dayKey(day)} onChange={(v) => v && setDay(new Date(v + 'T00:00:00'))}>
           {picked ? fmt.dayShort(day) + ', ' + fmt.monthShort(day) + ' ' + day.getDate() : 'Pick a day'}
-          <input
-            ref={dateInput}
-            type="date"
-            tabIndex={-1}
-            aria-hidden
-            value={dayKey(day)}
-            onChange={(e) => e.target.value && setDay(new Date(e.target.value + 'T00:00:00'))}
-          />
-        </button>
+        </DateChip>
       </div>
 
       <div className="label">Time</div>
       <div className="chips">
-        <button className={chip(allDay)} onClick={() => setAllDay(true)}>
+        <Chip on={allDay} onClick={() => setAllDay(true)}>
           All day
-        </button>
-        <button className={chip(!allDay)} onClick={() => setAllDay(false)}>
+        </Chip>
+        <Chip on={!allDay} onClick={() => setAllDay(false)}>
           At a time
-        </button>
+        </Chip>
       </div>
       {allDay ? (
         <div className={css.more}>
@@ -352,20 +333,21 @@ function EventForm({
         <div className={css.more}>
           <div className="chips">
             {TIMES.map(([t, label]) => (
-              <button key={t} className={chip(start === t)} onClick={() => pickStart(t)}>
+              <Chip key={t} on={start === t} onClick={() => pickStart(t)}>
                 {label}
-              </button>
+              </Chip>
             ))}
           </div>
           <div className="chips">
             {LENGTHS.map(([m, label]) => (
-              <button
+              <Chip
                 key={m}
-                className={chip(length === m) + ' chip--ghost'}
+                on={length === m}
+                className="chip--ghost"
                 onClick={() => setEnd(fromMinutes(minutesOf(start) + m))}
               >
                 {label}
-              </button>
+              </Chip>
             ))}
           </div>
           <div className={css.times}>

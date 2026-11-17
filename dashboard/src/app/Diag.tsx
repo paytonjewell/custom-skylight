@@ -1,7 +1,7 @@
 // On-device diagnostics overlay for checking performance on the frame.
 // Enable with ?diag in the URL (remembered), turn off with ?diag=0.
 // Experiments: ?diag&exp=font,shadow,img (comma separated) to rule out expensive rendering.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { store, stored } from '../lib/store';
 import { ui, useUI } from './ui';
 import app from './App.module.css';
@@ -33,13 +33,32 @@ function ua() {
   return (m ? m[1] + ' ' + m[2] : navigator.userAgent.slice(0, 30)) + (android ? ' · Android ' + android[1] : '');
 }
 
+/** What the panel tracks between ticks (one panel at most, so module state) */
+const probe = { frames: [] as number[], jank: 0, down: null as number | null, switches: [] as Switch[] };
+
+/** Everything the panel shows, read twice a second */
+function measure() {
+  const fr = probe.frames.slice(-90);
+  const stage = document.getElementById('stage');
+  const imgs = Array.from(document.images).filter((i) => i.naturalWidth);
+  const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+  return {
+    avg: fr.reduce((a, b) => a + b, 0) / (fr.length || 1),
+    jank: probe.jank,
+    scale: stage ? stage.getBoundingClientRect().height / 800 : 1,
+    viewport: `${innerWidth}×${innerHeight}`,
+    imgs: imgs.length,
+    mpx: imgs.reduce((s, i) => s + i.naturalWidth * i.naturalHeight, 0) / 1e6,
+    heap: mem ? Math.round(mem.usedJSHeapSize / 1048576) + ' MB' : 'n/a',
+    dom: document.getElementsByTagName('*').length,
+    mode: ui.get().mode,
+    switches: [...probe.switches],
+  };
+}
+
 export function Diag() {
   const view = useUI((s) => s.view);
-  const [, setTick] = useState(0);
-  const frames = useRef<number[]>([]);
-  const jank = useRef(0);
-  const down = useRef<number | null>(null);
-  const switches = useRef<Switch[]>([]);
+  const [m, setM] = useState(measure);
 
   // Experiments + frame timing + finger-down timestamps + twice-a-second repaint of the panel
   useEffect(() => {
@@ -53,17 +72,17 @@ export function Diag() {
     const frame = (t: number) => {
       const d = t - last;
       last = t;
-      frames.current.push(d);
-      if (d > 50) jank.current++;
-      if (frames.current.length > 180) frames.current.shift();
+      probe.frames.push(d);
+      if (d > 50) probe.jank++;
+      if (probe.frames.length > 180) probe.frames.shift();
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     const onDown = (e: PointerEvent) => {
-      if ((e.target as Element).closest('.' + app.rail)) down.current = performance.now();
+      if ((e.target as Element).closest('.' + app.rail)) probe.down = performance.now();
     };
     document.addEventListener('pointerdown', onDown, true);
-    const t = setInterval(() => setTick((n) => n + 1), 500);
+    const t = setInterval(() => setM(measure()), 500);
     return () => {
       style.remove();
       cancelAnimationFrame(raf);
@@ -74,35 +93,29 @@ export function Diag() {
 
   // Screen switch: time from finger down on the sidebar to the next painted frame
   useEffect(() => {
-    const start = down.current ?? performance.now();
+    const start = probe.down ?? performance.now();
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        switches.current = [{ view, total: performance.now() - start }, ...switches.current].slice(0, 7);
-        down.current = null;
+        probe.switches = [{ view, total: performance.now() - start }, ...probe.switches].slice(0, 7);
+        probe.down = null;
       }),
     );
   }, [view]);
 
-  const fr = frames.current.slice(-90);
-  const avg = fr.reduce((a, b) => a + b, 0) / (fr.length || 1);
-  const stage = document.getElementById('stage');
-  const scale = stage ? stage.getBoundingClientRect().height / 800 : 1;
-  const imgs = Array.from(document.images).filter((i) => i.naturalWidth);
-  const mpx = imgs.reduce((s, i) => s + i.naturalWidth * i.naturalHeight, 0) / 1e6;
-  const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
   return (
     <div className={css.diag}>
-      <b>DIAG</b> {ua()} · exp {EXP.join(',') || 'none'} · mode {ui.get().mode}
+      <b>DIAG</b> {ua()} · exp {EXP.join(',') || 'none'} · mode {m.mode}
       <br />
-      viewport {innerWidth}×{innerHeight} · dpr {devicePixelRatio} · scale {scale.toFixed(3)}
+      viewport {m.viewport} · dpr {devicePixelRatio} · scale {m.scale.toFixed(3)}
       <br />
-      fps {(1000 / avg).toFixed(0)} · frame {avg.toFixed(0)}ms · jank&gt;50ms {jank.current}
+      fps {(1000 / m.avg).toFixed(0)} · frame {m.avg.toFixed(0)}ms · jank&gt;50ms {m.jank}
       <br />
-      dom {document.getElementsByTagName('*').length} · imgs {imgs.length} ({mpx.toFixed(1)} MP) · heap{' '}
-      {mem ? Math.round(mem.usedJSHeapSize / 1048576) + ' MB' : 'n/a'}
+      dom {m.dom} · imgs {m.imgs} ({m.mpx.toFixed(1)} MP) · heap {m.heap}
       <br />
       <u>screen switch · tap → painted</u>
-      {switches.current.map((s, i) => (
+      {m.switches.map((s, i) => (
+        // Newest first and capped at 7: the position is the identity
+        // biome-ignore lint/suspicious/noArrayIndexKey: see above
         <span key={i}>
           <br />
           {s.view} · <b>{Math.round(s.total)}ms</b>

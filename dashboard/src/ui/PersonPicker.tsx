@@ -28,22 +28,42 @@ export function PersonPicker({
   big,
   after = [],
 }: Props) {
-  const button = (p: Person, label: string) => (
-    <button
+  const button = (p: Person, label?: string) => (
+    <PersonButton
       key={p.id}
-      className={css.person + (selected.includes(p.id) ? ' ' + css.isOn : '')}
-      style={toneStyle(p)}
-      onClick={() => onPick(p.id)}
-    >
-      <Avatar p={p} size={avatarSize} />
-      <span>{label}</span>
-    </button>
+      p={p}
+      label={label ?? p.name}
+      on={selected.includes(p.id)}
+      size={avatarSize}
+      onPick={onPick}
+    />
   );
   return (
     <div className={css.picker + (big ? ' ' + css.big : '')}>
-      {people.map((p) => button(p, p.name))}
+      {people.map((p) => button(p))}
       {everyone && button(everyone, everyoneLabel)}
-      {after.map((p) => button(p, p.name))}
+      {after.map((p) => button(p))}
     </div>
+  );
+}
+
+function PersonButton({
+  p,
+  label,
+  on,
+  size,
+  onPick,
+}: {
+  p: Person;
+  label: string;
+  on: boolean;
+  size: number;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <button className={css.person + (on ? ' ' + css.isOn : '')} style={toneStyle(p)} onClick={() => onPick(p.id)}>
+      <Avatar p={p} size={size} />
+      <span>{label}</span>
+    </button>
   );
 }

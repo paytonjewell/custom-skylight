@@ -5,7 +5,7 @@
 // Or start from a link: the Worker reads the page's recipe (worker/recipeImport.ts) and fills the form
 // to check over. A site that won't let apps read it: paste the recipe's text instead, and it's split at
 // its "Ingredients" and "Instructions" headings.
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { Ingredient } from '../../data/types';
 import { useData, newId } from '../../data/store';
 import { amount, guessEmoji, parseIngredient, parseRecipeText, parseSteps } from '../../data/recipes';
@@ -86,27 +86,31 @@ function AddRecipe({ link: startLink }: { link?: string }) {
     if (x.tags?.length) setTags(x.tags);
     setKinds({});
   };
-  const fetchLink = async (url = link) => {
+  const fetchLink = (url = link) => {
     if (!url.trim() || importing) return;
     setImporting(true);
     setImportErr('');
-    try {
-      const x = await api.importRecipe(url.trim());
-      fill(x);
-      setSource(x.source);
-      setPasting(false);
-    } catch (e) {
-      setImportErr((e as Error).message || 'Couldn’t read that page.');
-      setSource(url.trim());
-    } finally {
-      setImporting(false);
-    }
+    void api
+      .importRecipe(url.trim())
+      .then(
+        (x) => {
+          fill(x);
+          setSource(x.source);
+          setPasting(false);
+        },
+        (e: Error) => {
+          setImportErr(e.message || 'Couldn’t read that page.');
+          setSource(url.trim());
+        },
+      )
+      .then(() => setImporting(false));
   };
   // Opened with a link: import it straight away
-  useEffect(() => {
-    if (startLink) void fetchLink(startLink);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const usePasted = () => {
+  const importStartLink = useEffectEvent(() => {
+    if (startLink) fetchLink(startLink);
+  });
+  useEffect(() => importStartLink(), []);
+  const applyPasted = () => {
     const x = parseRecipeText(pasted);
     if (!x)
       return setImportErr(
@@ -178,11 +182,11 @@ function AddRecipe({ link: startLink }: { link?: string }) {
             value={link}
             onChange={(e) => setLink(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') void fetchLink();
+              if (e.key === 'Enter') fetchLink();
             }}
             enterKeyHint="go"
           />
-          <button className="btn btn--solid" disabled={!link.trim() || importing} onClick={() => void fetchLink()}>
+          <button className="btn btn--solid" disabled={!link.trim() || importing} onClick={() => fetchLink()}>
             {importing ? 'Reading…' : 'Get recipe'}
           </button>
         </div>
@@ -209,7 +213,7 @@ function AddRecipe({ link: startLink }: { link?: string }) {
               value={pasted}
               onChange={(e) => setPasted(e.target.value)}
             />
-            <button className={'btn btn--ghost ' + css.useBtn} disabled={!pasted.trim()} onClick={usePasted}>
+            <button className={'btn btn--ghost ' + css.pasteBtn} disabled={!pasted.trim()} onClick={applyPasted}>
               Fill in the form
             </button>
           </>
