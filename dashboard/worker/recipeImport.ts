@@ -5,6 +5,7 @@
 // The request says who it is (it doesn't pretend to be a browser). Sites that turn away apps get a
 // clear answer, and the app offers pasting the recipe's text instead.
 import { json, readJson } from './http';
+import { NotPublic, fetchPublic, isPublicUrl } from './outbound';
 
 const UA = 'WhiteLotusHQ/1.0 (family dashboard; imports a recipe someone shared)';
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -209,17 +210,17 @@ export async function importRecipe(req: Request): Promise<Response> {
   }
   if (url.protocol !== 'https:' && url.protocol !== 'http:')
     return json({ error: 'That doesn’t look like a web link.' }, 400);
-  if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.|\[)/.test(url.hostname))
-    return json({ error: 'That link can’t be read.' }, 400);
+  if (!isPublicUrl(url)) return json({ error: 'That link can’t be read.' }, 400);
 
   let res: Response;
   try {
-    res = await fetch(url.toString(), {
+    ({ res, url } = await fetchPublic(url, {
       headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml' },
-      redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-  } catch {
+    }));
+  } catch (e) {
+    // A redirect to somewhere private
+    if (e instanceof NotPublic) return json({ error: 'That link can’t be read.' }, 400);
     return json({ error: 'Couldn’t reach that page.', reason: 'unreachable' }, 502);
   }
   if (res.status === 401 || res.status === 403 || res.status === 429) {
@@ -228,7 +229,7 @@ export async function importRecipe(req: Request): Promise<Response> {
   if (!res.ok) return json({ error: `That page didn’t load (${res.status}).`, reason: 'missing' }, 422);
   const recipe = findRecipe(await readCapped(res));
   if (!recipe) return json({ error: 'No recipe found on that page.', reason: 'none' }, 422);
-  const out = toImported(recipe, res.url || url.toString());
+  const out = toImported(recipe, url.toString());
   if (!out.title || !out.ingredients.length)
     return json({ error: 'That page’s recipe is missing its ingredients.', reason: 'none' }, 422);
   return json(out);
