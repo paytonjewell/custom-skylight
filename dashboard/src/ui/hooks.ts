@@ -1,4 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+
+/**
+ * A ref that always holds the latest `value`. For handlers attached once (window listeners that live
+ * for a whole drag) that must still see this render's props, not the props from when they were attached.
+ */
+export function useLatest<T>(value: T): RefObject<T> {
+  const ref = useRef(value);
+  useLayoutEffect(() => {
+    ref.current = value;
+  });
+  return ref;
+}
 
 /**
  * Tap now, commit shortly after: `start(id, commit)` marks the item as pending (for a check

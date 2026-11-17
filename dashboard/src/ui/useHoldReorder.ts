@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
+import { useLatest } from './hooks';
 
 /** The lifted item, positioned in `container`'s (unscaled) coordinates */
 export interface Ghost {
@@ -22,6 +23,20 @@ const MOVE_SLOP = 10; // px a finger may wander during the hold
 const EDGE = 90; // px from the scroller's top/bottom edge where dragging auto-scrolls
 const SCROLL_SPEED = 14; // px per frame at the very edge
 const GLIDE = 'transform 220ms cubic-bezier(.2, .8, .2, 1)';
+
+/**
+ * The dragged order, brought up to date with the list as it is now: items removed while dragging (a
+ * sync landed) are dropped, and items added are kept at their place in the current list.
+ */
+export function reconcile(order: string[], ids: string[]): string[] {
+  const now = new Set(ids);
+  const next = order.filter((id) => now.has(id));
+  const had = new Set(next);
+  ids.forEach((id, i) => {
+    if (!had.has(id)) next.splice(Math.min(i, next.length), 0, id);
+  });
+  return next;
+}
 
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -54,6 +69,9 @@ export function useHoldReorder({
   holdMs?: number;
 }) {
   const [order, setOrder] = useState<string[] | null>(null); // only while dragging
+  // The listeners added at pointerdown live for the whole drag; they read the list and callback from
+  // here, so a sync landing mid-drag doesn't leave them working on the list as it was at the start.
+  const latest = useLatest({ ids, onCommit });
   const [ghost, setGhost] = useState<Ghost | null>(null);
   const items = useRef(new Map<string, HTMLElement>());
   const drag = useRef<{
@@ -182,7 +200,9 @@ export function useHoldReorder({
         const s = scaleOf(box);
         before.current.set(d.id, new DOMRect(d.cx - d.gx * s, d.cy - d.gy * s, d.w * s, d.h * s));
       }
-      if (commit && d.order.join() !== ids.join()) onCommit(d.order);
+      const { ids: now, onCommit: commitOrder } = latest.current;
+      const next = reconcile(d.order, now);
+      if (commit && next.join() !== now.join()) commitOrder(next);
     }
     setOrder(null);
     setGhost(null);
@@ -202,6 +222,7 @@ export function useHoldReorder({
         r = box.getBoundingClientRect(),
         s = scaleOf(box);
       const sc = scrollingBox(scroller.current ?? box);
+      const ids = latest.current.ids;
       drag.current = {
         id,
         order: ids,

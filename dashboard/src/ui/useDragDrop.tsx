@@ -14,6 +14,7 @@
 // half the finger is over), for an insertion line.
 import { useEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useLatest } from './hooks';
 
 const MOVE_SLOP = 10; // px a finger may wander during the hold
 const EDGE = 90; // px from the top/bottom of what's showing where dragging scrolls the page
@@ -109,8 +110,7 @@ export function useDragDrop<T>({
   const over = useRef<HTMLElement | null>(null);
   /** A drag just ended: the click that follows isn't a tap */
   const justDragged = useRef(false);
-  const drop = useRef(onDrop);
-  drop.current = onDrop;
+  const drop = useLatest(onDrop);
 
   const mark = (el: HTMLElement | null, y = 0) => {
     if (el && el.hasAttribute('data-drop-sides')) el.setAttribute('data-drop-side', sideOf(el, y));

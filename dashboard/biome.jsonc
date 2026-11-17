@@ -24,7 +24,7 @@
   "assist": { "actions": { "source": { "organizeImports": "off" } } },
   "linter": {
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         // String concatenation reads fine for short class lists and labels
         "useTemplate": "off",
