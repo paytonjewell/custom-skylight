@@ -9,7 +9,7 @@
 .icon {
   width: 48px; height: 48px; flex: none; border-radius: 12px;
   display: grid; place-items: center; font-size: 24px;
-  background: var(--c-tint); color: var(--c);
+  background: var(--c-tint-fill, var(--c-tint)); color: var(--c);
 }
 .emoji { filter: var(--emoji-filter); line-height: 1; }
 .text { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 150px; }

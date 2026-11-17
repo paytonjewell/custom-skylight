@@ -3,12 +3,12 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent,
 import type { CalEvent } from '../../data/types';
 import { useData } from '../../data/store';
 import { useCalendarEvents as useEvents } from '../../data/hooks';
-import { allDayOn, evColor, evLabel, isFamily, leaveBy, timedOn } from '../../data/select';
+import { allDayOn, evLabel, isFamily, leaveBy, timedOn } from '../../data/select';
 import { addDays, dayStart, DAY_MS, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow, useNow } from '../../lib/clock';
 import { Icon } from '../../ui/Icon';
-import { Dots, toneStyle } from '../../ui/people';
+import { Dots, eventStyle, toneStyle } from '../../ui/people';
 import { Segmented } from '../../ui/Segmented';
 import { EmptyNote } from '../../ui/EmptyNote';
 import { openEventSheet, openMoreSheet } from './EventSheet';
@@ -208,7 +208,7 @@ function EvBlock({ e, style, lane, half, day, now }: { e: CalEvent; style: CSSPr
     (fam ? ' ' + css.isFamily : '') + (half ? ' ' + css.isHalf : '');
   const box = blockBox(e, day);
   return (
-    <button className={cls} style={toneStyle(evColor(data, e), { top: box.top, height: box.h, ...style })} onClick={() => openEventSheet(e)}>
+    <button className={cls} style={eventStyle(data, e, { top: box.top, height: box.h, ...style })} onClick={() => openEventSheet(e)}>
       {e.travel ? <span className={css.travel} style={{ height: (e.travel * PX) / 60 }} /> : null}
       <span className={css.evTitle}>{evLabel(e)}</span>
       <span className={css.evMeta}>
@@ -312,7 +312,7 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
               const col = single || isFamily(data, e) ? '1 / -1' : ids.indexOf(e.people[0]) + 1 + ' / span 1';
               const spanDays = Math.round((+e.end - +e.start) / DAY_MS), dayN = Math.round((+s - +e.start) / DAY_MS) + 1;
               return (
-                <button key={e.id} className={css.ad + (e.start < s ? ' ' + css.adCont : '')} style={toneStyle(evColor(data, e), { gridColumn: col })} onClick={() => openEventSheet(e)}>
+                <button key={e.id} className={css.ad + (e.start < s ? ' ' + css.adCont : '')} style={eventStyle(data, e, { gridColumn: col })} onClick={() => openEventSheet(e)}>
                   {e.start < s && <Icon name="left" size={16} />}
                   {evLabel(e)}
                   {spanDays > 1 && <small>Day {dayN} of {spanDays}</small>}
@@ -383,7 +383,7 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
             {allDay.map((e) => {
               const a = Math.max(0, Math.round((+e.start - +s0) / DAY_MS)), b = Math.min(3, Math.round((+e.end - +s0) / DAY_MS));
               return (
-                <button key={e.id} className={css.ad + (e.start < s0 ? ' ' + css.adCont : '')} style={toneStyle(evColor(data, e), { gridColumn: `${a + 1} / ${b + 1}` })} onClick={() => openEventSheet(e)}>
+                <button key={e.id} className={css.ad + (e.start < s0 ? ' ' + css.adCont : '')} style={eventStyle(data, e, { gridColumn: `${a + 1} / ${b + 1}` })} onClick={() => openEventSheet(e)}>
                   {e.start < s0 && <Icon name="left" size={16} />}
                   {evLabel(e)}
                   {e.end > s3 && <Icon name="right" size={16} />}
@@ -426,12 +426,12 @@ function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: 
               <span className="num display-num">{d.getDate()}</span>
             </div>
             {ad.map((e) => (
-              <button key={e.id} className={css.wkAd} style={toneStyle(evColor(data, e))} onClick={stop(() => openEventSheet(e))}>
+              <button key={e.id} className={css.wkAd} style={eventStyle(data, e)} onClick={stop(() => openEventSheet(e))}>
                 {evLabel(e)}
               </button>
             ))}
             {list.slice(0, max).map((e) => (
-              <button key={e.id} className={css.wkEv + (e.end <= now ? ' ' + css.isPast : '')} style={toneStyle(evColor(data, e))} onClick={stop(() => openEventSheet(e))}>
+              <button key={e.id} className={css.wkEv + (e.end <= now ? ' ' + css.isPast : '')} style={eventStyle(data, e)} onClick={stop(() => openEventSheet(e))}>
                 <span className={css.wkT}>{fmt.time(e.start, false)}</span>
                 <span className={css.wkN}>{evLabel(e)}</span>
               </button>

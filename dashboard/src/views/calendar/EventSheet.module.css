@@ -4,7 +4,8 @@
 /* Phone: the close button has its own light background there, so it keeps the normal ink colour */
 :global(.phone) .sheet :global(.sheet-x) { color: var(--ink); }
 .band {
-  background: var(--c); color: var(--c-ink); padding: 34px 36px 30px;
+  background: var(--c-fill, var(--c)); color: var(--c-ink); padding: 34px 36px 30px;
+  --stripe: 28px;
 
   :global(.phone) & { padding: 30px 18px 20px; }
 }
@@ -43,7 +44,7 @@
 /* ---------------------------------------------------------------- "+N more" list */
 .moreList { display: flex; flex-direction: column; gap: 8px; }
 .moreRow {
-  display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 0 20px; border-radius: 14px; background: var(--c-tint);
+  display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 0 20px; border-radius: 14px; background: var(--c-tint-fill, var(--c-tint));
 
   :global(.phone) & { min-height: 56px; padding: 0 14px; }
 }

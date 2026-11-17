@@ -14,6 +14,15 @@ export function person(d: Data, id: string): Person {
 export const isFamily = (d: Data, e: CalEvent) => e.people.length >= d.people.length;
 export const evColor = (d: Data, e: CalEvent): Person =>
   e.color ? { ...d.family, color: e.color } : isFamily(d, e) ? d.family : person(d, e.people[0]);
+/**
+ * The people an event is striped with: two or more, but not everyone (that's Family's colour) and
+ * not on a calendar with a colour of its own. Empty when it's drawn in one colour.
+ */
+export function evStripes(d: Data, e: CalEvent): Person[] {
+  if (e.color || isFamily(d, e)) return [];
+  const ps = [...new Set(e.people)].map((id) => person(d, id)).filter((p, i, all) => p !== d.family && all.indexOf(p) === i);
+  return ps.length >= 2 ? ps : [];
+}
 /** An event's title with its emoji in front, where it has one */
 export const evLabel = (e: Pick<CalEvent, 'emoji' | 'title'>): string => (e.emoji ? e.emoji + ' ' + e.title : e.title);
 export const leaveBy = (e: CalEvent): Date => (e.travel ? new Date(e.start.getTime() - e.travel * 60000) : e.start);

@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
-import type { Person } from '../data/types';
+import type { CalEvent, Data, Person } from '../data/types';
 import { useData } from '../data/store';
-import { person } from '../data/select';
+import { evColor, evStripes, person } from '../data/select';
 import { Icon } from './Icon';
 
 /**
@@ -9,8 +9,9 @@ import { Icon } from './Icon';
  * defines the actual colours, so switching themes recolours everything without re-rendering.
  */
 export function toneStyle(p: Pick<Person, 'tone' | 'color'>, extra?: CSSProperties): CSSProperties {
-  if (p.color) return { ...ownColor(p.color), ...extra } as CSSProperties;
+  if (p.color) return { ...ownColor(p.color), ...NO_STRIPES, ...extra } as CSSProperties;
   return {
+    ...NO_STRIPES,
     '--c': `var(--t${p.tone})`,
     '--c-rgb': `var(--t${p.tone}-rgb)`,
     '--c-ink': `var(--t${p.tone}-ink)`,
@@ -18,6 +19,38 @@ export function toneStyle(p: Pick<Person, 'tone' | 'color'>, extra?: CSSProperti
     '--c-tint': `rgb(var(--t${p.tone}-rgb) / var(--tint))`,
     ...extra,
   } as CSSProperties;
+}
+
+// Only eventStyle sets the striped fills; everything else resets them, so a stripe never leaks
+// from an event into something inside it ('initial' makes var() use its fallback)
+const NO_STRIPES = { '--c-fill': 'initial', '--c-tint-fill': 'initial' };
+
+/** One person's colour, solid and as the theme's soft tint */
+function shades(p: Pick<Person, 'tone' | 'color'>): [string, string] {
+  if (p.color) {
+    const v = ownColor(p.color);
+    return [v['--c'], v['--c-tint']];
+  }
+  return [`var(--t${p.tone})`, `rgb(var(--t${p.tone}-rgb) / var(--tint))`];
+}
+
+/** Diagonal bands, one per colour, repeating (the band width is in CSS: --stripe) */
+const bands = (colors: string[]) =>
+  'repeating-linear-gradient(135deg, ' +
+  colors.map((c, i) => `${c} calc(var(--stripe, 16px) * ${i}) calc(var(--stripe, 16px) * ${i + 1})`).join(', ') +
+  ')';
+
+/**
+ * An event's colours: toneStyle for its colour (the first person's, Family's for everyone, or its
+ * calendar's own), plus, when it's for two or more people, striped fills in each of their colours.
+ * Event surfaces paint with var(--c-fill, var(--c)) or var(--c-tint-fill, var(--c-tint)).
+ */
+export function eventStyle(d: Data, e: CalEvent, extra?: CSSProperties): CSSProperties {
+  const ps = evStripes(d, e);
+  const base = toneStyle(ps[0] ?? evColor(d, e), extra);
+  if (!ps.length) return base;
+  const s = ps.map(shades);
+  return { ...base, '--c-fill': bands(s.map((x) => x[0])), '--c-tint-fill': bands(s.map((x) => x[1])) } as CSSProperties;
 }
 
 export function Avatar({ p, size = 48, className }: { p: Person; size?: number; className?: string }) {

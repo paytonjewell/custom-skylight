@@ -67,6 +67,9 @@
   --tint: .3;           /* strength of person-coloured backgrounds (pastels need more on white) */
   --emoji-filter: saturate(.55);  /* chore emoji, softened to match */
 
+  /* Width of each colour band on events shared by several people (eventStyle in src/ui/people.tsx) */
+  --stripe: 16px;
+
   /* accents */
   --accent: #7DBF93;    /* checks, rain */
   --accent-rgb: 125 191 147;

@@ -6,12 +6,12 @@ import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { CalEvent } from '../../data/types';
 import { useData } from '../../data/store';
 import { useCalendarEvents } from '../../data/hooks';
-import { dayWeather, evColor, evLabel } from '../../data/select';
+import { dayWeather, evLabel } from '../../data/select';
 import { addDays, dayStart, DAY_MS, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { useLayout } from '../../app/layout';
 import { Icon } from '../../ui/Icon';
-import { toneStyle } from '../../ui/people';
+import { eventStyle } from '../../ui/people';
 import { openEventSheet } from './EventSheet';
 import css from './MonthGrid.module.css';
 
@@ -129,7 +129,7 @@ export function MonthGrid({ start, weeks, now, month, onDay }: {
                 <button
                   key={p.e.id}
                   className={css.chip + (p.e.allDay ? ' ' + css.isAllDay : '') + (p.e.end <= now ? ' ' + css.isPast : '')}
-                  style={toneStyle(evColor(data, p.e), { gridColumn: `${p.a + 1} / ${p.b + 1}`, gridRow: p.lane + 2 })}
+                  style={eventStyle(data, p.e, { gridColumn: `${p.a + 1} / ${p.b + 1}`, gridRow: p.lane + 2 })}
                   onClick={() => openEventSheet(p.e)}
                 >
                   {!phone && !p.e.allDay && <small>{fmt.time(p.e.start).replace(':00', '')}</small>}

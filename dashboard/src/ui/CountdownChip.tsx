@@ -1,12 +1,12 @@
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
-import { evColor } from '../data/select';
+import {  } from '../data/select';
 import { daysBetween } from '../lib/dates';
 import { fmt, pluralize } from '../lib/fmt';
 import { useNow } from '../lib/clock';
 import { openEventSheet } from '../views/calendar/EventSheet';
 import { Icon } from './Icon';
-import { toneStyle } from './people';
+import { eventStyle } from './people';
 import css from './CountdownChip.module.css';
 
 const EMOJI = /\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*/u;
@@ -27,7 +27,7 @@ export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: bo
   const icon = <span className={css.icon}>{emoji ? <span className={css.emoji}>{emoji}</span> : <Icon name="calendar" size={22} />}</span>;
 
   return (
-    <button className={css.chip + (glass ? ' ' + css.glass : ' surface') + (className ? ' ' + className : '')} style={toneStyle(evColor(data, e))} onClick={() => openEventSheet(e)}>
+    <button className={css.chip + (glass ? ' ' + css.glass : ' surface') + (className ? ' ' + className : '')} style={eventStyle(data, e)} onClick={() => openEventSheet(e)}>
       {icon}
       {glass ? (
         <span className={css.text}>

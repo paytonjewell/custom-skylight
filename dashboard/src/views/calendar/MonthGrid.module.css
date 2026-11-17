@@ -42,14 +42,14 @@
 .chip {
   min-width: 0; height: 21px; margin: 0 3px; padding: 0 7px; border-radius: 6px;
   display: flex; align-items: center; gap: 5px;
-  background: var(--c-tint); color: var(--ink); font-size: 13px; font-weight: 500; line-height: 1; text-align: left;
+  background: var(--c-tint-fill, var(--c-tint)); color: var(--ink); font-size: 13px; font-weight: 500; line-height: 1; text-align: left;
 
   .isPhone & { height: 14px; margin: 0 1px; padding: 0 3px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: -.01em; }
 }
 .chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip small { flex: none; font-size: 12px; font-weight: 500; color: var(--ink-2); }
 /* All-day and multi-day: solid in the event's colour */
-.chip.isAllDay { background: var(--c); color: var(--c-ink); }
+.chip.isAllDay { background: var(--c-fill, var(--c)); color: var(--c-ink); }
 .chip.isPast { opacity: .5; }
 .chip:active { filter: brightness(.95); }
 

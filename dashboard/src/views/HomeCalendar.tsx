@@ -6,14 +6,14 @@ import { useEffect, useRef, useState } from 'react';
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
 import { useCalendarEvents } from '../data/hooks';
-import { allDayOn, dayWeather, evColor, evLabel, timedOn } from '../data/select';
+import { allDayOn, dayWeather, evLabel, timedOn } from '../data/select';
 import { addDays, dayStart, sameDay } from '../lib/dates';
 import { fmt } from '../lib/fmt';
 import { store, stored } from '../lib/store';
 import { useLayout } from '../app/layout';
 import { go } from '../app/ui';
 import { Icon } from '../ui/Icon';
-import { Dots, toneStyle } from '../ui/people';
+import { Dots, eventStyle } from '../ui/people';
 import { EmptyNote } from '../ui/EmptyNote';
 import { Pager, type PagerHandle } from '../ui/Pager';
 import { openEventSheet } from './calendar/EventSheet';
@@ -146,7 +146,7 @@ function Week({ start, now, next }: { start: Date; now: Date; next: () => void }
               <small>{list.length ? list.length + (list.length === 1 ? ' event' : ' events') : 'No events'}</small>
             </div>
             {fits.map((e) => (
-              <button key={e.id} className={css.ev + (e.allDay ? ' ' + css.isAllDay : '') + (e.end <= now ? ' ' + css.isPast : '')} style={toneStyle(evColor(data, e))} onClick={(ev) => { ev.stopPropagation(); openEventSheet(e); }}>
+              <button key={e.id} className={css.ev + (e.allDay ? ' ' + css.isAllDay : '') + (e.end <= now ? ' ' + css.isPast : '')} style={eventStyle(data, e)} onClick={(ev) => { ev.stopPropagation(); openEventSheet(e); }}>
                 <b>{evLabel(e)}</b>
                 <small>{e.allDay ? 'All day' : fmt.range(e.start, e.end)}</small>
               </button>
@@ -186,7 +186,7 @@ function Schedule({ date, now }: { date: Date; now: Date }) {
         const cur = !e.allDay && e.start <= now && e.end > now;
         return (
           <li key={e.id}>
-            <button className={css.row + (e.end <= now && !e.allDay ? ' ' + css.isPast : '') + (cur ? ' ' + css.isNow : '')} style={toneStyle(evColor(data, e))} onClick={() => openEventSheet(e)}>
+            <button className={css.row + (e.end <= now && !e.allDay ? ' ' + css.isPast : '') + (cur ? ' ' + css.isNow : '')} style={eventStyle(data, e)} onClick={() => openEventSheet(e)}>
               <span className={css.when}>
                 {e.allDay ? 'All day' : (
                   <>

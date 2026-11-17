@@ -1,13 +1,13 @@
 import type { CalEvent } from '../../data/types';
 import { dataStore, useData } from '../../data/store';
-import { evColor, evLabel, isFamily, leaveBy, person } from '../../data/select';
+import { evLabel, isFamily, leaveBy, person } from '../../data/select';
 import { fmt } from '../../lib/fmt';
 import { useNow } from '../../lib/clock';
 import { closeSheet, openSheet, toast } from '../../app/ui';
 import { setTaskDone } from '../../data/actions';
 import { openEditEventSheet, removeEvent } from './AddEventSheet';
 import { Icon } from '../../ui/Icon';
-import { Avatar, toneStyle } from '../../ui/people';
+import { Avatar, eventStyle, toneStyle } from '../../ui/people';
 import { SheetHeader } from '../../ui/headers';
 import css from './EventSheet.module.css';
 
@@ -31,7 +31,7 @@ function EventSheet({ e }: { e: CalEvent }) {
   const who = fam ? data.people : e.people.map((id) => person(data, id));
   const cal = data.calendars.find((c) => c.id === e.calendar);
   return (
-    <div className={css.evs} style={toneStyle(evColor(data, e))}>
+    <div className={css.evs} style={eventStyle(data, e)}>
       <div className={css.band}>
         <div className="label label--on">
           {fmt.rel(e.start, now)} · {fmt.month(e.start)} {e.start.getDate()}
@@ -106,7 +106,7 @@ function MoreSheet({ list }: { list: CalEvent[] }) {
       <SheetHeader kicker="Overlapping" title={`${list.length} more events`} />
       <div className={css.moreList}>
         {list.map((e) => (
-          <button key={e.id} className={css.moreRow} style={toneStyle(evColor(data, e))} onClick={() => openEventSheet(e)}>
+          <button key={e.id} className={css.moreRow} style={eventStyle(data, e)} onClick={() => openEventSheet(e)}>
             <i />
             <b>{evLabel(e)}</b>
             <span>{fmt.range(e.start, e.end)}</span>

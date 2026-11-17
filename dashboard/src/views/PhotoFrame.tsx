@@ -3,12 +3,12 @@
 import type { Ref } from 'react';
 import { useData } from '../data/store';
 import { useEvents } from '../data/hooks';
-import { countdowns, evColor, evLabel, nextEvent, weatherNow } from '../data/select';
+import { countdowns, evLabel, nextEvent, weatherNow } from '../data/select';
 import { fmt } from '../lib/fmt';
 import { useNow } from '../lib/clock';
 import { Icon } from '../ui/Icon';
 import { CountdownChip } from '../ui/CountdownChip';
-import { toneStyle } from '../ui/people';
+import { eventStyle } from '../ui/people';
 import { usePixelShift } from '../ui/hooks';
 import { Slideshow, type SlideshowHandle } from './Slideshow';
 import css from './PhotoFrame.module.css';
@@ -52,7 +52,7 @@ export function PhotoFrame({ active, showCountdowns, slideshowRef }: {
                 </div>
               )}
               {next && (
-                <div className={css.next} style={toneStyle(evColor(data, next))}>
+                <div className={css.next} style={eventStyle(data, next)}>
                   <i />
                   {evLabel(next)} · {fmt.time(next.start)}
                 </div>
