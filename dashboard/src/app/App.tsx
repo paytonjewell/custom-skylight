@@ -1,8 +1,6 @@
 // App shell. On the frame: the 1280×800 stage, sidebar rail, screens and overlays, plus idle → photo
 // frame (or a black sleep screen during the sleep hours). On a phone (src/app/layout.ts): full-screen scrolling screens and a bottom tab bar.
 import { Kitchen } from '../views/recipes/Kitchen';
-import { checkSharedRecipe } from '../views/recipes/AddRecipeSheet';
-import { startKitchenSync } from '../data/kitchenSync';
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from 'react';
 import { fmt } from '../lib/fmt';
 import { now as clockNow, useNow } from '../lib/clock';
@@ -13,23 +11,13 @@ import { Calendar } from '../views/calendar/Calendar';
 import { Tasks } from '../views/tasks/Tasks';
 import { Lists } from '../views/lists/Lists';
 import { News } from '../views/News';
-import { Photos, receiveSharedPhotos } from '../views/Photos';
+import { Photos } from '../views/Photos';
 import { Ambient, SheetHost, Sleep, Toasts } from './Overlays';
 import { isSleepTime, setBacklight } from './sleep';
 import { Diag, diagEnabled } from './Diag';
-import { startPhotoSync } from '../data/photoSync';
-import { startNewsSync } from '../data/newsSync';
-import { startWeatherSync } from '../data/weatherSync';
-import { startFamilySync } from '../data/familySync';
-import { startListSync } from '../data/listSync';
-import { startGrocerySync } from '../data/grocerySync';
-import { startTaskSync } from '../data/taskSync';
-import { startPush } from '../data/push';
-import { startCalendarSync } from '../data/calendarSync';
-import { checkGoogleReturn } from '../views/calendar/CalendarSettings';
 import { openThemeSheet } from './ThemeSheet';
 import { THEMES, useApplyTheme, useTheme } from './theme';
-import { IS_KIOSK, isPhone, useLayout, viewportSize } from './layout';
+import { isPhone, useLayout, viewportSize } from './layout';
 import { VIEWS, closeSheet, go, goFromHash, idleTick, resetIdle, setMode, toast, ui, useUI, type ViewName } from './ui';
 import { store, stored } from '../lib/store';
 import css from './App.module.css';
@@ -60,23 +48,6 @@ export function App() {
   useIdle();
   const ptr = useRef<HTMLDivElement>(null);
   usePullToRefresh(phone, ptr);
-
-  useEffect(startFamilySync, []);
-  useEffect(startPhotoSync, []);
-  useEffect(startNewsSync, []);
-  useEffect(startWeatherSync, []);
-  useEffect(startListSync, []);
-  useEffect(startGrocerySync, []);
-  useEffect(startTaskSync, []);
-  useEffect(startPush, []);
-  useEffect(startCalendarSync, []);
-  useEffect(startKitchenSync, []);
-  useEffect(checkGoogleReturn, []);
-  useEffect(checkSharedRecipe, []);
-  // Photos shared to the installed app from another app (public/sw.js)
-  useEffect(() => {
-    if (!IS_KIOSK) void receiveSharedPhotos();
-  }, []);
 
   useDragTips(view);
 

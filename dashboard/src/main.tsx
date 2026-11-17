@@ -15,6 +15,7 @@ import '../css/components.css';
 
 import { App } from './app/App';
 import { IS_KIOSK } from './app/layout';
+import { startApp } from './app/start';
 
 // The service worker receives photos shared to the installed app (public/sw.js). Not on the frame,
 // and only where browsers allow it (HTTPS or localhost).
@@ -27,3 +28,4 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+startApp();

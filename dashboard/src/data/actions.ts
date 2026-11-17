@@ -163,7 +163,11 @@ function flushPendingDeletes(): void {
   for (const [id, timer] of deleteTimers) {
     clearTimeout(timer);
     deleteTimers.delete(id);
-    void fetch(`/api/photos/${id}`, { method: 'DELETE', keepalive: true });
+    // If the page was only put away (not closed), this finishes while it's hidden: either way the
+    // photo stops being held back, and a delete that failed brings it back on the next refresh
+    void trackSave(fetch(`/api/photos/${id}`, { method: 'DELETE', keepalive: true }))
+      .catch(() => {})
+      .finally(() => pendingDeletes.delete(id));
   }
 }
 addEventListener('pagehide', flushPendingDeletes);

@@ -1,37 +1,22 @@
-// Keeps the news in step with the Worker (worker/news): loads it at start, then every 15 minutes and
-// whenever the page becomes visible. The Worker checks each feed about hourly.
+// Keeps the news in step with the Worker (worker/news; see createSync, src/data/sync.ts). The Worker
+// checks each feed about hourly, so every 15 minutes is often enough here.
 import { createStore, useStore } from '../lib/store';
 import { api } from './api';
 import { dataStore } from './store';
-
-const REFRESH_MS = 15 * 60 * 1000;
-
-export type NewsStatus = 'loading' | 'ready' | 'error';
-const status = createStore<NewsStatus>('loading');
-export const useNewsStatus = () => useStore(status, (s) => s);
+import { createSync } from './sync';
 
 /** When the Worker last refreshed the feeds */
 const updated = createStore<Date | null>(null);
 export const useNewsUpdated = () => useStore(updated, (u) => u);
 
-async function refreshNews(): Promise<void> {
-  try {
-    const n = await api.news();
+const sync = createSync({
+  load: api.news,
+  apply: (n) => {
     dataStore.set((d) => ({ ...d, news: n.stories, newsTopics: n.topics }));
     updated.set(new Date(n.updated));
-    status.set('ready');
-  } catch {
-    if (status.get() === 'loading') status.set('error');
-  }
-}
+  },
+  refreshMs: 15 * 60 * 1000,
+});
 
-let started = false;
-export function startNewsSync(): void {
-  if (started) return;
-  started = true;
-  void refreshNews();
-  setInterval(refreshNews, REFRESH_MS);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') void refreshNews();
-  });
-}
+export const useNewsStatus = sync.useStatus;
+export const startNewsSync = () => sync.start();
