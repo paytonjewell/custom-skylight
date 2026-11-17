@@ -2,6 +2,7 @@
 // check off (Undo in the toast), swipe right to edit, left to delete or move to tomorrow, and hold to
 // drag it into order, into another part of the day, or onto someone else's column.
 import { useEffect, useState, type ReactNode } from 'react';
+import type { Task, TaskDone } from '../../data/types';
 import { dataStore, useData } from '../../data/store';
 import { deleteTask, editTask, moveTaskTo, restoreTask, setTaskDone } from '../../data/actions';
 import { useDragDrop, type DragProps } from '../../ui/useDragDrop';
@@ -45,6 +46,24 @@ export interface RowProps {
 const draggingTask = createStore(false);
 export const useTaskDragging = () => useStore(draggingTask, (v) => v);
 
+/** The last streaks worked out, and what from */
+let streakCache: { tasks: Task[]; done: TaskDone[]; today: string; streaks: Map<string, number> } | null = null;
+/**
+ * Each habit's current streak (shown on its row). Every habit counts back up to 400 days, and the
+ * Tasks screen and each person sheet use the same answer, so it's kept until the tasks, what's
+ * done or the day changes (the store hands out the same arrays until then).
+ */
+function habitStreaks(tasks: Task[], done: TaskDone[], today: string): Map<string, number> {
+  const c = streakCache;
+  if (c && c.tasks === tasks && c.done === done && c.today === today) return c.streaks;
+  const streaks = new Map<string, number>();
+  const doneBy = doneByTask(done);
+  for (const t of tasks)
+    if (t.habit) streaks.set(t.id, habitStats(t, doneBy.get(t.id) ?? [], today, shiftDay(today, -400)).current);
+  streakCache = { tasks, done, today, streaks };
+  return streaks;
+}
+
 /**
  * Rows' actions, for the Tasks screen and a person's sheet on Today: tap to check off (habits too),
  * swipe right to edit, left to delete. `back` reopens the sheet once the task editor closes.
@@ -60,11 +79,7 @@ export function useTaskRows(
   /** The row swiped open (one at a time) */
   const [swiped, setSwiped] = useState<{ id: string; side: SwipeSide } | null>(null);
   const future = day > today;
-  // Current streak per habit (shown on its row)
-  const streaks = new Map<string, number>();
-  const doneBy = doneByTask(data.taskDone);
-  for (const t of data.tasks)
-    if (t.habit) streaks.set(t.id, habitStats(t, doneBy.get(t.id) ?? [], today, shiftDay(today, -400)).current);
+  const streaks = habitStreaks(data.tasks, data.taskDone, today);
 
   const tap = (x: DueItem) => {
     const id = x.task.id + x.day;
