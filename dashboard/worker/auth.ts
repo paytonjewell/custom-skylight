@@ -68,7 +68,9 @@ export async function authenticate(req: Request, env: Env): Promise<{ device: De
 
 /** POST /signin (a plain form post, so it works without the app's JS) */
 export async function signIn(req: Request, env: Env): Promise<Response> {
-  const form = await req.formData();
+  // Anything that isn't a form (a stray POST, a bad body) is turned away here rather than throwing
+  const form = await req.formData().catch(() => null);
+  if (!form) return signInPage(req, { error: 'Enter the PIN to sign in.', status: 400 });
   const pin = String(form.get('pin') ?? '');
   const name =
     String(form.get('name') ?? '')

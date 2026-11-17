@@ -66,36 +66,13 @@ export default {
     const url = new URL(req.url);
     const path = url.pathname;
     const isData = path.startsWith('/api/') || path.startsWith('/media/');
-
-    if (path === '/signin' && req.method === 'POST') return signIn(req, env);
-    // Browsers fetch the web app manifest and its icons without cookies, so these must be public for
-    // the app to install. They hold nothing private.
-    if (PUBLIC.has(path)) return env.ASSETS.fetch(req);
-    // Google asks for a public privacy policy (worker/privacy-page.ts)
-    if (path === '/privacy' && req.method === 'GET') return privacyPage();
-    // A share that reached the server means the phone's service worker wasn't running yet to catch it
-    // (e.g. the app hadn't been opened since install). A link opens Kitchen importing it (as
-    // public/sw.js does); photos just open the app (they'd need the service worker).
-    if (path === '/share' && req.method === 'POST') return shareFallback(req);
-
-    const auth = await authenticate(req, env);
-    // Signed out: data requests get a 401 (the app reloads into the sign-in page); everything else
-    // gets the sign-in page itself
-    if (!auth) return isData ? json({ error: 'Signed out' }, 401) : signInPage(req);
-
-    let res: Response;
     try {
-      res =
-        (await route(req, env, ctx, path, auth.device)) ??
-        (isData ? json({ error: 'Not found' }, 404) : await env.ASSETS.fetch(req));
+      return await handle(req, env, ctx, path, isData);
     } catch (e) {
+      // An uncaught error would otherwise show Cloudflare's own error page (1101)
       console.error(req.method, path, e);
-      res = json({ error: 'Server error' }, 500);
+      return json({ error: 'Server error' }, 500);
     }
-    if (!auth.setCookie) return res;
-    res = new Response(res.body, res); // asset responses have immutable headers
-    res.headers.append('Set-Cookie', auth.setCookie);
-    return res;
   },
 
   // Cron trigger (wrangler.jsonc): send task reminders to phones, and keep the news fresh even when
@@ -113,6 +90,32 @@ export default {
     ctx.waitUntil(sendReminders(env).catch((e) => console.error('Reminders', e)));
   },
 } satisfies ExportedHandler<Env>;
+
+async function handle(req: Request, env: Env, ctx: ExecutionContext, path: string, isData: boolean): Promise<Response> {
+  if (path === '/signin' && req.method === 'POST') return signIn(req, env);
+  // Browsers fetch the web app manifest and its icons without cookies, so these must be public for
+  // the app to install. They hold nothing private.
+  if (PUBLIC.has(path)) return env.ASSETS.fetch(req);
+  // Google asks for a public privacy policy (worker/privacy-page.ts)
+  if (path === '/privacy' && req.method === 'GET') return privacyPage();
+  // A share that reached the server means the phone's service worker wasn't running yet to catch it
+  // (e.g. the app hadn't been opened since install). A link opens Kitchen importing it (as
+  // public/sw.js does); photos just open the app (they'd need the service worker).
+  if (path === '/share' && req.method === 'POST') return shareFallback(req);
+
+  const auth = await authenticate(req, env);
+  // Signed out: data requests get a 401 (the app reloads into the sign-in page); everything else
+  // gets the sign-in page itself
+  if (!auth) return isData ? json({ error: 'Signed out' }, 401) : signInPage(req);
+
+  let res =
+    (await route(req, env, ctx, path, auth.device)) ??
+    (isData ? json({ error: 'Not found' }, 404) : await env.ASSETS.fetch(req));
+  if (!auth.setCookie) return res;
+  res = new Response(res.body, res); // asset responses have immutable headers
+  res.headers.append('Set-Cookie', auth.setCookie);
+  return res;
+}
 
 async function route(
   req: Request,
