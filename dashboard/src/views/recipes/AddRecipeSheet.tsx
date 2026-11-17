@@ -53,7 +53,7 @@ const site = (url: string) => {
 };
 
 function AddRecipe({ link: startLink }: { link?: string }) {
-  const data = useData();
+  const data = useData('recipes');
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🍽️');
   const [picking, setPicking] = useState(false);

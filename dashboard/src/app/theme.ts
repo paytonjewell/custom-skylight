@@ -38,7 +38,7 @@ export function setAutoDark(autoDark: boolean): void {
 /** The theme in effect right now (the chosen one, or Dark after sunset if that's switched on). */
 export function useTheme(): ThemeName {
   const { choice, autoDark } = useThemeSettings();
-  const data = useData();
+  const data = useData('weather');
   const now = useNow();
   return autoDark && afterDark(data, now) ? 'dark' : choice;
 }

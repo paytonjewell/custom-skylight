@@ -15,7 +15,15 @@ import css from './Habits.module.css';
 const WEEKS = { frame: 53, phone: 18 };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function Habits({ data, people, today }: { data: Data; people: string[]; today: string }) {
+export function Habits({
+  data,
+  people,
+  today,
+}: {
+  data: Pick<Data, 'tasks' | 'taskDone' | 'people' | 'family' | 'lists'>;
+  people: string[];
+  today: string;
+}) {
   const layout = useLayout();
   const by = doneByTask(data.taskDone);
   const habits = data.tasks.filter((t) => t.habit && people.includes(t.who));
@@ -54,7 +62,7 @@ function HabitCard({
   start,
   weeks,
 }: {
-  data: Data;
+  data: Pick<Data, 'tasks' | 'taskDone' | 'people' | 'family' | 'lists'>;
   t: Task;
   rows: TaskDone[];
   today: string;

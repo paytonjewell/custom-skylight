@@ -29,7 +29,7 @@ import css from './Inventory.module.css';
 const PLACE_EMOJI: Record<Place, string> = { Pantry: '🥫', Fridge: '🧊', Freezer: '❄️' };
 
 export function Inventory() {
-  const data = useData();
+  const data = useData('catalog', 'groceryNames', 'inventory', 'inventoryNames', 'recipes');
   const [name, setName] = useState('');
   /** Where the typed name will go: chosen, or the guess */
   const [chosen, setChosen] = useState<Place | null>(null);
@@ -169,7 +169,10 @@ export function Inventory() {
  * Names to suggest for what's typed: what's been kept before, the grocery list's known names and
  * recipes' ingredients; ones starting with it first. Each says where it would go, or that it's here.
  */
-function suggestions(data: Data, typed: string): { name: string; place: Place; have: number }[] {
+function suggestions(
+  data: Pick<Data, 'inventory' | 'inventoryNames' | 'recipes' | 'groceryNames' | 'catalog'>,
+  typed: string,
+): { name: string; place: Place; have: number }[] {
   const q = typed.trim().toLowerCase();
   if (!q) return [];
   const seen = new Set<string>();
@@ -283,7 +286,7 @@ function openItem(id: string): void {
   openSheet(() => <ItemSheet id={id} />);
 }
 function ItemSheet({ id }: { id: string }) {
-  const data = useData();
+  const data = useData('foodAliases', 'groceries', 'inventory');
   const i = data.inventory.find((x) => x.id === id);
   const [name, setName] = useState(i?.name ?? '');
   const [note, setNote] = useState(i?.note ?? '');

@@ -15,7 +15,15 @@ import type { SwipeSide } from '../../ui/useSwipeReveal';
 import { openTaskSheet } from './TaskSheet';
 import css from './AllTasks.module.css';
 
-export function AllTasks({ data, people, today }: { data: Data; people: string[]; today: string }) {
+export function AllTasks({
+  data,
+  people,
+  today,
+}: {
+  data: Pick<Data, 'tasks' | 'taskDone' | 'people' | 'family' | 'lists'>;
+  people: string[];
+  today: string;
+}) {
   const [swiped, setSwiped] = useState<{ id: string; side: SwipeSide } | null>(null);
   const by = doneByTask(data.taskDone);
   const rows = data.tasks.map((t) => ({ t, next: nextDue(t, by.get(t.id) ?? [], today) }));
@@ -116,7 +124,7 @@ export function whenText(n: NextDue, today: string): string {
 }
 
 /** "🎄 Xmas list" for a reminder made from a list item (if the list still exists) */
-function listName(data: Data, t: Task): string | null {
+function listName(data: Pick<Data, 'lists'>, t: Task): string | null {
   const l = data.lists.find((x) => x.id === t.listId);
   return l ? `${l.emoji} ${l.title || 'Untitled list'}` : null;
 }

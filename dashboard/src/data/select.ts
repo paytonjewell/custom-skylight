@@ -4,8 +4,14 @@ import { OTHER } from './grocery';
 import { fmt } from '../lib/fmt';
 import type { CalEvent, Data, Person, Verse, Weather, WxCond } from './types';
 
+// What each helper reads, so a component can subscribe to just that (see useData, src/data/store.ts)
+export type PeopleData = Pick<Data, 'people' | 'family'>;
+export type EventColorData = Pick<Data, 'people' | 'family' | 'ALL'>;
+export type WeatherData = Pick<Data, 'weather'>;
+export type GroceryNameData = Pick<Data, 'groceryNames' | 'catalog' | 'usuals'>;
+
 // ------------------------------------------------------------ people
-export function person(d: Data, id: string): Person {
+export function person(d: PeopleData, id: string): Person {
   if (id === 'family' || id === 'any') return d.family;
   return d.people.find((p) => p.id === id) ?? d.family;
 }
@@ -29,14 +35,14 @@ export const taskLanes = (people: Person[]): string[] => {
 export const phonePeople = (people: Person[]): Person[] => people.filter((p) => !p.pet && p.calendar !== false);
 
 // ------------------------------------------------------------ calendar
-export const isFamily = (d: Data, e: CalEvent) => e.people.length >= d.ALL.length;
-export const evColor = (d: Data, e: CalEvent): Person =>
+export const isFamily = (d: Pick<Data, 'ALL'>, e: CalEvent) => e.people.length >= d.ALL.length;
+export const evColor = (d: EventColorData, e: CalEvent): Person =>
   e.color ? { ...d.family, color: e.color } : isFamily(d, e) ? d.family : person(d, e.people[0]);
 /**
  * The people an event is striped with: two or more, but not everyone (that's Family's colour) and
  * not on a calendar with a colour of its own. Empty when it's drawn in one colour.
  */
-export function evStripes(d: Data, e: CalEvent): Person[] {
+export function evStripes(d: EventColorData, e: CalEvent): Person[] {
   if (e.color || isFamily(d, e)) return [];
   const ps = [...new Set(e.people)]
     .map((id) => person(d, id))
@@ -113,7 +119,7 @@ function advise(t: number): string {
 }
 
 /** What the dashboard says about the weather; null until it has loaded */
-export function weatherNow(d: Data, events: CalEvent[], now: Date) {
+export function weatherNow(d: WeatherData, events: CalEvent[], now: Date) {
   const W = d.weather;
   if (!W) return null;
   const i = hourIndex(W, now);
@@ -161,7 +167,7 @@ export function weatherNow(d: Data, events: CalEvent[], now: Date) {
   };
 }
 
-export function hourly(d: Data, now: Date, count: number) {
+export function hourly(d: WeatherData, now: Date, count: number) {
   const W = d.weather;
   if (!W) return [];
   const i = hourIndex(W, now);
@@ -188,7 +194,7 @@ export function dayWeather(W: Weather | null, day: Date): WxCond | undefined {
 }
 
 /** Between sunset and sunrise (today's times from the weather data) */
-export function afterDark(d: Data, now: Date): boolean {
+export function afterDark(d: WeatherData, now: Date): boolean {
   if (!d.weather) return now.getHours() >= 19 || now.getHours() < 7; // no sun times yet: 7 pm to 7 am
   return now >= atTime(d.weather.sunset, now) || now < atTime(d.weather.sunrise, now);
 }
@@ -202,7 +208,7 @@ export const photoSrc = (id: string, size: 'full' | 'thumb' = 'full') => `/media
  * Every item name we know, [name, aisle]: names added before (with the aisle each was last in, most
  * used first), then the starter guesses for names never added. Drives aisle guesses and suggestions.
  */
-export function knownGroceries(d: Data): [string, string][] {
+export function knownGroceries(d: Omit<GroceryNameData, 'usuals'>): [string, string][] {
   const seen = new Set(d.groceryNames.map(([n]) => n.toLowerCase()));
   // remembered names that are also presets show with the presets' spelling
   const preset = new Map(d.catalog.map(([n]) => [n.toLowerCase(), n]));
@@ -214,7 +220,7 @@ export function knownGroceries(d: Data): [string, string][] {
  * How an item's name is spelled on the list: a usual or starter item always as the presets spell it
  * (lowercase, except brands), else as it was last added, else exactly as typed.
  */
-export function spellGrocery(d: Data, name: string): string {
+export function spellGrocery(d: GroceryNameData, name: string): string {
   const typed = name.trim().replace(/\s+/g, ' ');
   const lower = typed.toLowerCase();
   return (
@@ -226,7 +232,7 @@ export function spellGrocery(d: Data, name: string): string {
 }
 
 /** Aisle for a typed item: where it was last time, else the closest known name's, else 'Other' */
-export function categorize(d: Data, name: string): string {
+export function categorize(d: Omit<GroceryNameData, 'usuals'>, name: string): string {
   const n = name.trim().toLowerCase();
   const known = knownGroceries(d);
   const hit =
@@ -238,12 +244,12 @@ export function categorize(d: Data, name: string): string {
     known.find((c) => n.split(/\s+/).some((w) => w.length > 3 && c[0].toLowerCase().includes(w)));
   return hit ? hit[1] : OTHER;
 }
-export const findGrocery = (d: Data, name: string, done: boolean) =>
+export const findGrocery = (d: Pick<Data, 'groceries'>, name: string, done: boolean) =>
   d.groceries.find((g) => g.done === done && g.name.toLowerCase() === name.toLowerCase());
 
 // ------------------------------------------------------------ verse of the day
 /** Today's verse (from Bible Gateway), or a built-in one if it couldn't be loaded */
-export function verseOfDay(d: Data, now: Date): Verse {
+export function verseOfDay(d: Pick<Data, 'verse' | 'verses'>, now: Date): Verse {
   if (d.verse) return d.verse;
   const dayOfYear = daysBetween(new Date(now.getFullYear(), 0, 0), now);
   return { ...d.verses[dayOfYear % d.verses.length], version: 'KJV' };

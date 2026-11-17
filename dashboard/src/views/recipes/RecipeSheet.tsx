@@ -43,7 +43,7 @@ function addWithUndo(names: string[]): void {
 }
 
 function RecipeSheet({ id, day }: { id: string; day?: string }) {
-  const data = useData();
+  const data = useData('groceries', 'inventory', 'mealPlan', 'recipes');
   const today = dayOf(useNow());
   const r = data.recipes.find((x) => x.id === id);
   const [servings, setServings] = useState(r?.servings ?? 4);
@@ -249,7 +249,7 @@ function openHaveIt(recipeId: string, name: string): void {
   openSheet(() => <HaveIt recipeId={recipeId} name={name} />);
 }
 function HaveIt({ recipeId, name }: { recipeId: string; name: string }) {
-  const data = useData();
+  const data = useData('inventory');
   const [q, setQ] = useState('');
   const back = () => openRecipe(recipeId);
   const list = data.inventory
@@ -335,7 +335,7 @@ export function openShopSheet(days: string[]): void {
   openSheet(() => <ShopSheet days={days} />, { cls: 'sheet--wide' });
 }
 function ShopSheet({ days }: { days: string[] }) {
-  const data = useData();
+  const data = useData('groceries', 'inventory', 'mealPlan', 'recipes');
   const recipes = plannedFor(data, days);
   const items = shoppingFor(recipes, data.groceries, data.inventory);
   const [picked, setPicked] = useState<Set<string>>(

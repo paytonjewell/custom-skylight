@@ -7,13 +7,13 @@ import { dayOf } from '../lib/repeat';
 
 /** Calendar events to show */
 export function useEvents(): CalEvent[] {
-  return useData().events;
+  return useData('events').events;
 }
 
 /** What the Calendar screen shows: events, and tasks marked "Show on calendar" */
 export function useCalendarEvents(): CalEvent[] {
   const events = useEvents();
-  const data = useData();
+  const data = useData('ALL', 'taskDone', 'tasks');
   const now = useNow();
   const day = dayOf(now);
   // Recomputed when tasks change or the day does, not on every clock tick

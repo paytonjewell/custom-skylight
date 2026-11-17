@@ -48,7 +48,7 @@ const NOT_FOOD = ['Household'];
 
 /** The grocery list, food only, with what this week's dinners need marked and suggested */
 function Shopping() {
-  const data = useData();
+  const data = useData('groceries', 'inventory', 'mealPlan', 'recipes');
   const today = dayOf(useNow());
   const week = Array.from({ length: 7 }, (_, i) => shiftDay(today, i));
   const planned = plannedFor(data, week);

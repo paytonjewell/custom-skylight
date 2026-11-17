@@ -36,7 +36,7 @@ export function Photos({ active }: { active: boolean }) {
 }
 
 function Grid({ onPreview }: { onPreview: () => void }) {
-  const photos = useData().photos;
+  const photos = useData('photos').photos;
   const status = usePhotoStatus();
   const view = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);

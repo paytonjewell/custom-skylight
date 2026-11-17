@@ -28,7 +28,7 @@ export const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-
 const fromKey = (k: string) => new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1, Number(k.slice(8, 10)));
 
 /** Its stored copy, if the dashboard may change it */
-function movable(d: Data, e: CalEvent): EventRecord | null {
+function movable(d: Pick<Data, 'calendars' | 'eventRecords'>, e: CalEvent): EventRecord | null {
   if (e.task || !e.calendar) return null;
   const r = recordOf(d, e);
   const cal = d.calendars.find((c) => c.id === e.calendar);
@@ -102,7 +102,7 @@ export function EventDragProvider({
   hourGrid: { px: number; start: number };
   children: ReactNode;
 }) {
-  const data = useData();
+  const data = useData('ALL', 'calendars', 'eventRecords', 'family', 'people');
   const dnd = useDragDrop<CalEvent>({
     onDrop: (e, _target, at) => {
       const r = movable(data, e);

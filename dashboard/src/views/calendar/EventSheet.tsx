@@ -31,7 +31,7 @@ export function openEventSheet(e: CalEvent): void {
 }
 
 function EventSheet({ e }: { e: CalEvent }) {
-  const data = useData();
+  const data = useData('ALL', 'calendars', 'family', 'people');
   const now = useNow();
   const fam = isFamily(data, e);
   const who = fam ? data.people : e.people.map((id) => person(data, id));
@@ -120,7 +120,7 @@ export function openMoreSheet(list: CalEvent[]): void {
 }
 
 function MoreSheet({ list }: { list: CalEvent[] }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people');
   return (
     <div className="sheet-pad">
       <SheetHeader kicker="Overlapping" title={`${list.length} more events`} />

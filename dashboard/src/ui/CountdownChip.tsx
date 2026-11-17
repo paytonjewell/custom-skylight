@@ -16,7 +16,7 @@ const EMOJI = /\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*/u;
  * glass: compact two-line version for over photos (ambient mode shares the width six ways).
  */
 export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: boolean; className?: string }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people');
   const now = useNow();
   const days = daysBetween(now, e.start);
   // Its emoji (or, for the sample events, one in the title) becomes the icon

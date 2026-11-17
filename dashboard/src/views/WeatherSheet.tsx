@@ -1,10 +1,10 @@
 // Weather details: opened by tapping the weather on Today. Current conditions, the next 12 hours,
 // today + 3 days, and sun / moon / wind / humidity tiles.
 import type { ReactNode } from 'react';
-import type { Data, WxCond } from '../data/types';
+import type { WxCond } from '../data/types';
 import { useData } from '../data/store';
 import { useEvents } from '../data/hooks';
-import { WX_LABELS, hourly, weatherNow } from '../data/select';
+import { WX_LABELS, hourly, weatherNow, type WeatherData } from '../data/select';
 import { addDays, atTime, daysBetween, minutesBetween } from '../lib/dates';
 import { fmt } from '../lib/fmt';
 import { useNow } from '../lib/clock';
@@ -17,7 +17,7 @@ export function openWeatherSheet(): void {
 }
 
 function WeatherSheet() {
-  const data = useData();
+  const data = useData('weather');
   const now = useNow();
   const w = weatherNow(data, useEvents(), now);
   const W = data.weather;
@@ -65,7 +65,7 @@ function WeatherSheet() {
   );
 }
 
-function Hours({ data, now }: { data: Data; now: Date }) {
+function Hours({ data, now }: { data: WeatherData; now: Date }) {
   const list = hourly(data, now, 12);
   // Room for rain chances only when there are some
   const wet = list.some((h) => h.p >= 20);
@@ -87,7 +87,7 @@ function Hours({ data, now }: { data: Data; now: Date }) {
   );
 }
 
-function Days({ data, now, todayCond }: { data: Data; now: Date; todayCond: WxCond }) {
+function Days({ data, now, todayCond }: { data: WeatherData; now: Date; todayCond: WxCond }) {
   const W = data.weather!; // the sheet only opens once it has loaded
   const todayP = Math.max(...W.p.slice(now.getHours()));
   const rows = [
@@ -132,7 +132,7 @@ function Times({ a, b }: { a: [string, Date]; b: [string, Date] }) {
 }
 
 /** Sun position along a half-circle arc between sunrise and sunset */
-function SunTile({ data, now }: { data: Data; now: Date }) {
+function SunTile({ data, now }: { data: WeatherData; now: Date }) {
   const rise = atTime(data.weather!.sunrise, now),
     set = atTime(data.weather!.sunset, now);
   const t = Math.max(0, Math.min(1, (now.getTime() - rise.getTime()) / (set.getTime() - rise.getTime())));
@@ -159,7 +159,7 @@ function SunTile({ data, now }: { data: Data; now: Date }) {
 }
 
 /** Lit part of the moon: outer half-circle on the lit side + an elliptical terminator */
-function MoonTile({ data, now }: { data: Data; now: Date }) {
+function MoonTile({ data, now }: { data: WeatherData; now: Date }) {
   const M = data.weather!.moon;
   const r = 26,
     f = M.lit / 100,

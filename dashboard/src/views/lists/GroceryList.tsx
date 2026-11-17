@@ -54,7 +54,7 @@ export interface KitchenMode {
 }
 
 export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?: KitchenMode }) {
-  const data = useData();
+  const data = useData('catOrder', 'catalog', 'groceries', 'groceryNames', 'inventory', 'stores', 'usuals');
   const [store, setStore] = useState('all');
   const [query, setQuery] = useState('');
   const [drawer, setDrawer] = useState(false);
@@ -537,7 +537,7 @@ function Suggest({
   onAdd,
   planned,
 }: {
-  data: Data;
+  data: Pick<Data, 'inventory' | 'usuals' | 'groceries' | 'groceryNames' | 'catalog'>;
   query: string;
   onAdd: (name: string) => void;
   planned?: string[];

@@ -31,7 +31,7 @@ export function openPersonTasks(who: string): void {
 }
 
 function PersonTasks({ who }: { who: string }) {
-  const data = useData();
+  const data = useData('family', 'people', 'taskDone', 'tasks');
   const now = useNow();
   const { sections, show, filtered } = useShowSettings();
   const [offset, setOffset] = useState(0);

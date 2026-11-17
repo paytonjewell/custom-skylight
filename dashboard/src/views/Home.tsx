@@ -91,7 +91,7 @@ function Countdowns({ list, active }: { list: CalEvent[]; active: boolean }) {
 
 /** Short and sweet: now, high/low and the one-line advice. Tap for the full forecast. */
 function Weather({ events, now }: { events: CalEvent[]; now: Date }) {
-  const w = weatherNow(useData(), events, now);
+  const w = weatherNow(useData('people', 'weather'), events, now);
   if (!w) return <div className={css.wx} />;
   return (
     <button className={css.wx} aria-label="Weather details" onClick={openWeatherSheet}>
@@ -119,7 +119,7 @@ function Weather({ events, now }: { events: CalEvent[]; now: Date }) {
 
 /** Today's tasks per person (habits not counted); tap to open Tasks */
 function TasksCard({ now }: { now: Date }) {
-  const data = useData();
+  const data = useData('family', 'people', 'taskDone', 'tasks');
   const due = dueToday(data.tasks, data.taskDone, dayOf(now)).filter((x) => !x.task.habit);
   // In the order of the Tasks screen's columns (dragged there, saved on this device)
   const who = useTaskLanes(data);
@@ -160,7 +160,7 @@ function TasksCard({ now }: { now: Date }) {
 
 /** Tonight's dinner from the Kitchen plan: tap to open the recipe (and cook), or to plan one */
 function DinnerCard({ now }: { now: Date }) {
-  const data = useData();
+  const data = useData('inventory', 'mealPlan', 'recipes');
   const today = dayOf(now);
   const r = data.recipes.find((x) => x.id === data.mealPlan[today]);
   if (!r) {
@@ -203,7 +203,7 @@ function DinnerCard({ now }: { now: Date }) {
  * count sits top right; the heading opens the full list. Scrolls when it's long.
  */
 function GroceriesCard() {
-  const data = useData();
+  const data = useData('groceries', 'inventory');
   const open = data.groceries.filter((g) => !g.done);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
@@ -308,7 +308,7 @@ function GroceriesCard() {
 }
 
 function VerseCard({ now }: { now: Date }) {
-  const v = verseOfDay(useData(), now);
+  const v = verseOfDay(useData('people', 'verse', 'verses'), now);
   const size = v.text.length > 180 ? ' ' + css.isVeryLong : v.text.length > 100 ? ' ' + css.isLong : '';
   // Tap for the whole verse (a long one can be cut short here)
   return (

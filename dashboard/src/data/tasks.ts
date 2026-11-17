@@ -74,8 +74,14 @@ export function dueItem(t: Task, rows: TaskDone[], day: string, today: string): 
  * Everything showing on `day`, in order: ones given a place (dragged) first, by that place; then
  * overdue, then by time, then oldest first
  */
-export function dueOn(tasks: Task[], done: TaskDone[], day: string, today: string): DueItem[] {
-  const by = doneByTask(done);
+export function dueOn(
+  tasks: Task[],
+  /** The history, or doneByTask of it (when calling for many days, build it once) */
+  done: TaskDone[] | Map<string, TaskDone[]>,
+  day: string,
+  today: string,
+): DueItem[] {
+  const by = done instanceof Map ? done : doneByTask(done);
   return tasks
     .map((t) => dueItem(t, by.get(t.id) ?? [], day, today))
     .filter((x): x is DueItem => !!x)

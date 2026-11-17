@@ -61,7 +61,7 @@ const inOrder = (topics: [string, string][], saved: string[] | null): [string, s
     : [...saved.flatMap((id) => topics.filter((t) => t[0] === id)), ...topics.filter((t) => !saved.includes(t[0]))];
 
 export function News() {
-  const data = useData();
+  const data = useData('news', 'newsTopics');
   const now = useNow();
   const status = useNewsStatus();
   const updated = useNewsUpdated();

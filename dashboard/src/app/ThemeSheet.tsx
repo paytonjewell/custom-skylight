@@ -17,7 +17,7 @@ export function openThemeSheet(): void {
 /** Theme picker: live previews of each theme (theme tokens apply to any element with data-theme) */
 function ThemeSheet() {
   const { choice, autoDark } = useThemeSettings();
-  const W = useData().weather;
+  const W = useData('weather').weather;
   const now = useNow();
   return (
     <div className="sheet-pad">

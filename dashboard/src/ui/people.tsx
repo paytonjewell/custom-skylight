@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
-import type { CalEvent, Data, Person } from '../data/types';
+import type { CalEvent, Person } from '../data/types';
 import { useData } from '../data/store';
-import { evColor, evStripes, person } from '../data/select';
+import { evColor, evStripes, person, type EventColorData } from '../data/select';
 import { Icon } from './Icon';
 
 /**
@@ -45,7 +45,7 @@ const bands = (colors: string[]) =>
  * calendar's own), plus, when it's for two or more people, striped fills in each of their colours.
  * Event surfaces paint with var(--c-fill, var(--c)) or var(--c-tint-fill, var(--c-tint)).
  */
-export function eventStyle(d: Data, e: CalEvent, extra?: CSSProperties): CSSProperties {
+export function eventStyle(d: EventColorData, e: CalEvent, extra?: CSSProperties): CSSProperties {
   const ps = evStripes(d, e);
   const base = toneStyle(ps[0] ?? evColor(d, e), extra);
   if (!ps.length) return base;
@@ -76,7 +76,7 @@ export function Avatar({ p, size = 48, className }: { p: Person; size?: number; 
 
 /** A row of small colour dots, one per person */
 export function Dots({ ids, size }: { ids: string[]; size?: number }) {
-  const data = useData();
+  const data = useData('family', 'people');
   return (
     <span className="dots">
       {ids.map((id) => (

@@ -25,7 +25,7 @@ export function PhotoFrame({
   showCountdowns?: boolean;
   slideshowRef?: Ref<SlideshowHandle>;
 }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people', 'weather');
   const events = useEvents();
   const now = useNow();
   const shift = usePixelShift(active, now);

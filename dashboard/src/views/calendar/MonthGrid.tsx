@@ -74,7 +74,7 @@ export function MonthGrid({
   month?: number;
   onDay: (d: Date) => void;
 }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people', 'weather');
   const drag = useEventDrag();
   const events = useCalendarEvents();
   const phone = useLayout() === 'phone';

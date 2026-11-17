@@ -148,7 +148,7 @@ const range = (a: Date, b: Date) =>
 
 // ------------------------------------------------------------ week: 7 days and "Next week"
 function Week({ start, now, next }: { start: Date; now: Date; next: () => void }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people', 'weather');
   const events = useCalendarEvents();
   const phone = useLayout() === 'phone';
   const after = addDays(start, 7);
@@ -207,7 +207,7 @@ function Week({ start, now, next }: { start: Date; now: Date; next: () => void }
 
 // ------------------------------------------------------------ day: a schedule
 function Schedule({ date, now }: { date: Date; now: Date }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people');
   const events = useCalendarEvents();
   const list = dayEvents(events, date);
   if (!list.length) {

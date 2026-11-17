@@ -17,7 +17,7 @@ import { useTaskStatus } from '../../data/taskSync';
 import { pushSupported, testPush, turnOffPush, turnOnPush, usePush } from '../../data/push';
 import { SLOTS, doneByTask, doneLate, dueOn, type DueItem } from '../../data/tasks';
 import { habitStats } from '../../data/habits';
-import { person, phonePeople, taskLanes, taskPeople } from '../../data/select';
+import { person, phonePeople, taskLanes, taskPeople, type PeopleData } from '../../data/select';
 import { dayDiff, dayOf, describeRepeat, shiftDay } from '../../lib/repeat';
 import { createStore, store, stored, useStore } from '../../lib/store';
 import { useNow } from '../../lib/clock';
@@ -39,7 +39,7 @@ import css from './Tasks.module.css';
 
 const CHECK_MS = 350; // let the check animation play before the row changes
 /** A column per person (FAMILY, worker/home.ts), then Anyone, then tasks-only profiles */
-const lanesOf = (d: Data): string[] => taskLanes(d.people);
+const lanesOf = (d: Pick<Data, 'people'>): string[] => taskLanes(d.people);
 type Section = Slot | 'habits';
 const SECTIONS: [Section, string][] = [['habits', 'Habits'], ...SLOTS];
 
@@ -91,7 +91,7 @@ const laneOrder = savedIds('tasks.order');
 const inOrder = (ids: string[], saved: string[] | null): string[] =>
   !saved ? ids : [...saved.filter((id) => ids.includes(id)), ...ids.filter((id) => !saved.includes(id))];
 /** Today's rings and the Tasks columns, in the order chosen on the Tasks screen */
-export function useTaskLanes(d: Data): string[] {
+export function useTaskLanes(d: Pick<Data, 'people'>): string[] {
   return inOrder(
     lanesOf(d),
     useStore(laneOrder.store, (s) => s),
@@ -99,7 +99,7 @@ export function useTaskLanes(d: Data): string[] {
 }
 
 export function Tasks() {
-  const data = useData();
+  const data = useData('family', 'lists', 'people', 'taskDone', 'tasks');
   const now = useNow();
   const status = useTaskStatus();
   const people = useStore(peopleFilter.store, (s) => s);
@@ -278,7 +278,7 @@ export function Tasks() {
 }
 
 /** A column's name, for "Moved … to Ace" */
-const laneName = (d: Data, who: string) => (who === 'any' ? 'Anyone' : person(d, who).name);
+const laneName = (d: PeopleData, who: string) => (who === 'any' ? 'Anyone' : person(d, who).name);
 
 /**
  * Rows' actions, for the Tasks screen and a person's sheet on Today: tap to check off (habits too),
@@ -293,7 +293,7 @@ export function useTaskRows(
   today: string,
   back?: () => void,
 ): { rowProps: (x: DueItem) => RowProps; layer: ReactNode } {
-  const data = useData();
+  const data = useData('family', 'people', 'taskDone', 'tasks');
   const { sections, show } = useShowSettings();
   const pending = usePendingAction(CHECK_MS);
   /** The row swiped open (one at a time) */
@@ -494,7 +494,7 @@ function Lane({
   move,
   lifted,
 }: {
-  data: Data;
+  data: Pick<Data, 'tasks' | 'taskDone' | 'people' | 'family' | 'lists'>;
   who: string;
   day: string;
   items: DueItem[];
@@ -624,7 +624,7 @@ function Detail({
   show,
   rowProps,
 }: {
-  data: Data;
+  data: Pick<Data, 'tasks' | 'taskDone' | 'people' | 'family' | 'lists'>;
   who: string;
   day: string;
   items: DueItem[];
@@ -680,7 +680,7 @@ function TaskRow({ x, viewing, checking, streak: _streak, ...swipe }: { x: DueIt
   const t = x.task;
   const done = !!x.done || checking;
   // A reminder from a list item names the list
-  const list = useData().lists.find((l) => l.id === t.listId);
+  const list = useData('lists').lists.find((l) => l.id === t.listId);
   const sub = x.overdue ? (
     <span className={css.late}>Overdue · {shortDay(x.day)}</span>
   ) : x.done && doneLate(x) ? (
@@ -782,7 +782,7 @@ function cheerIfFinished(who: string, today: string): void {
   celebrate({ from, tone: person(d, who).tone, everyone });
 }
 
-function SettingsSheet({ data }: { data: Data }) {
+function SettingsSheet({ data }: { data: PeopleData }) {
   const people = useStore(peopleFilter.store, (s) => s);
   const sections = useStore(sectionFilter.store, (s) => s);
   const show = useStore(doneView, (s) => s);
@@ -876,7 +876,7 @@ export function useShowSettings(): { sections: string[] | null; show: DoneView; 
 }
 
 /** Turn phone reminders on or off on this device, and say whose phone it is */
-function PhoneReminders({ data }: { data: Data }) {
+function PhoneReminders({ data }: { data: PeopleData }) {
   const on = usePush((s) => s.person);
   const [who, setWho] = useState<string | null>(on);
   const [busy, setBusy] = useState(false);

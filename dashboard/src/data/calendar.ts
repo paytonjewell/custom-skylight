@@ -1,5 +1,5 @@
 // Google Calendar events and tasks as the calendar shows them. Pure functions.
-import { dueOn } from './tasks';
+import { doneByTask, dueOn } from './tasks';
 import { holidayEmoji } from './holidays';
 import { dayOf, shiftDay } from '../lib/repeat';
 import type { Calendar, CalEvent, Data, EventRecord, Person } from './types';
@@ -23,11 +23,8 @@ function namesIn(title: string, people: Person[]): string[] {
 export function whoFor(r: Pick<EventRecord, 'title' | 'people'>, c: Calendar, people: Person[]): string[] {
   if (c.person === 'none') return [];
   const all = people.map((p) => p.id);
-  const pick = r.people?.length
-    ? r.people
-    : c.byName && namesIn(r.title, people).length
-      ? namesIn(r.title, people)
-      : [c.person];
+  const named = !r.people?.length && c.byName ? namesIn(r.title, people) : [];
+  const pick = r.people?.length ? r.people : named.length ? named : [c.person];
   return pick.includes('family') ? all : pick.filter((id) => all.includes(id));
 }
 
@@ -80,14 +77,12 @@ export function withEvents(d: Data): Data {
     const had = best.get(r.id);
     if (!had || (had.guest && !r.guest)) best.set(r.id, r);
   }
-  return {
-    ...d,
-    events: [...best.values()].map((r) => toCalEvent(r, shown.get(r.calendar)!, calendarPeople(d.people))),
-  };
+  const people = calendarPeople(d.people);
+  return { ...d, events: [...best.values()].map((r) => toCalEvent(r, shown.get(r.calendar)!, people)) };
 }
 
 /** The Worker's copy of a CalEvent from Google */
-export const recordOf = (d: Data, e: CalEvent): EventRecord | undefined =>
+export const recordOf = (d: Pick<Data, 'eventRecords'>, e: CalEvent): EventRecord | undefined =>
   d.eventRecords.find((r) => r.calendar === e.calendar && r.id === e.gid);
 
 /** Days either side of today that tasks are put on the calendar for */
@@ -97,15 +92,16 @@ const TASK_DAYS = 62;
  * Tasks with "Show on calendar", as all-day items for each day they're due (from two months back to
  * two months ahead). Tapping one checks it off (src/views/calendar/EventSheet.tsx).
  */
-export function taskEvents(d: Data, now: Date): CalEvent[] {
+export function taskEvents(d: Pick<Data, 'tasks' | 'taskDone' | 'ALL'>, now: Date): CalEvent[] {
   const tasks = d.tasks.filter((t) => t.onCalendar);
   if (!tasks.length) return [];
   const today = dayOf(now);
+  const by = doneByTask(d.taskDone);
   const out: CalEvent[] = [];
   for (let i = -TASK_DAYS; i <= TASK_DAYS; i++) {
     const day = shiftDay(today, i);
     const [y, m, dd] = day.split('-').map(Number);
-    for (const x of dueOn(tasks, d.taskDone, day, today)) {
+    for (const x of dueOn(tasks, by, day, today)) {
       const t = x.task;
       out.push({
         id: `task:${t.id}:${day}`,

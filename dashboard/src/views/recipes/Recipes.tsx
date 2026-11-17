@@ -39,7 +39,7 @@ const FILTERS = [
 
 /** `onInventory`: switch to the Inventory tab */
 export function RecipesTab({ onInventory }: { onInventory: () => void }) {
-  const data = useData();
+  const data = useData('inventory', 'kitchenLoaded', 'mealPlan', 'recipes');
   const now = useNow();
   const today = dayOf(now);
   const status = useKitchenStatus();
@@ -194,7 +194,7 @@ function WeekPlan({
   /** The day whose dinner is being dragged */
   lifted?: string;
 }) {
-  const data = useData();
+  const data = useData('groceries', 'inventory', 'mealPlan', 'recipes');
   const planned = plannedFor(data, days);
   const toBuy = shoppingFor(planned, data.groceries, data.inventory).filter(
     (x) => !x.listed && !x.pantry && !x.optional && !x.have,
@@ -253,7 +253,7 @@ export function pickDinner(day: string): void {
   openSheet(() => <PickDinner day={day} />, { cls: 'sheet--wide' });
 }
 function PickDinner({ day }: { day: string }) {
-  const data = useData();
+  const data = useData('recipes');
   const today = dayOf(useNow());
   // Favorites first, then the ones not made for longest
   const list = [...data.recipes].sort(
@@ -358,7 +358,7 @@ function FromKitchen({
   hasInventory: boolean;
   onInventory: () => void;
 }) {
-  const data = useData();
+  const data = useData('groceries');
   const close = ready.filter((x) => x.missing.length <= CLOSE).slice(0, 8);
   const row = useRef<HTMLDivElement>(null);
   useEdgeFade(row, [close.length, hasInventory]);

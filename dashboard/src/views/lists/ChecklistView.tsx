@@ -40,7 +40,7 @@ import css from './ChecklistView.module.css';
 export function ChecklistView({ list, onBack }: { list: Checklist; onBack: () => void }) {
   // The add box is beside the list on the frame, above it on phones
   const phone = useLayout() === 'phone';
-  const data = useData();
+  const data = useData('taskDone', 'tasks');
   const now = useNow();
   const [text, setText] = useState('');
   /** The row swiped open to show an action, and which side (one row at a time) */

@@ -32,7 +32,7 @@ export const openList = (id: string | null) => {
 const back = () => openList(null);
 
 export function Lists() {
-  const data = useData();
+  const data = useData('lists');
   const id = useStore(open, (s) => s);
   const list = data.lists.find((l) => l.id === id);
 
@@ -47,7 +47,7 @@ export function Lists() {
 }
 
 function Grid({ lists }: { lists: Checklist[] }) {
-  const groceries = useData().groceries;
+  const groceries = useData('groceries').groceries;
   const toGet = groceries.filter((g) => !g.done);
   const view = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);

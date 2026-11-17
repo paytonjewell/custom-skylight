@@ -103,7 +103,7 @@ export function openCalendarAt(day: Date): void {
 
 export function Calendar({ active }: { active: boolean }) {
   const now = useNow();
-  const data = useData();
+  const data = useData('googleAccounts', 'googleConfigured');
   const [mode, setMode] = useState<CalView>('day');
   const [date, setDate] = useState(() => dayStart(clockNow()));
   /** Counts jumps to another date (Today, a picked day), not steps */
@@ -271,7 +271,7 @@ function EvBlock({
   day: Date;
   now: Date;
 }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people');
   const fam = isFamily(data, e);
   const mins = (+e.end - +e.start) / 60000;
   const others = lane ? e.people.filter((id) => id !== lane) : e.people.length > 1 && !fam ? e.people : [];
@@ -386,7 +386,7 @@ function GridScroll({ resetKey, active, children }: { resetKey: string; active: 
 
 // ------------------------------------------------------------ Today (lanes per person; one timeline on a phone)
 function DayView({ date, now, active, resetKey }: { date: Date; now: Date; active: boolean; resetKey: string }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people');
   const events = useEvents();
   // A phone is too narrow for a lane per person: everyone shares one timeline, in their colours
   const single = useLayout() === 'phone';
@@ -479,7 +479,7 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
 
 // ------------------------------------------------------------ 3 day
 function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; active: boolean; resetKey: string }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people');
   const events = useEvents();
   const days = [0, 1, 2].map((i) => addDays(date, i));
   const s0 = dayStart(date),
@@ -546,7 +546,7 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
 
 // ------------------------------------------------------------ rolling week
 function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: Date) => void }) {
-  const data = useData();
+  const data = useData('ALL', 'family', 'people');
   const events = useEvents();
   const stop = (fn: () => void) => (e: MouseEvent) => {
     e.stopPropagation();

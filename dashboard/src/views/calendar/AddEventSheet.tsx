@@ -74,7 +74,7 @@ function EventForm({
   onAdded?: (start: Date) => void;
   day?: Date;
 }) {
-  const data = useData();
+  const data = useData('calendars', 'eventRecords', 'family', 'googleAccounts', 'people');
   const [today] = useState(() => dayStart(clockNow()));
   const record = event ? recordOf(data, event) : undefined;
   /** Calendars it can go on: shown and writable (moving an existing one: same Google account only) */
@@ -428,7 +428,7 @@ const calOf = (list: Calendar[], id: string) => list.find((c) => c.id === id);
 
 /** A calendar's colour dot and whose it is */
 function CalendarMark({ c }: { c: Calendar }) {
-  const data = useData();
+  const data = useData('family', 'people');
   return (
     <span className={css.mark}>
       <i style={{ background: c.color }} />

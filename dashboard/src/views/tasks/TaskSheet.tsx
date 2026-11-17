@@ -90,7 +90,7 @@ function controls(r: Repeat | null): { mode: Often; custom: Custom; basis: Basis
 }
 
 function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFields> }) {
-  const data = useData();
+  const data = useData('family', 'lists', 'people');
   const [today] = useState(() => dayOf(clockNow()));
   const r = task?.repeat ?? null;
   const start = r?.start ?? today;

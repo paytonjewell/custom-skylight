@@ -3,7 +3,6 @@
 // which one new events go on. Connecting happens on Google's pages (worker/google.ts), which send
 // the browser back to /?google=…#calendar; checkGoogleReturn opens this sheet then.
 import { useState } from 'react';
-import type { Data } from '../../data/types';
 import { useData } from '../../data/store';
 import { api } from '../../data/api';
 import { setCalendar } from '../../data/actions';
@@ -15,7 +14,7 @@ import { Icon } from '../../ui/Icon';
 import { EmojiPicker } from '../../ui/EmojiPicker';
 import { Avatar, toneStyle } from '../../ui/people';
 import css from './CalendarSettings.module.css';
-import { calendarPeople } from '../../data/select';
+import { calendarPeople, type PeopleData } from '../../data/select';
 
 export function openCalendarSettings(): void {
   // Up to date when it opens (e.g. Google just set up on the server, or a calendar added in Google)
@@ -43,7 +42,7 @@ export function checkGoogleReturn(): void {
 }
 
 /** Who a calendar can belong to */
-const owners = (d: Data) => [...calendarPeople(d.people), d.family];
+const owners = (d: PeopleData) => [...calendarPeople(d.people), d.family];
 /** Colours for calendars that are no one's */
 const COLORS = [
   '#D9534F',
@@ -60,7 +59,7 @@ const COLORS = [
 ];
 
 function CalendarSettings() {
-  const data = useData();
+  const data = useData('calendars', 'family', 'googleAccounts', 'googleConfigured', 'people');
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
   /** The calendar whose emoji is being picked */
