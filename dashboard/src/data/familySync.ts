@@ -6,10 +6,15 @@ import { store } from '../lib/store';
 import { FAMILY_KEY } from './initial';
 import type { Person } from './types';
 import { calendarPeople } from './select';
+import { withEvents } from './calendar';
 
-/** ALL: everyone on the calendar ("everyone" events, Anyone's tasks), so not tasks-only profiles */
+/**
+ * ALL: everyone on the calendar ("everyone" events, Anyone's tasks), so not tasks-only profiles.
+ * Events are rebuilt too: they take their people from the family, and on a new device the calendar
+ * can load before the family does.
+ */
 const setFamily = (people: Person[]) =>
-  dataStore.set((d) => ({ ...d, people, ALL: calendarPeople(people).map((p) => p.id) }));
+  dataStore.set((d) => withEvents({ ...d, people, ALL: calendarPeople(people).map((p) => p.id) }));
 
 let started = false;
 export function startFamilySync(): void {
