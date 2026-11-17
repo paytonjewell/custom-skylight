@@ -1,5 +1,5 @@
 // Tests for src/data/habits.ts (streaks, rate, heatmap cells)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { habitStats } from '../src/data/habits.ts';
 import type { Task, TaskDone } from '../src/data/types.ts';

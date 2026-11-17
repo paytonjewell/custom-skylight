@@ -100,7 +100,7 @@ export async function getTasks(env: Env): Promise<Response> {
 }
 
 /** Task fields from the app, checked. `partial` allows any subset (for edits). */
-function fields(v: unknown, partial: boolean): Partial<Task> | null {
+export function fields(v: unknown, partial: boolean): Partial<Task> | null {
   const b = v as Record<string, unknown> | null;
   if (!b || typeof b !== 'object') return null;
   const out: Partial<Task> = {};
@@ -160,7 +160,7 @@ function fields(v: unknown, partial: boolean): Partial<Task> | null {
 }
 
 /** A completion from the app, checked */
-function doneRow(v: unknown): Pick<TaskDone, 'day' | 'at' | 'by'> | null {
+export function doneRow(v: unknown): Pick<TaskDone, 'day' | 'at' | 'by'> | null {
   const d = v as Partial<TaskDone> | null;
   if (!d || !isDay(d.day) || typeof d.at !== 'string' || Number.isNaN(Date.parse(d.at))) return null;
   if (d.by != null && !(typeof d.by === 'string' && PERSON.test(d.by))) return null;

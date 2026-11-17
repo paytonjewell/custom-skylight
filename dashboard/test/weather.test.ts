@@ -1,6 +1,6 @@
 // Tests for worker/weather.ts (Open-Meteo → our weather, the moon, Bible Gateway's text) and the
 // Today screen's weather lines (src/data/select.ts)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { condition, moon, plainVerse, toWeather } from '../worker/weather.ts';
 import { hourly, weatherNow } from '../src/data/select.ts';

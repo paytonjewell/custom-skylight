@@ -1,5 +1,5 @@
 // Tests for src/ui/useHoldReorder.ts (a drag's order, brought up to date with a sync that landed mid-drag)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { reconcile } from '../src/ui/useHoldReorder.ts';
 

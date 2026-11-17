@@ -1,6 +1,6 @@
 // Tests for Google Calendar: event checks and conversion (worker/google.ts), Google → CalEvent
 // and tasks shown on the calendar (src/data/calendar.ts)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { calendarEmoji, eventFields, toRecord } from '../worker/google.ts';
 import { splitEmoji, taskEvents, toCalEvent, whoFor, withEvents } from '../src/data/calendar.ts';

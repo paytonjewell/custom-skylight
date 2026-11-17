@@ -1,5 +1,5 @@
 // Tests for worker/recipeImport.ts (reading schema.org Recipe data from a page)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { findRecipe, isoMinutes, readServings, readSteps, toImported } from '../worker/recipeImport.ts';
 

@@ -1,5 +1,5 @@
 // Tests for src/data/kitchen.ts (where things are kept, matching ingredients, what can be made)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { guessPlace, onHand, readiness, whatCanWeMake } from '../src/data/kitchen.ts';
 import { SAMPLE_RECIPES } from './fixtures/recipes.ts';

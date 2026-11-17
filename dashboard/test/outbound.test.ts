@@ -1,5 +1,5 @@
 // Tests for worker/outbound.ts: links typed or shared into the app reach only the public web
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { fetchPublic, isPublicUrl, NotPublic } from '../worker/outbound.ts';
 

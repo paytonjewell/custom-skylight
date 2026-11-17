@@ -1,5 +1,5 @@
 // Tests for src/lib/repeat.ts. Run: npm test (Node's built-in runner; Node 24 runs .ts directly).
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   carriesOver,

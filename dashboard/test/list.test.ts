@@ -1,5 +1,5 @@
 // Tests for src/lib/list.ts
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { insertAt, orderBy, patch } from '../src/lib/list.ts';
 

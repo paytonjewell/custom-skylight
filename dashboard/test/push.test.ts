@@ -1,6 +1,6 @@
 // Tests for worker/webpush.ts (encryption, checked by decrypting with Node's own crypto as a phone
 // would) and worker/push.ts (which reminders go out when, and to whom)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createDecipheriv, createECDH, hkdfSync, randomBytes } from 'node:crypto';
 import { b64url, encrypt } from '../worker/webpush.ts';

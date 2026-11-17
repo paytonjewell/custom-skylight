@@ -63,7 +63,7 @@ async function getKitchen(env: Env): Promise<Response> {
 }
 
 /** A recipe from the app, checked (null if anything's off) */
-function recipeFields(v: unknown): Omit<Recipe, 'favorite' | 'made'> | null {
+export function recipeFields(v: unknown): Omit<Recipe, 'favorite' | 'made'> | null {
   const b = v as Partial<Recipe> | null;
   if (!b || typeof b !== 'object') return null;
   if (typeof b.id !== 'string' || !RECIPE_ID.test(b.id) || !str(b.title, 200) || !b.title.trim() || !str(b.emoji, 16))

@@ -1,5 +1,5 @@
 // Tests for src/data/names.ts (the same food however it's written)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { core, sameFood } from '../src/data/names.ts';
 

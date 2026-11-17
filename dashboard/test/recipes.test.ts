@@ -1,5 +1,5 @@
 // Tests for src/data/recipes.ts (amounts, grocery matching, a week's shopping, times in steps)
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   amount,
