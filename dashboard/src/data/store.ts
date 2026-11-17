@@ -13,9 +13,15 @@ export const dataStore = createStore<Data>(initialData());
  */
 export function useData<K extends keyof Data>(...keys: [K, ...K[]]): Pick<Data, K> {
   const last = useRef<Pick<Data, K> | null>(null);
+  const prevAliases = useRef<Data['foodAliases'] | null>(null);
+  // Matching foods (src/data/names.ts) also depends on the matches the family taught, which it reads
+  // outside the store: anything showing kitchen or grocery data redraws when one is taught too
+  const kitchen = keys.some((k) => k === 'inventory' || k === 'groceries' || k === 'recipes');
   return useStore(dataStore, (d) => {
     const prev = last.current;
-    if (prev && keys.every((k) => prev[k] === d[k])) return prev;
+    const aliasesSame = !kitchen || prevAliases.current === d.foodAliases;
+    if (prev && aliasesSame && keys.every((k) => prev[k] === d[k])) return prev;
+    prevAliases.current = d.foodAliases;
     const next = {} as Pick<Data, K>;
     for (const k of keys) next[k] = d[k];
     last.current = next;

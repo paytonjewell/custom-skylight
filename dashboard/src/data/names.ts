@@ -169,21 +169,31 @@ const DESCRIPTORS = new Set([
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// Built once: core() runs for every ingredient against every item when the kitchen screens draw
+const RULES: [RegExp, string][] = [
+  ...SAME.map(([from, to]): [RegExp, string] => [new RegExp(` ${escape(from)} `, 'g'), ` ${to} `]),
+  ...CHEESES.map((c): [RegExp, string] => [new RegExp(` ${escape(c)} cheese `), ` ${c} `]),
+  ...SPICES.map((sp): [RegExp, string] => [new RegExp(` ground ${escape(sp)} `), ` ${sp} `]),
+];
+const cores = new Map<string, string>();
+
 /** The core of a food name (see the top of this file) */
 export function core(name: string): string {
+  const hit = cores.get(name);
+  if (hit !== undefined) return hit;
   let s = name
     .toLowerCase()
     .replace(/['’]/g, '')
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9 ]+/g, ' ');
   s = s.split(/\s+/).filter(Boolean).map(singular).join(' ');
-  for (const [from, to] of SAME)
-    s = (' ' + s + ' ').replace(new RegExp(' ' + escape(from) + ' ', 'g'), ' ' + to + ' ').trim();
-  for (const c of CHEESES) s = (' ' + s + ' ').replace(' ' + c + ' cheese ', ' ' + c + ' ').trim();
-  for (const sp of SPICES) s = (' ' + s + ' ').replace(' ground ' + sp + ' ', ' ' + sp + ' ').trim();
+  for (const [re, to] of RULES) s = ` ${s} `.replace(re, to).trim();
   const words = s.split(' ').filter((w) => w && !DESCRIPTORS.has(w));
   // Nothing but descriptors (e.g. "large"): keep what was there
-  return words.length ? words.join(' ') : s;
+  const out = words.length ? words.join(' ') : s;
+  if (cores.size > 5000) cores.clear(); // names come from the family's lists, so this is never reached in practice
+  cores.set(name, out);
+  return out;
 }
 
 /** Matches the family taught ("I have this"): core → the core it counts as. Set from the kitchen data. */
