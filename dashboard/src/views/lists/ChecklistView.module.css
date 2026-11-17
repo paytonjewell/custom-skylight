@@ -231,40 +231,6 @@
     backdrop-filter: blur(20px) saturate(1.4);
   }
 }
-.inputWrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 76px;
-  padding: 0 20px;
-  border-radius: 12px;
-  background: var(--field);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--line);
-
-  :global(.phone) & {
-    height: 52px;
-    padding: 0 14px;
-  }
-}
-.input {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  border: 0;
-  outline: none;
-  background: transparent;
-  font-size: 24px;
-  font-weight: 400;
-
-  :global(.phone) & {
-    font-size: 17px;
-  }
-}
-.input::placeholder {
-  color: #b5b5b5;
-  font-weight: 400;
-}
 .addButtons {
   display: flex;
   gap: 10px;

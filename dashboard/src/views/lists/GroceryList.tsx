@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from 'react';
 import type { Data, Grocery } from '../../data/types';
 import { useData } from '../../data/store';
 import {
-  addGrocery,
   clearGroceries,
   placeGroceries,
   removeGrocery,
@@ -27,7 +26,8 @@ import { Icon } from '../../ui/Icon';
 import { Segmented } from '../../ui/Segmented';
 import { PageHeader } from '../../ui/headers';
 import { EmptyNote } from '../../ui/EmptyNote';
-import { usePendingAction } from '../../ui/hooks';
+import { useGroceryActions } from './useGroceryActions';
+import { AddBar } from '../../ui/AddBar';
 import { useHoldReorder } from '../../ui/useHoldReorder';
 import { store as remember, stored } from '../../lib/store';
 import type { SwipeSide } from '../../ui/useSwipeReveal';
@@ -59,7 +59,7 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
   const [store, setStore] = useState('all');
   const [query, setQuery] = useState('');
   const [drawer, setDrawer] = useState(false);
-  const pending = usePendingAction(CHECK_MS);
+  const groceries = useGroceryActions(CHECK_MS);
   const [flash, setFlash] = useState<string | null>(null);
   const status = useGroceryStatus();
   // Phones show stores' short names in the switcher (PNS), where space is tight
@@ -120,47 +120,11 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
 
   const add = (name: string) => {
     if (!name.trim()) return;
-    const { item, kind } = addGrocery(name, store);
+    const item = groceries.add(name, store);
     setQuery('');
     setFlash(item.id);
-    // Already in the kitchen (Inventory): say so, in case it's not needed after all
-    const have = haveNote(data.inventory, item.name);
-    toast(
-      <>
-        {kind === 'more' ? (
-          <>
-            Already on the list · now <b>×{item.qty}</b> {item.name}
-          </>
-        ) : kind === 'revived' ? (
-          <>
-            Added back <b>{item.name}</b>
-          </>
-        ) : (
-          <>
-            Added <b>{item.name}</b> to {item.cat}
-          </>
-        )}
-        {have && <> · you have {have}</>}
-      </>,
-      { icon: 'cart', ms: have ? 5000 : 3000 },
-    );
   };
-
-  const check = (g: Grocery) => {
-    if (pending.cancel(g.id)) return; // second tap cancels
-    pending.start(g.id, () => setGroceryDone(g.id, true));
-    toast(
-      <>
-        <b>{g.name}</b> checked off
-      </>,
-      {
-        icon: 'check',
-        undo: () => {
-          if (!pending.cancel(g.id)) setGroceryDone(g.id, false);
-        },
-      },
-    );
-  };
+  const check = groceries.check;
 
   // At one, minus takes the item off the list (with Undo)
   const less = (g: Grocery) => {
@@ -277,7 +241,7 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
                 g={g}
                 showStore={store === 'all'}
                 counts={counts}
-                checking={pending.isPending(id)}
+                checking={groceries.isChecking(id)}
                 flash={flash === id}
                 lifted={ghost?.id === id}
                 props={itemProps(id)}
@@ -361,20 +325,7 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
 
       <aside className={css.side}>
         <div className={css.add + ' surface'}>
-          <label className={css.inputWrap}>
-            <Icon name="plus" size={30} />
-            <input
-              className={css.input}
-              placeholder="Add an item…"
-              autoComplete="off"
-              enterKeyHint="done"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') add(query);
-              }}
-            />
-          </label>
+          <AddBar value={query} onChange={setQuery} onSubmit={() => add(query)} />
         </div>
         <div className={css.suggest}>
           <Suggest data={data} query={query} onAdd={add} planned={kitchen?.suggest} />

@@ -36,6 +36,7 @@ import { useHoldReorder } from '../../ui/useHoldReorder';
 import type { SwipeSide } from '../../ui/useSwipeReveal';
 import { SwipeRow, deleteAction, editAction } from '../../ui/SwipeRow';
 import { EditField } from '../../ui/EditField';
+import { AddBar } from '../../ui/AddBar';
 import css from './ChecklistView.module.css';
 
 export function ChecklistView({ list, onBack }: { list: Checklist; onBack: () => void }) {
@@ -217,21 +218,7 @@ export function ChecklistView({ list, onBack }: { list: Checklist; onBack: () =>
 
       <aside className={css.side}>
         <div className={css.add + ' surface'}>
-          <label className={css.inputWrap}>
-            <Icon name="plus" size={30} />
-            <input
-              ref={input}
-              className={css.input}
-              placeholder="Add an item…"
-              autoComplete="off"
-              enterKeyHint="done"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') add(false);
-              }}
-            />
-          </label>
+          <AddBar value={text} onChange={setText} onSubmit={() => add(false)} inputRef={input} />
           <div className={css.addButtons}>
             <button className="btn btn--solid" disabled={!text.trim()} onClick={() => add(false)}>
               Add item

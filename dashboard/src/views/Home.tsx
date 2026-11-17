@@ -9,10 +9,7 @@ import { dayOf } from '../lib/repeat';
 import { dueToday } from '../data/tasks';
 import { fmt } from '../lib/fmt';
 import { useNow } from '../lib/clock';
-import { closeSheet, go, openSheet, toast } from '../app/ui';
-import { addGrocery, setGroceryDone } from '../data/actions';
-import { usePendingAction } from '../ui/hooks';
-import type { Grocery } from '../data/types';
+import { closeSheet, go, openSheet } from '../app/ui';
 import { GROCERY, openList } from './lists/Lists';
 import { useLayout } from '../app/layout';
 import { openThemeSheet } from '../app/ThemeSheet';
@@ -26,7 +23,8 @@ import { HomeCalendar } from './HomeCalendar';
 import { openPersonTasks } from './tasks/PersonTasksSheet';
 import { openRecipe } from './recipes/RecipeSheet';
 import { pickDinner } from './recipes/Recipes';
-import { haveNote, readiness } from '../data/kitchen';
+import { readiness } from '../data/kitchen';
+import { useGroceryActions } from './lists/useGroceryActions';
 import css from './Home.module.css';
 
 export function Home({ active }: { active: boolean }) {
@@ -207,46 +205,15 @@ function GroceriesCard() {
   const open = data.groceries.filter((g) => !g.done);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
-  // A checked item stays (ticked) a moment, so a second tap can take it back
-  const pending = usePendingAction(1200);
+  const groceries = useGroceryActions(1200);
 
   const add = () => {
     const n = name.trim();
     if (!n) return setAdding(false);
-    const { item, kind } = addGrocery(n, 'all');
+    groceries.add(n, 'all');
     setName('');
-    const have = haveNote(data.inventory, item.name);
-    toast(
-      <>
-        {kind === 'more' ? (
-          <>
-            Already on the list · now <b>×{item.qty}</b> {item.name}
-          </>
-        ) : (
-          <>
-            Added <b>{item.name}</b>
-          </>
-        )}
-        {have && <> · you have {have}</>}
-      </>,
-      { icon: 'cart', ms: have ? 5000 : 2500 },
-    );
   };
-  const check = (g: Grocery) => {
-    if (pending.cancel(g.id)) return;
-    pending.start(g.id, () => setGroceryDone(g.id, true));
-    toast(
-      <>
-        <b>{g.name}</b> checked off
-      </>,
-      {
-        icon: 'check',
-        undo: () => {
-          if (!pending.cancel(g.id)) setGroceryDone(g.id, false);
-        },
-      },
-    );
-  };
+  const check = groceries.check;
 
   return (
     <div className={css.shop + ' card'}>
@@ -291,7 +258,7 @@ function GroceriesCard() {
           </button>
         )}
         {[...open].reverse().map((g) => {
-          const ticked = pending.isPending(g.id);
+          const ticked = groceries.isChecking(g.id);
           return (
             <button key={g.id} className={css.item + (ticked ? ' ' + css.isTicked : '')} onClick={() => check(g)}>
               <span>
