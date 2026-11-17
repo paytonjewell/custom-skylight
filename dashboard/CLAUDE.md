@@ -52,7 +52,15 @@ hide layout bugs the frame has (e.g. Chrome 124 gives `<button>` `align-items: f
   everything starts once from `src/app/start.ts`.
 - React Compiler memoizes components, so there's no need for `useMemo`/`useCallback`. A component it
   can't compile is printed as `[react-compiler] skipped …` by the dev server and build: keep that at zero.
-- Shared pieces live in `src/ui/` (`Chip`/`DateChip`, `PersonPicker`, `SheetHeader`…): reuse them
-  rather than copying markup and CSS between sheets.
+- Shared pieces live in `src/ui/` (`Chip`/`DateChip`, `EmojiTitle`, `Stepper`, `AddBar`, `SwipeRow`,
+  `PersonPicker`, `SheetHeader`…): reuse them rather than copying markup and CSS between sheets.
+  Something tapped as a whole that holds buttons of its own gets `role="button" tabIndex={0}` and
+  `tappable()` (`ui/tappable.ts`).
 - Dragging: `ui/useDragDrop.tsx` (drop onto targets) and `ui/useHoldReorder.ts` (reorder in place),
-  both press-and-hold. Swipe rows: `ui/SwipeRow.tsx`.
+  both press-and-hold through `ui/hold.ts`. Swipe rows: `ui/SwipeRow.tsx` (actions per side).
+- Worker: answer with `json<T>()` / `bad()` / `done()` from `worker/http.ts`, naming the answer's type
+  from `src/data/types.ts` (the app reads the same type); ids and other input checks are in
+  `worker/validate.ts`; fetches to URLs from users go through `worker/outbound.ts`. Lists of values
+  go to D1 as one JSON parameter (`json_each(?)`): D1 allows only 100 bound parameters.
+- Tests (Vitest): `test/*.test.ts` run in Node (pure functions from `src/` and `worker/`);
+  `test/worker/` runs the Worker itself against a real local D1 and R2 with the migrations applied.
