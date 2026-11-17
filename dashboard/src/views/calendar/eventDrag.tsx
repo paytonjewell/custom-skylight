@@ -7,6 +7,7 @@
 //
 // Drop targets (data-drop): "t:YYYY-MM-DD" an hour-grid column (its top is START o'clock),
 // "d:YYYY-MM-DD" a day, "a3:YYYY-MM-DD" the 3-day all-day row (the day comes from where across it).
+import { dayOf } from '../../lib/repeat';
 import { createContext, useContext, type ReactNode } from 'react';
 import type { CalEvent, Data, EventRecord } from '../../data/types';
 import { useData } from '../../data/store';
@@ -23,8 +24,6 @@ import css from './Calendar.module.css';
 
 const SNAP = 15; // minutes
 
-const pad = (n: number) => String(n).padStart(2, '0');
-export const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fromKey = (k: string) => new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1, Number(k.slice(8, 10)));
 
 /** Its stored copy, if the dashboard may change it */
@@ -68,7 +67,7 @@ function moveEvent(r: EventRecord, e: CalEvent, to: Date): void {
   if (+to === +e.start) return;
   const len = +e.end - +e.start;
   const change = e.allDay
-    ? { allDay: true, start: dayKey(to), end: dayKey(new Date(+to + len + 12 * 36e5)) } // (+12h: a DST day isn't 24h)
+    ? { allDay: true, start: dayOf(to), end: dayOf(new Date(+to + len + 12 * 36e5)) } // (+12h: a DST day isn't 24h)
     : { allDay: false, start: to.toISOString(), end: new Date(+to + len).toISOString() };
   editCalEvent(r, change);
   const when = fmt.rel(to, clockNow()) + (e.allDay ? '' : ' ' + fmt.time(to));

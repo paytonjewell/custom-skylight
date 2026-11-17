@@ -30,3 +30,6 @@ export function daysBetween(from: Date, to: Date): number {
 }
 
 export const minutesBetween = (a: Date, b: Date) => (b.getTime() - a.getTime()) / 60000;
+
+/** Two digits: 7 → "07" */
+export const pad2 = (n: number): string => String(n).padStart(2, '0');

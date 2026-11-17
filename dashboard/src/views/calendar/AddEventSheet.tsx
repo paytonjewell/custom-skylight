@@ -3,6 +3,7 @@
 // Who it's for starts as whose the calendar says (names in the title, on one that goes by names) and
 // can be changed; a change is kept on the event. The title is saved exactly as typed.
 // Editing one occurrence of a repeating event changes just that occurrence.
+import { dayOf } from '../../lib/repeat';
 import { Stepper } from '../../ui/Stepper';
 import { Chip, DateChip } from '../../ui/Chip';
 import { useState } from 'react';
@@ -11,7 +12,7 @@ import { dataStore, useData } from '../../data/store';
 import { addCalEvent, deleteCalEvent, editCalEvent, restoreCalEvent, type EventFields } from '../../data/actions';
 import { recordOf, whoFor } from '../../data/calendar';
 import { calendarPeople, person } from '../../data/select';
-import { addDays, dayStart, sameDay } from '../../lib/dates';
+import { addDays, dayStart, sameDay, pad2 } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow } from '../../lib/clock';
 import { closeSheet, openSheet, toast } from '../../app/ui';
@@ -57,11 +58,9 @@ export function removeEvent(e: CalEvent): void {
   );
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const hhmm = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const hhmm = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 const minutesOf = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
-const fromMinutes = (m: number) => `${pad(Math.floor((m % 1440) / 60))}:${pad(m % 60)}`;
+const fromMinutes = (m: number) => `${pad2(Math.floor((m % 1440) / 60))}:${pad2(m % 60)}`;
 const at = (day: Date, t: string) => new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutesOf(t));
 /** "3:30 PM" */
 const timeLabel = (t: string) => fmt.time(at(new Date(2000, 0, 1), t));
@@ -188,8 +187,8 @@ function EventForm({
       calendar,
       title: name,
       allDay,
-      start: allDay ? dayKey(day) : s.toISOString(),
-      end: allDay ? dayKey(addDays(day, days)) : e.toISOString(),
+      start: allDay ? dayOf(day) : s.toISOString(),
+      end: allDay ? dayOf(addDays(day, days)) : e.toISOString(),
       location: loc.trim(),
       notes: notes.trim(),
       ...(people.length ? { people } : {}),
@@ -270,7 +269,7 @@ function EventForm({
             {i < 2 ? fmt.rel(d, today) : fmt.dayShort(d) + ' ' + d.getDate()}
           </Chip>
         ))}
-        <DateChip on={picked} value={dayKey(day)} onChange={(v) => v && setDay(new Date(v + 'T00:00:00'))}>
+        <DateChip on={picked} value={dayOf(day)} onChange={(v) => v && setDay(new Date(v + 'T00:00:00'))}>
           {picked ? fmt.dayShort(day) + ', ' + fmt.monthShort(day) + ' ' + day.getDate() : 'Pick a day'}
         </DateChip>
       </div>

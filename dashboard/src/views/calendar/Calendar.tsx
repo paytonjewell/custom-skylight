@@ -1,4 +1,5 @@
 // Calendar: Today-by-person lanes (default), 3-day, rolling week, month.
+import { dayOf } from '../../lib/repeat';
 import { useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import type { CalEvent } from '../../data/types';
 import { useData } from '../../data/store';
@@ -19,7 +20,7 @@ import { useLayout } from '../../app/layout';
 import { Pager, type PagerHandle } from '../../ui/Pager';
 import { go } from '../../app/ui';
 import { createStore, useStore } from '../../lib/store';
-import { EventDragProvider, dayKey, useEventDrag } from './eventDrag';
+import { EventDragProvider, useEventDrag } from './eventDrag';
 import css from './Calendar.module.css';
 
 const PX = 72,
@@ -397,7 +398,7 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
   const ids = lanes.map((p) => p.id);
   const cols = single ? 1 : lanes.length;
   const drag = useEventDrag();
-  const t = 't:' + dayKey(date);
+  const t = 't:' + dayOf(date);
   return (
     <div className={css.day}>
       {allDay.length > 0 && (
@@ -406,7 +407,7 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
           <div
             className={css.alldayGrid}
             style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-            data-drop={'d:' + dayKey(date)}
+            data-drop={'d:' + dayOf(date)}
           >
             {allDay.map((e) => {
               const col = single || isFamily(data, e) ? '1 / -1' : ids.indexOf(e.people[0]) + 1 + ' / span 1';
@@ -503,7 +504,7 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
       {allDay.length > 0 && (
         <div className={css.allday}>
           <div className={css.gutter + ' label'}>All day</div>
-          <div className={css.alldayGrid + ' ' + css.alldayGrid3} data-drop={'a3:' + dayKey(s0)}>
+          <div className={css.alldayGrid + ' ' + css.alldayGrid3} data-drop={'a3:' + dayOf(s0)}>
             {allDay.map((e) => {
               const a = Math.max(0, Math.round((+e.start - +s0) / DAY_MS)),
                 b = Math.min(3, Math.round((+e.end - +s0) / DAY_MS));
@@ -529,11 +530,7 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
       <GridScroll resetKey={resetKey} active={active}>
         <div className={css.lanes + ' ' + css.lanes3}>
           {days.map((d) => (
-            <div
-              key={+d}
-              className={css.lane + (sameDay(d, now) ? ' ' + css.isToday : '')}
-              data-drop={'t:' + dayKey(d)}
-            >
+            <div key={+d} className={css.lane + (sameDay(d, now) ? ' ' + css.isToday : '')} data-drop={'t:' + dayOf(d)}>
               <Blocks list={timedOn(events, d)} day={d} now={now} />
             </div>
           ))}
@@ -568,7 +565,7 @@ function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: 
             key={i}
             className={css.wkCol + (sameDay(d, now) ? ' ' + css.isToday : '')}
             onClick={() => openDay(d)}
-            data-drop={'d:' + dayKey(d)}
+            data-drop={'d:' + dayOf(d)}
           >
             <div className={css.wkHead}>
               <b>{fmt.dayShort(d)}</b>

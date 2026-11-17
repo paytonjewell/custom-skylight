@@ -3,8 +3,8 @@
 // mode. Also the "Shop for this week" sheet, which does the same for every planned dinner at once.
 import { Stepper } from '../../ui/Stepper';
 import { Chip } from '../../ui/Chip';
-import { useEffect, useRef, useState } from 'react';
-import { dataStore, useData } from '../../data/store';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useData } from '../../data/store';
 import { onHand } from '../../data/kitchen';
 import { amount, nameFor, onList, plannedFor, shoppingFor, stepSeconds, timerLabel } from '../../data/recipes';
 import {
@@ -50,13 +50,11 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
   const r = data.recipes.find((x) => x.id === id);
   const [servings, setServings] = useState(r?.servings ?? 4);
   /** Ingredients picked to buy (by name); starts with what's needed: not pantry, not listed, not in the kitchen */
-  const [picked, setPicked] = useState<Set<string>>(
+  const [picked, toggle, setPicked] = useToggleSet(
     () =>
-      new Set(
-        r?.ingredients
-          .filter((i) => !i.pantry && !i.optional && !onList(data.groceries, i.name) && !onHand(data.inventory, i.name))
-          .map((i) => i.name),
-      ),
+      r?.ingredients
+        .filter((i) => !i.pantry && !i.optional && !onList(data.groceries, i.name) && !onHand(data.inventory, i.name))
+        .map((i) => i.name) ?? [],
   );
   const [planning, setPlanning] = useState(false);
   if (!r) return null;
@@ -64,13 +62,6 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
   const toAdd = r.ingredients.filter((i) => picked.has(i.name) && !onList(data.groceries, i.name)).map((i) => i.name);
   const week = Array.from({ length: 7 }, (_, i) => shiftDay(today, i));
   const plannedOn = week.filter((d) => data.mealPlan[d] === r.id);
-  const toggle = (name: string) =>
-    setPicked((p) => {
-      const n = new Set(p);
-      if (n.has(name)) n.delete(name);
-      else n.add(name);
-      return n;
-    });
 
   return (
     <div className={'sheet-pad ' + css.recipe} style={toneStyle({ tone: r.tone })}>
@@ -127,26 +118,17 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
               const canTeach = !listed && !have;
               return (
                 <li key={i.name + i.note} className={css.ingRow}>
-                  <button
-                    className={css.ing + (on ? ' ' + css.isOn : '') + (listed ? ' ' + css.isListed : '')}
-                    disabled={listed}
+                  <IngredientButton
+                    on={on}
+                    listed={listed}
+                    have={have}
+                    pantry={i.pantry}
+                    optional={i.optional}
                     onClick={() => toggle(i.name)}
                   >
-                    <span className={css.box}>{(on || listed) && <Icon name="check" size={16} />}</span>
-                    <span className={css.ingText}>
-                      <b>{amount(i, factor)}</b> {nameFor(i, factor)}
-                      {i.note && <small>, {i.note}</small>}
-                    </span>
-                    {listed ? (
-                      <em className={css.tag}>On list</em>
-                    ) : have ? (
-                      <em className={css.tagHave}>In kitchen</em>
-                    ) : i.pantry ? (
-                      <em className={css.tagSoft}>Pantry</em>
-                    ) : i.optional ? (
-                      <em className={css.tagSoft}>Optional</em>
-                    ) : null}
-                  </button>
+                    <b>{amount(i, factor)}</b> {nameFor(i, factor)}
+                    {i.note && <small>, {i.note}</small>}
+                  </IngredientButton>
                   {canTeach && (
                     <button className={css.haveIt} onClick={() => openHaveIt(r.id, i.name)}>
                       I have this
@@ -323,6 +305,58 @@ function HaveIt({ recipeId, name }: { recipeId: string; name: string }) {
 }
 
 // ------------------------------------------------------------ shop for this week
+/** A set of names to pick from, starting with `initial`; toggle adds or removes one */
+function useToggleSet(initial: () => string[]) {
+  const [set, setSet] = useState<ReadonlySet<string>>(() => new Set(initial()));
+  const toggle = (name: string) =>
+    setSet((p) => {
+      const n = new Set(p);
+      if (n.has(name)) n.delete(name);
+      else n.add(name);
+      return n;
+    });
+  return [set, toggle, setSet] as const;
+}
+
+/** An ingredient to tick for the grocery list, with why it might not be needed (on the list already, …) */
+function IngredientButton({
+  on,
+  listed,
+  have,
+  pantry,
+  optional,
+  onClick,
+  children,
+}: {
+  on: boolean;
+  listed: boolean;
+  have: boolean;
+  pantry?: boolean;
+  optional?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      className={css.ing + (on ? ' ' + css.isOn : '') + (listed ? ' ' + css.isListed : '')}
+      disabled={listed}
+      onClick={onClick}
+    >
+      <span className={css.box}>{(on || listed) && <Icon name="check" size={16} />}</span>
+      <span className={css.ingText}>{children}</span>
+      {listed ? (
+        <em className={css.tag}>On list</em>
+      ) : have ? (
+        <em className={css.tagHave}>In kitchen</em>
+      ) : pantry ? (
+        <em className={css.tagSoft}>Pantry</em>
+      ) : optional ? (
+        <em className={css.tagSoft}>Optional</em>
+      ) : null}
+    </button>
+  );
+}
+
 export function openShopSheet(days: string[]): void {
   openSheet(() => <ShopSheet days={days} />, { cls: 'sheet--wide' });
 }
@@ -330,17 +364,10 @@ function ShopSheet({ days }: { days: string[] }) {
   const data = useData('groceries', 'inventory', 'mealPlan', 'recipes');
   const recipes = plannedFor(data, days);
   const items = shoppingFor(recipes, data.groceries, data.inventory);
-  const [picked, setPicked] = useState<Set<string>>(
-    () => new Set(items.filter((x) => !x.pantry && !x.optional && !x.listed && !x.have).map((x) => x.name)),
+  const [picked, toggle] = useToggleSet(() =>
+    items.filter((x) => !x.pantry && !x.optional && !x.listed && !x.have).map((x) => x.name),
   );
   const toAdd = items.filter((x) => picked.has(x.name) && !x.listed).map((x) => x.name);
-  const toggle = (name: string) =>
-    setPicked((p) => {
-      const n = new Set(p);
-      if (n.has(name)) n.delete(name);
-      else n.add(name);
-      return n;
-    });
   return (
     <div className="sheet-pad">
       <SheetHeader kicker="Shop for this week" title={recipes.map((r) => r.emoji).join(' ')} />
@@ -350,26 +377,17 @@ function ShopSheet({ days }: { days: string[] }) {
           const on = picked.has(x.name) && !x.listed;
           return (
             <li key={x.name}>
-              <button
-                className={css.ing + (on ? ' ' + css.isOn : '') + (x.listed ? ' ' + css.isListed : '')}
-                disabled={x.listed}
+              <IngredientButton
+                on={on}
+                listed={x.listed}
+                have={!!x.have}
+                pantry={x.pantry}
+                optional={x.optional}
                 onClick={() => toggle(x.name)}
               >
-                <span className={css.box}>{(on || x.listed) && <Icon name="check" size={16} />}</span>
-                <span className={css.ingText}>
-                  {x.name}
-                  <small> · {x.for.join(', ')}</small>
-                </span>
-                {x.listed ? (
-                  <em className={css.tag}>On list</em>
-                ) : x.have ? (
-                  <em className={css.tagHave}>In kitchen</em>
-                ) : x.pantry ? (
-                  <em className={css.tagSoft}>Pantry</em>
-                ) : x.optional ? (
-                  <em className={css.tagSoft}>Optional</em>
-                ) : null}
-              </button>
+                {x.name}
+                <small> · {x.for.join(', ')}</small>
+              </IngredientButton>
             </li>
           );
         })}
@@ -420,20 +438,20 @@ function chime(): void {
 }
 
 function Cook({ id, servings }: { id: string; servings: number }) {
-  const r = dataStore.get().recipes.find((x) => x.id === id);
+  const r = useData('recipes').recipes.find((x) => x.id === id);
   const today = dayOf(useNow());
   const [step, setStep] = useState(0);
   // One timer at a time: when it ends and how long it was
   const [timer, setTimer] = useState<{ end: number; secs: number; step: number } | null>(null);
-  const [, tick] = useState(0);
-  const rang = useRef(false);
+  /** Seconds left on the timer, counted down by the effect below */
+  const [left, setLeft] = useState(0);
   useEffect(() => {
     if (!timer) return;
-    rang.current = false;
+    let rang = false;
     const t = setInterval(() => {
-      tick((n) => n + 1);
-      if (Date.now() >= timer.end && !rang.current) {
-        rang.current = true;
+      setLeft(Math.max(0, Math.round((timer.end - Date.now()) / 1000)));
+      if (Date.now() >= timer.end && !rang) {
+        rang = true;
         chime();
         toast(<>Timer done · step {timer.step + 1}</>, { icon: 'timer', ms: 8000 });
       }
@@ -444,7 +462,6 @@ function Cook({ id, servings }: { id: string; servings: number }) {
   const factor = servings / r.servings;
   const last = step === r.steps.length - 1;
   const secs = stepSeconds(r.steps[step]);
-  const left = timer ? Math.max(0, Math.round((timer.end - Date.now()) / 1000)) : 0;
   const mmss = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
 
   return (
@@ -487,7 +504,13 @@ function Cook({ id, servings }: { id: string; servings: number }) {
               <small>{left ? `Step ${timer.step + 1} · tap to stop` : 'Tap to clear'}</small>
             </button>
           ) : secs ? (
-            <button className={css.timerStart} onClick={() => setTimer({ end: Date.now() + secs * 1000, secs, step })}>
+            <button
+              className={css.timerStart}
+              onClick={() => {
+                setTimer({ end: Date.now() + secs * 1000, secs, step });
+                setLeft(secs);
+              }}
+            >
               <Icon name="timer" size={22} /> Start a {timerLabel(secs)} timer
             </button>
           ) : null}

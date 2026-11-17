@@ -1,4 +1,4 @@
-import { daysBetween } from './dates';
+import { daysBetween, pad2 } from './dates';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = [
@@ -22,20 +22,18 @@ const MON_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Se
 export const pluralize = (count: number, singular: string, plural = singular + 's'): string =>
   count === 1 ? singular : plural;
 
-const pad = (m: number) => (m < 10 ? '0' : '') + m;
-
 export const fmt = {
   /** "3:45 PM", or "3:45" with ampm = false */
   time(d: Date, ampm = true): string {
     const h = d.getHours();
-    const s = (h % 12 || 12) + ':' + pad(d.getMinutes());
+    const s = (h % 12 || 12) + ':' + pad2(d.getMinutes());
     return ampm ? s + ' ' + (h >= 12 ? 'PM' : 'AM') : s;
   },
   /** "4 PM", "3:45 PM" */
   hour(d: Date): string {
     const h = d.getHours(),
       m = d.getMinutes();
-    return (h % 12 || 12) + (m ? ':' + pad(m) : '') + ' ' + (h >= 12 ? 'PM' : 'AM');
+    return (h % 12 || 12) + (m ? ':' + pad2(m) : '') + ' ' + (h >= 12 ? 'PM' : 'AM');
   },
   ampm: (d: Date) => (d.getHours() >= 12 ? 'PM' : 'AM'),
   /** "3:45 – 4:30 PM", "11:30 AM – 12:15 PM" */

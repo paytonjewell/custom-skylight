@@ -2,6 +2,7 @@
 // Each week is a row: the date and the day's weather on top, then events in lanes. An all-day event
 // that runs over several days is one bar across them. Lanes are fitted to the row's height; when a
 // day has more than fit, its last lane says "+N more". Phones get slim bars with just the name in small text.
+import { dayOf } from '../../lib/repeat';
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { CalEvent } from '../../data/types';
 import { useData } from '../../data/store';
@@ -13,7 +14,7 @@ import { useLayout } from '../../app/layout';
 import { Icon } from '../../ui/Icon';
 import { eventStyle } from '../../ui/people';
 import { openEventSheet } from './EventSheet';
-import { dayKey, useEventDrag } from './eventDrag';
+import { useEventDrag } from './eventDrag';
 import css from './MonthGrid.module.css';
 
 /** Row heights (px): the date line, and one lane of chips (frame / phone) */
@@ -129,7 +130,7 @@ export function MonthGrid({
                       className={css.day + (out ? ' ' + css.isOut : '') + (past ? ' ' + css.isPast : '')}
                       aria-label={fmt.day(d) + ' ' + fmt.month(d) + ' ' + d.getDate()}
                       onClick={() => onDay(d)}
-                      data-drop={'d:' + dayKey(d)}
+                      data-drop={'d:' + dayOf(d)}
                     >
                       <span className={css.head}>
                         {wx && !past && !phone ? <Icon name={wx} size={18} /> : <i />}
