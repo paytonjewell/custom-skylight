@@ -33,6 +33,12 @@ function newEventId(): string {
 const setRecords = (change: (list: EventRecord[]) => EventRecord[]) =>
   set((d) => withEvents({ ...d, eventRecords: change(d.eventRecords) }));
 const same = (a: EventRecord) => (b: EventRecord) => a.calendar === b.calendar && a.id === b.id;
+/**
+ * Events that came back under a new id when a delete was undone (Google wouldn't restore the old one).
+ * Changes queued before the restore finished still name the old id, so they look it up when they're sent.
+ */
+const renamed = new Map<string, string>();
+const idNow = (r: EventRecord) => renamed.get(`${r.calendar}/${r.id}`) ?? r.id;
 
 export function addCalEvent(f: EventFields): EventRecord {
   const r: EventRecord = { ...f, id: newEventId(), recurring: false };
@@ -43,16 +49,22 @@ export function addCalEvent(f: EventFields): EventRecord {
 /** Change an event (times change together; `calendar` moves it) */
 export function editCalEvent(r: EventRecord, p: EventChange): void {
   setRecords((list) => list.map((x) => (same(r)(x) ? { ...x, ...p } : x)));
-  saveEvent(() => api.editEvent(r.calendar, r.id, p));
+  saveEvent(() => api.editEvent(r.calendar, idNow(r), p));
 }
 export function deleteCalEvent(r: EventRecord): void {
   setRecords((list) => list.filter((x) => !same(r)(x)));
-  saveEvent(() => api.deleteEvent(r.calendar, r.id));
+  saveEvent(() => api.deleteEvent(r.calendar, idNow(r)));
 }
 /** Undo a delete */
 export function restoreCalEvent(r: EventRecord): void {
   setRecords((list) => [...list.filter((x) => !same(r)(x)), r]);
-  saveEvent(() => api.restoreEvent(r, newEventId()).then(() => refreshEvents()));
+  saveEvent(() =>
+    api.restoreEvent(r, newEventId()).then((back) => {
+      if (!back) return refreshEvents();
+      if (back.id !== r.id) renamed.set(`${r.calendar}/${r.id}`, back.id);
+      setRecords((list) => [...list.filter((x) => !same(r)(x) && !same(back)(x)), back]);
+    }),
+  );
 }
 /** Show or hide a Google calendar, say whose it is, its colour, or make it where new events go */
 export function setCalendar(id: string, p: CalendarChange): void {
@@ -358,8 +370,10 @@ export function restoreGrocery(item: Grocery, at: number): void {
  * of the heading it ended up under (which is remembered for that name). They fill the places the shown
  * items had, so items not shown (checked off, or at another store while one is picked) keep theirs.
  */
-export function placeGroceries(placed: { id: string; cat: string }[]): void {
+export function placeGroceries(dragged: { id: string; cat: string }[]): void {
   const before = new Map(dataStore.get().groceries.map((g) => [g.id, g]));
+  // A refresh during the drag can remove an item that was on screen when it started
+  const placed = dragged.filter((p) => before.has(p.id));
   set((d) => {
     const shown = new Set(placed.map((p) => p.id));
     let k = 0;

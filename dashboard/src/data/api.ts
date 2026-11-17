@@ -128,8 +128,11 @@ export const api = {
   editEvent: (calendar: string, id: string, p: EventChange) =>
     send('PATCH', `/api/events/${calendar}/${encodeURIComponent(id)}`, p),
   deleteEvent: (calendar: string, id: string) => send('DELETE', `/api/events/${calendar}/${encodeURIComponent(id)}`),
-  restoreEvent: (e: EventRecord, newId: string) =>
-    send('POST', `/api/events/${e.calendar}/${encodeURIComponent(e.id)}/restore`, { ...e, newId }),
+  /** The restored event (its id is `newId` if Google wouldn't bring the old one back), or null */
+  restoreEvent: async (e: EventRecord, newId: string): Promise<EventRecord | null> => {
+    const res = await send('POST', `/api/events/${e.calendar}/${encodeURIComponent(e.id)}/restore`, { ...e, newId });
+    return res.status === 204 ? null : res.json();
+  },
 };
 
 /** POST /api/recipes/import */
