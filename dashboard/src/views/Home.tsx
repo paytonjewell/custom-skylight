@@ -5,7 +5,7 @@ import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
 import { useEvents } from '../data/hooks';
 import { countdowns, person, verseOfDay, weatherNow, laneName } from '../data/select';
-import { useTaskLanes } from './tasks/Tasks';
+import { useTaskLanes } from './tasks/settings';
 import { dayOf } from '../lib/repeat';
 import { dueToday } from '../data/tasks';
 import { fmt } from '../lib/fmt';

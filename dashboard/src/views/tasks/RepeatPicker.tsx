@@ -1,6 +1,7 @@
 // "How often" in the task editor: Once, Daily, Weekdays, Weekly, Monthly or Custom…, with the
 // weekdays, day of the month, every-few steppers and "Repeat from" each one needs. The controls are
 // plain data (repeatControls.ts); TaskSheet keeps them and turns them into the rule with toRepeat.
+import { Stepper } from '../../ui/Stepper';
 import { Chip } from '../../ui/Chip';
 import type { Weekday } from '../../lib/repeat';
 import { canCountFromDone, fromDone, type Custom, type Often, type RepeatControls } from './repeatControls';
@@ -43,34 +44,6 @@ const OFFSETS: [number, string][] = [
   [1, 'Day after'],
 ];
 
-/** − 3 + days */
-function Stepper({
-  label,
-  value,
-  onChange,
-  min = 1,
-  max = 365,
-}: {
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-  min?: number;
-  max?: number;
-}) {
-  return (
-    <div className={css.stepper}>
-      <button className="icon-btn" aria-label="Fewer" onClick={() => onChange(Math.max(min, value - 1))}>
-        −
-      </button>
-      <b className="num">{value}</b>
-      <button className="icon-btn" aria-label="More" onClick={() => onChange(Math.min(max, value + 1))}>
-        +
-      </button>
-      <span>{label}</span>
-    </div>
-  );
-}
-
 export function RepeatPicker({
   value: c,
   onChange,
@@ -92,7 +65,13 @@ export function RepeatPicker({
     </div>
   );
   const monthDayStep = (
-    <Stepper label="day of the month" value={monthDay} onChange={(n) => set({ monthDay: n })} max={31} />
+    <Stepper
+      unit={() => 'day of the month'}
+      label="day of the month"
+      value={monthDay}
+      onChange={(n) => set({ monthDay: n })}
+      max={31}
+    />
   );
   /** "2 weeks" counting from when it's done, "2 weeks, on" (then the weekdays) from the calendar */
   const unit = (one: string) => (every === 1 ? one : one + 's') + (done ? '' : ', on');
@@ -132,17 +111,35 @@ export function RepeatPicker({
             ))}
           </div>
           {custom === 'days' && (
-            <Stepper label={every === 1 ? 'day' : 'days'} value={every} onChange={(n) => set({ every: n })} />
+            <Stepper
+              unit={() => (every === 1 ? 'day' : 'days')}
+              label="days"
+              value={every}
+              onChange={(n) => set({ every: n })}
+              max={365}
+            />
           )}
           {custom === 'weeks' && (
             <>
-              <Stepper label={unit('week')} value={every} onChange={(n) => set({ every: n })} max={52} />
+              <Stepper
+                unit={() => unit('week')}
+                label={unit('week')}
+                value={every}
+                onChange={(n) => set({ every: n })}
+                max={52}
+              />
               {!done && weekdays}
             </>
           )}
           {custom === 'months' && (
             <>
-              <Stepper label={unit('month')} value={every} onChange={(n) => set({ every: n })} max={24} />
+              <Stepper
+                unit={() => unit('month')}
+                label={unit('month')}
+                value={every}
+                onChange={(n) => set({ every: n })}
+                max={24}
+              />
               {!done && monthDayStep}
             </>
           )}

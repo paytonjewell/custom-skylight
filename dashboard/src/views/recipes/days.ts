@@ -1,7 +1,6 @@
 // Day names for Recipes ("Today", "Tue 17", "Tuesday, Nov 17") and "made 3 days ago"
+import { asDate } from '../../lib/days';
 import { dayDiff } from '../../lib/repeat';
-
-const asDate = (day: string) => new Date(day + 'T12:00:00');
 
 export function dayLabel(day: string, today: string, long = false): string {
   const n = dayDiff(today, day);

@@ -1,5 +1,6 @@
 // What the Tasks screen shows, saved on this device: which people and sections, all tasks or only
 // those to do or done, and the columns' order. A person's sheet on Today shares the same settings.
+import { inSavedOrder, savedIds, type SavedIds } from '../../lib/saved';
 import type { Data, Person, Slot } from '../../data/types';
 import { SLOTS, type DueItem } from '../../data/tasks';
 import { taskLanes, taskPeople } from '../../data/select';
@@ -9,28 +10,6 @@ import { createStore, store, stored, useStore } from '../../lib/store';
 export const lanesOf = (d: Pick<Data, 'people'>): string[] => taskLanes(d.people);
 type Section = Slot | 'habits';
 export const SECTIONS: [Section, string][] = [['habits', 'Habits'], ...SLOTS];
-
-/** A saved list of ids, or null for "all" */
-function savedIds(key: string) {
-  const s = createStore<string[] | null>(
-    (() => {
-      try {
-        const v = JSON.parse(stored(key, 'null'));
-        return Array.isArray(v) && v.length ? v : null;
-      } catch {
-        return null;
-      }
-    })(),
-  );
-  return {
-    store: s,
-    set(ids: string[] | null) {
-      s.set(ids);
-      store(key, JSON.stringify(ids));
-    },
-  };
-}
-type SavedIds = ReturnType<typeof savedIds>;
 
 export const peopleFilter = savedIds('tasks.people');
 /** Which sections show (saved on this device): shared with a person's sheet on Today */
@@ -62,14 +41,13 @@ export function toggleIn(f: SavedIds, cur: string[] | null, all: string[], id: s
 
 /** The columns' order, as dragged by their headings (saved on this device); null: the usual order */
 export const laneOrder = savedIds('tasks.order');
-/** Columns in the saved order; ones it doesn't mention (someone new) keep their usual place at the end */
-const inOrder = (ids: string[], saved: string[] | null): string[] =>
-  !saved ? ids : [...saved.filter((id) => ids.includes(id)), ...ids.filter((id) => !saved.includes(id))];
 /** Today's rings and the Tasks columns, in the order chosen on the Tasks screen */
 export function useTaskLanes(d: Pick<Data, 'people'>): string[] {
-  return inOrder(
+  // Columns in the saved order; someone new keeps their usual place, at the end
+  return inSavedOrder(
     lanesOf(d),
     useStore(laneOrder.store, (s) => s),
+    (id) => id,
   );
 }
 

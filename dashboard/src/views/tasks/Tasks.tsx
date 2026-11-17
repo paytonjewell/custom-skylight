@@ -41,7 +41,6 @@ import { SettingsSheet } from './TaskSettingsSheet';
 import css from './Tasks.module.css';
 
 // Home (Today's rings) reads the columns' order from here
-export { useTaskLanes } from './settings';
 
 export function Tasks() {
   const data = useData('family', 'lists', 'people', 'taskDone', 'tasks');

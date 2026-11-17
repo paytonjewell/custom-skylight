@@ -15,8 +15,7 @@ import { peopleWithPhones, usePush } from '../../data/push';
 import { closeSheet, dismissSheet, go, openSheet, toast } from '../../app/ui';
 import { openList } from '../lists/Lists';
 import { PersonPicker } from '../../ui/PersonPicker';
-import { EmojiPicker } from '../../ui/EmojiPicker';
-import { Icon } from '../../ui/Icon';
+import { EmojiTitle } from '../../ui/EmojiTitle';
 import { RepeatPicker } from './RepeatPicker';
 import { toControls, toRepeat } from './repeatControls';
 import css from './TaskSheet.module.css';
@@ -42,7 +41,6 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
   const [slot, setSlot] = useState<Slot>(task?.slot ?? defaults?.slot ?? 'anytime');
   const [habit, setHabit] = useState(task?.habit ?? defaults?.habit ?? false);
   const [emoji, setEmoji] = useState(task?.emoji ?? defaults?.emoji ?? '');
-  const [picking, setPicking] = useState(false);
   const [onCalendar, setOnCalendar] = useState(task?.onCalendar ?? defaults?.onCalendar ?? false);
   const [remind, setRemind] = useState<string | null>(task?.remind ?? null);
   const [notify, setNotify] = useState<string[]>(task?.notify ?? []);
@@ -115,26 +113,15 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
       <div className="label">
         {task ? (fromList ? 'Edit reminder' : 'Edit task') : fromList ? 'New reminder' : 'New task'}
       </div>
-      <div className={css.titleRow}>
-        <button
-          className={css.emojiBtn + (picking ? ' ' + css.isOn : '')}
-          aria-label={emoji ? 'Change emoji' : 'Add an emoji'}
-          onClick={() => setPicking(!picking)}
-        >
-          {emoji || <Icon name="smile" size={30} />}
-        </button>
-        <input
-          className={css.bigInput}
-          placeholder="What needs doing?"
-          value={title}
-          autoFocus={!task}
-          enterKeyHint="done"
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          }}
-        />
-      </div>
+      <EmojiTitle
+        emoji={emoji}
+        onEmoji={setEmoji}
+        clearable
+        title={title}
+        onTitle={setTitle}
+        placeholder="What needs doing?"
+        autoFocus={!task}
+      />
       {fromList && (
         <div className={css.from}>
           <span>From</span>
@@ -152,27 +139,6 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
           >
             Open list
           </button>
-        </div>
-      )}
-      {picking && (
-        <div className={css.picker}>
-          <EmojiPicker
-            onPick={(e) => {
-              setEmoji(e);
-              setPicking(false);
-            }}
-          />
-          {emoji && (
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                setEmoji('');
-                setPicking(false);
-              }}
-            >
-              No emoji
-            </button>
-          )}
         </div>
       )}
 
