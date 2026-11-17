@@ -192,7 +192,7 @@ function TaskRow({ x, viewing, checking, streak: _streak, ...swipe }: { x: DueIt
         <span className={css.mark}>
           {t.emoji}
           <span className={css.check}>
-            <svg viewBox="0 0 24 24" width="24" height="24">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
               <path d="M5 12.5l4.5 4.5L19 7" />
             </svg>
           </span>

@@ -122,7 +122,7 @@ function HabitCard({
               const prev = shiftDay(first, -7);
               // Label a week when its Monday starts a new month (and the first column)
               return (
-                <span key={w}>
+                <span key={first}>
                   {w === 0 || first.slice(5, 7) !== prev.slice(5, 7) ? MONTHS[Number(first.slice(5, 7)) - 1] : ''}
                 </span>
               );
