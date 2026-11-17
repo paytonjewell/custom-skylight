@@ -14,7 +14,10 @@
   <script>
     // Apply the last theme before first paint (no flash); the app re-checks it (incl. Dark after sunset).
     // Storage can be unavailable — default to Pastel.
-    try { var t = localStorage.getItem('themeApplied'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    try {
+      const t = localStorage.getItem('themeApplied');
+      if (t) document.documentElement.dataset.theme = t;
+    } catch {}
   </script>
 </head>
 <body>
@@ -22,7 +25,9 @@
   <script>
     // Wall-display self-healing: if the app bundle failed to load (e.g. a stale page right after a
     // deploy, or a network blip), reload until it starts.
-    setTimeout(function () { if (!document.getElementById('stage')) location.reload(); }, 10000);
+    setTimeout(() => {
+      if (!document.getElementById('stage')) location.reload();
+    }, 10000);
   </script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
