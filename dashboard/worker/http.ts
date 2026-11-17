@@ -1,11 +1,10 @@
 // Small helpers every API handler shares, so requests are read and answered the same way everywhere.
 
 /** A JSON answer. Never cached: the data changes from every device. */
-export const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
+export const json = (body: unknown, status = 200) => jsonText(JSON.stringify(body), status);
+/** The same, for JSON that's already text */
+export const jsonText = (text: string, status = 200) =>
+  new Response(text, { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
 /** An error the app can show ({ error }) */
 export const bad = (error: string, status = 400) => json({ error }, status);

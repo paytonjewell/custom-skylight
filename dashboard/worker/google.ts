@@ -1,6 +1,6 @@
 // Google Calendar, both ways. Someone connects their Google account once (OAuth; the refresh token
 // stays here), picks which of its calendars to show and whose each is. Shown calendars' events, from
-// a few months back to a year ahead, are copied here as JSON and kept fresh: when the app loads
+// a few months back to a year ahead, are copied here (D1: events) and kept fresh: when the app loads
 // events and the copy is a few minutes old, and by the cron. Adding, changing or deleting an event on
 // the dashboard writes to Google first, then updates the copy.
 //
@@ -12,7 +12,7 @@
 // occurrence, as in Google Calendar's "This event".
 import type { Calendar, EventRecord, GoogleAccount } from '../src/data/types';
 import { isDay } from '../src/lib/repeat';
-import { bad, done, json, notFound, readJson } from './http';
+import { bad, done, json, jsonText, notFound, readJson } from './http';
 import { ID, PERSON } from './validate';
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -70,7 +70,6 @@ interface CalendarRow {
   shown: number;
   writable: number;
   position: number;
-  events: string;
   synced_at: string | null;
 }
 
@@ -181,6 +180,7 @@ export async function disconnect(env: Env, id: string): Promise<Response> {
     .first<{ refresh_token: string }>();
   if (!a) return notFound('No such account');
   await env.DB.batch([
+    env.DB.prepare('DELETE FROM events WHERE calendar_id IN (SELECT id FROM calendars WHERE account_id = ?)').bind(id),
     env.DB.prepare('DELETE FROM calendars WHERE account_id = ?').bind(id),
     env.DB.prepare('DELETE FROM google_accounts WHERE id = ?').bind(id),
   ]);
@@ -345,7 +345,11 @@ async function refreshCalendarList(env: Env, a: AccountRow): Promise<void> {
   });
   const keep = new Set(items.map((c) => c.id));
   for (const [gid, id] of have)
-    if (!keep.has(gid)) stmts.push(env.DB.prepare('DELETE FROM calendars WHERE id = ?').bind(id));
+    if (!keep.has(gid))
+      stmts.push(
+        env.DB.prepare('DELETE FROM events WHERE calendar_id = ?').bind(id),
+        env.DB.prepare('DELETE FROM calendars WHERE id = ?').bind(id),
+      );
   if (stmts.length) await env.DB.batch(stmts);
 }
 
@@ -404,9 +408,32 @@ async function syncCalendar(env: Env, c: Pick<CalendarRow, 'id' | 'google_id'>, 
     page = r.nextPageToken;
     if (!page) break;
   }
-  await env.DB.prepare('UPDATE calendars SET events = ?, synced_at = ? WHERE id = ?')
-    .bind(JSON.stringify(out), new Date().toISOString(), c.id)
-    .run();
+  // Replace the calendar's copy in one go (a batch is a transaction). The events go in as JSON lists
+  // of about a megabyte each: a few statements rather than one per event, and each value well inside
+  // D1's 2 MB limit.
+  const insert = env.DB.prepare(
+    `INSERT OR REPLACE INTO events (calendar_id, id, position, data)
+     SELECT ?, json_extract(value, '$.id'), ? + key, value FROM json_each(?)`,
+  );
+  const stmts = [env.DB.prepare('DELETE FROM events WHERE calendar_id = ?').bind(c.id)];
+  let chunk: string[] = [],
+    size = 0,
+    from = 0;
+  const flush = () => {
+    if (chunk.length) stmts.push(insert.bind(c.id, from, '[' + chunk.join(',') + ']'));
+    from += chunk.length;
+    chunk = [];
+    size = 0;
+  };
+  for (const rec of out) {
+    const text = JSON.stringify(rec);
+    if (size + text.length > 1_000_000) flush();
+    chunk.push(text);
+    size += text.length + 1;
+  }
+  flush();
+  stmts.push(env.DB.prepare('UPDATE calendars SET synced_at = ? WHERE id = ?').bind(new Date().toISOString(), c.id));
+  await env.DB.batch(stmts);
 }
 
 /** Refresh shown calendars whose copy is older than `maxAge` ms (0: all of them) */
@@ -469,7 +496,7 @@ async function calendarsJson(
       email: a.email,
       error: !!a.error,
     })),
-    calendars: (cals.results as Omit<CalendarRow, 'events'>[]).map((c) => ({
+    calendars: (cals.results as CalendarRow[]).map((c) => ({
       id: c.id,
       account: c.account_id,
       name: c.name,
@@ -548,15 +575,19 @@ export async function editCalendar(req: Request, env: Env, id: string): Promise<
 
 /** GET /api/events: events from shown calendars; a copy that's a few minutes old is refreshed after */
 export async function getEvents(env: Env, ctx: ExecutionContext): Promise<Response> {
-  const rows = (
-    await env.DB.prepare('SELECT events, synced_at FROM calendars WHERE shown = 1').all<{
-      events: string;
-      synced_at: string | null;
-    }>()
-  ).results;
-  const stale = rows.some((r) => !r.synced_at || Date.now() - Date.parse(r.synced_at) > STALE_MS);
+  const [cals, events] = await env.DB.batch([
+    env.DB.prepare('SELECT synced_at FROM calendars WHERE shown = 1'),
+    // Calendars in the order they were added, each one's events in order
+    env.DB.prepare(
+      'SELECT e.data FROM calendars c JOIN events e ON e.calendar_id = c.id WHERE c.shown = 1 ORDER BY c.rowid, e.position',
+    ),
+  ]);
+  const stale = (cals.results as { synced_at: string | null }[]).some(
+    (r) => !r.synced_at || Date.now() - Date.parse(r.synced_at) > STALE_MS,
+  );
   if (stale) ctx.waitUntil(syncCalendars(env, STALE_MS));
-  return json({ events: rows.flatMap((r) => JSON.parse(r.events) as EventRecord[]) });
+  // Each event is stored as the JSON the app gets, so it's passed along as is, without parsing
+  return jsonText(`{"events":[${(events.results as { data: string }[]).map((r) => r.data).join(',')}]}`);
 }
 
 /** Event fields from the app, checked. `partial` allows any subset (for edits). */
@@ -633,14 +664,19 @@ async function calendarFor(env: Env, id: string): Promise<{ c: CalendarRow; a: A
   return c && a ? { c, a } : null;
 }
 
-/** Change the stored copy of a calendar's events */
-async function editCopy(env: Env, id: string, change: (events: EventRecord[]) => EventRecord[]): Promise<void> {
-  const row = await env.DB.prepare('SELECT events FROM calendars WHERE id = ?').bind(id).first<{ events: string }>();
-  if (!row) return;
-  await env.DB.prepare('UPDATE calendars SET events = ? WHERE id = ?')
-    .bind(JSON.stringify(change(JSON.parse(row.events))), id)
+/** Store an event in its calendar's copy: a new one goes last, and so does a changed one (as before) */
+const putEvent = (env: Env, rec: EventRecord) =>
+  env.DB.prepare(
+    `INSERT INTO events (calendar_id, id, position, data)
+     VALUES (?1, ?2, (SELECT COALESCE(MAX(position), -1) + 1 FROM events WHERE calendar_id = ?1), ?3)
+     ON CONFLICT (calendar_id, id) DO UPDATE SET position = excluded.position, data = excluded.data`,
+  )
+    .bind(rec.calendar, rec.id, JSON.stringify(rec))
     .run();
-}
+
+/** Remove an event from its calendar's copy */
+const dropEvent = (env: Env, calendar: string, id: string) =>
+  env.DB.prepare('DELETE FROM events WHERE calendar_id = ? AND id = ?').bind(calendar, id).run();
 
 /** A Google failure for the app. Never 401: to the app, that means this device was signed out. */
 const failed = (e: unknown) =>
@@ -662,7 +698,7 @@ export async function addEvent(req: Request, env: Env): Promise<Response> {
       body: JSON.stringify({ id: b.id, ...toGoogle(f, false) }),
     });
     const rec = toRecord(e, at.c.id)!;
-    await editCopy(env, at.c.id, (list) => [...list.filter((x) => x.id !== rec.id), rec]);
+    await putEvent(env, rec);
     return json(rec, 201);
   } catch (e) {
     // Already there (a retry after a lost reply): fine
@@ -690,7 +726,7 @@ export async function editEvent(req: Request, env: Env, calId: string, gid: stri
         `/calendars/${enc(at.c.google_id)}/events/${enc(gid)}/move?destination=${enc(to.c.google_id)}`,
         { method: 'POST' },
       );
-      await editCopy(env, at.c.id, (list) => list.filter((x) => x.id !== gid));
+      await dropEvent(env, at.c.id, gid);
       at = to;
     }
     const e = await gapi<GEvent>(env, at.a, `/calendars/${enc(at.c.google_id)}/events/${enc(gid)}`, {
@@ -698,7 +734,8 @@ export async function editEvent(req: Request, env: Env, calId: string, gid: stri
       body: JSON.stringify(toGoogle(f, true)),
     });
     const rec = toRecord(e, at.c.id);
-    await editCopy(env, at.c.id, (list) => [...list.filter((x) => x.id !== gid), ...(rec ? [rec] : [])]);
+    if (rec?.id !== gid) await dropEvent(env, at.c.id, gid);
+    if (rec) await putEvent(env, rec);
     return rec ? json(rec) : done();
   } catch (e) {
     return failed(e) ?? Promise.reject(e);
@@ -716,7 +753,7 @@ export async function deleteEvent(env: Env, calId: string, gid: string): Promise
     // Already gone from Google: just drop it here
     if (!(e instanceof GoogleError && (e.status === 404 || e.status === 410))) return failed(e) ?? Promise.reject(e);
   }
-  await editCopy(env, at.c.id, (list) => list.filter((x) => x.id !== gid));
+  await dropEvent(env, at.c.id, gid);
   return done();
 }
 
@@ -750,9 +787,7 @@ export async function restoreEvent(req: Request, env: Env, calId: string, gid: s
     }
   }
   const rec = toRecord(e, at.c.id);
-  await editCopy(env, at.c.id, (list) => [
-    ...list.filter((x) => x.id !== gid && x.id !== rec?.id),
-    ...(rec ? [rec] : []),
-  ]);
+  if (rec?.id !== gid) await dropEvent(env, at.c.id, gid);
+  if (rec) await putEvent(env, rec);
   return rec ? json(rec) : done();
 }
