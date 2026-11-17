@@ -118,6 +118,20 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, path: strin
   // public/sw.js does); photos just open the app (they'd need the service worker).
   if (path === '/share' && req.method === 'POST') return shareFallback(req);
 
+  // Changes must come from the app's own pages. The device cookie is SameSite=Lax, which already keeps
+  // it off most cross-site requests; this also refuses any that slip through. Browsers send Origin on
+  // every non-GET fetch (the app's, and the service worker's "Done" on a reminder), always this one;
+  // a request without it isn't from a web page at all (curl, a script), so the cookie still decides.
+  const origin = req.headers.get('Origin');
+  if (
+    path.startsWith('/api/') &&
+    req.method !== 'GET' &&
+    req.method !== 'HEAD' &&
+    origin &&
+    origin !== new URL(req.url).origin
+  )
+    return json({ error: 'Cross-origin request' }, 403);
+
   const auth = await authenticate(req, env);
   // Signed out: data requests get a 401 (the app reloads into the sign-in page); everything else
   // gets the sign-in page itself

@@ -8,7 +8,14 @@ const MAX_AGE = 400 * 24 * 3600; // Chrome's cap on cookie lifetime; renewed whi
 const RENEW_AFTER = 24 * 3600 * 1000; // refresh last_seen and the cookie at most daily
 const MIN_PIN = 6;
 
-// Wrong-PIN limits: per IP, and across everyone (so many IPs can't share the guessing)
+// Wrong-PIN limits: per IP, and across everyone (so many IPs can't share the guessing).
+//
+// The overall limit is a deliberate trade-off. Anyone who can reach the sign-in page can spend those
+// 30 tries in an hour and so stop *new* devices signing in for up to an hour, even with the right
+// PIN. Devices already signed in carry on as normal (they never see the PIN page), so the frame and
+// the family's phones keep working; it only delays adding a device. The alternative, per-IP limits
+// alone, is easy to get round: an attacker with an IPv6 range has endless addresses, which would make
+// a 6-digit PIN guessable. Locking out sign-ins for an hour is the lesser harm for a family dashboard.
 const PER_IP = { max: 5, ms: 15 * 60 * 1000 };
 const OVERALL = { max: 30, ms: 60 * 60 * 1000 };
 
