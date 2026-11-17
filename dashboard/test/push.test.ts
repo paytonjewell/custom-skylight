@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDecipheriv, createECDH, hkdfSync, randomBytes } from 'node:crypto';
 import { b64url, encrypt } from '../worker/webpush.ts';
-import { dueReminders, localNow } from '../worker/push.ts';
+import { anyInWindow, dueReminders, localNow } from '../worker/push.ts';
 import type { Task, TaskDone } from '../src/data/types.ts';
 
 test('encrypted payload decrypts on the phone side (RFC 8291)', async () => {
@@ -107,4 +107,15 @@ test('a reminder just before midnight still goes out, just after', () => {
     dueReminders([daily], [], 'john', TZ, at('2026-11-16T00:03:00')).map((x) => x.day),
     ['2026-11-15'],
   );
+});
+
+test('the every-minute check: nothing loads unless some reminder time is in its window somewhere', () => {
+  const now = at('2026-11-15T08:05:00'); // 14:05 UTC
+  assert.equal(anyInWindow(['08:00'], [TZ], now), true);
+  assert.equal(anyInWindow(['08:00', '17:30'], [TZ], at('2026-11-15T08:20:00')), false); // window passed
+  assert.equal(anyInWindow(['08:00'], ['Europe/London'], now), false); // 14:05 there
+  assert.equal(anyInWindow(['14:00'], ['Europe/London', TZ], now), true); // a phone in London
+  assert.equal(anyInWindow(['23:59'], [TZ], at('2026-11-16T00:03:00')), true); // yesterday's, just after midnight
+  assert.equal(anyInWindow([], [TZ], now), false); // no reminders
+  assert.equal(anyInWindow(['08:00'], [], now), false); // no phones
 });

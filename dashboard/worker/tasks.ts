@@ -58,20 +58,40 @@ const toTask = (r: TaskRow): Task => ({
 });
 const toDone = (r: DoneRow): TaskDone => ({ task: r.task_id, day: r.day, at: r.done_at, by: r.done_by });
 
-/** Tasks and their completions from about the last year (`reminders`: only tasks with a reminder) */
-export async function loadTasks(env: Env, reminders = false): Promise<{ tasks: Task[]; done: TaskDone[] }> {
+const loaded = (tasks: D1Result, rows: D1Result) => ({
+  tasks: (tasks.results as unknown as TaskRow[]).map(toTask),
+  done: (rows.results as unknown as DoneRow[]).map(toDone),
+});
+
+/** Tasks and their completions from about the last year */
+async function loadTasks(env: Env): Promise<{ tasks: Task[]; done: TaskDone[] }> {
   const since = new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString().slice(0, 10);
-  const only = reminders ? ' WHERE remind IS NOT NULL' : '';
   const [tasks, rows] = await env.DB.batch([
-    env.DB.prepare(`SELECT * FROM tasks${only} ORDER BY created_at`),
-    env.DB.prepare(
-      `SELECT task_id, day, done_at, done_by FROM task_done WHERE day >= ?${reminders ? ' AND task_id IN (SELECT id FROM tasks WHERE remind IS NOT NULL)' : ''} ORDER BY done_at`,
-    ).bind(since),
+    env.DB.prepare('SELECT * FROM tasks ORDER BY created_at'),
+    env.DB.prepare('SELECT task_id, day, done_at, done_by FROM task_done WHERE day >= ? ORDER BY done_at').bind(since),
   ]);
-  return {
-    tasks: (tasks.results as unknown as TaskRow[]).map(toTask),
-    done: (rows.results as unknown as DoneRow[]).map(toDone),
-  };
+  return loaded(tasks, rows);
+}
+
+/**
+ * Tasks with a reminder, and just the completions that decide whether one is due now (worker/push.ts
+ * dueReminders, through src/data/tasks.ts dueItem), which looks at: a completion for today or
+ * yesterday (in any time zone), one checked off in the last day or so whatever day it was for, and
+ * the latest one (afterDone repeats count from it; a one-off is finished by any). So: the last few
+ * days' rows plus each task's latest, instead of a year of history every minute.
+ */
+export async function loadReminders(env: Env, at = new Date()): Promise<{ tasks: Task[]; done: TaskDone[] }> {
+  const recent = new Date(at.getTime() - 3 * 864e5).toISOString();
+  const [tasks, rows] = await env.DB.batch([
+    env.DB.prepare('SELECT * FROM tasks WHERE remind IS NOT NULL ORDER BY created_at'),
+    env.DB.prepare(
+      `SELECT task_id, day, done_at, done_by FROM task_done d
+       WHERE task_id IN (SELECT id FROM tasks WHERE remind IS NOT NULL)
+         AND (day >= ? OR done_at >= ? OR day = (SELECT MAX(day) FROM task_done m WHERE m.task_id = d.task_id))
+       ORDER BY done_at`,
+    ).bind(recent.slice(0, 10), recent),
+  ]);
+  return loaded(tasks, rows);
 }
 
 /** GET /api/tasks: { tasks, done } */

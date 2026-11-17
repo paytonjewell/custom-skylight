@@ -1,5 +1,5 @@
 // Phone reminders. A phone turns reminders on (src/app/Reminders.tsx) and saves its push subscription
-// with the person it belongs to. Every 5 minutes the cron sends each task's reminder, at its local
+// with the person it belongs to. Every minute the cron sends each task's reminder, at its local
 // time on the days it's due and not done yet, only to phones whose person the task notifies: John's
 // phone never gets Mary's reminders. "Done" on the notification ticks the task (public/sw.js).
 import type { Device } from './auth';
@@ -9,7 +9,7 @@ import { describeRepeat, shiftDay } from '../src/lib/repeat';
 import { sendPush, vapid, type Subscription } from './webpush';
 import { bad, done, json, notFound, readJson } from './http';
 import { PERSON, validTz } from './validate';
-import { loadTasks } from './tasks';
+import { loadReminders } from './tasks';
 
 /** A reminder goes out if its time was within this many minutes (the cron runs every minute; this
  * covers a few missed runs) */
@@ -127,6 +127,27 @@ export function localNow(tz: string, at = new Date()): { day: string; minutes: n
 }
 const minutesOf = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 
+/** Whether a reminder at `hhmm` is in its sending window now: 0 for today's, 1 for yesterday's, else -1 */
+function windowDay(hhmm: string, minutes: number): number {
+  return (
+    [0, 1].find((back) => {
+      const ago = minutes + back * 1440 - minutesOf(hhmm);
+      return ago >= 0 && ago < WINDOW_MIN;
+    }) ?? -1
+  );
+}
+
+/**
+ * Could any reminder be due now? `times`: every reminder time in use; `zones`: the phones' time
+ * zones. Most minutes nothing is, and this answers that without loading any tasks.
+ */
+export function anyInWindow(times: string[], zones: string[], at = new Date()): boolean {
+  return zones.some((tz) => {
+    const { minutes } = localNow(tz, at);
+    return times.some((t) => windowDay(t, minutes) >= 0);
+  });
+}
+
 /**
  * Which reminders should go out now for a phone in `tz`: tasks with a reminder time in the last few
  * minutes, due that day (not overdue from before) and not done, that notify `person`. Just after
@@ -144,22 +165,25 @@ export function dueReminders(
   return tasks.flatMap((t) => {
     if (!t.remind || !t.notify.includes(person)) return [];
     // Its time today, or yesterday (when that's still within the window)
-    const day = [today, shiftDay(today, -1)].find((_, back) => {
-      const ago = minutes + back * 1440 - minutesOf(t.remind!);
-      return ago >= 0 && ago < WINDOW_MIN;
-    });
-    if (!day) return [];
+    const back = windowDay(t.remind, minutes);
+    if (back < 0) return [];
+    const day = shiftDay(today, -back);
     const item = dueItem(t, by.get(t.id) ?? [], day, day);
     return item && !item.done && !item.overdue ? [{ task: t, day: item.day }] : [];
   });
 }
 
 /** Cron: send the reminders that are due */
-export async function sendReminders(env: Env): Promise<void> {
-  const subs = (await env.DB.prepare('SELECT * FROM push_subs').all<SubRow>()).results;
-  if (!subs.length) return;
-  const { tasks, done } = await loadTasks(env, true);
-  if (!tasks.length) return;
+export async function sendReminders(env: Env, at = new Date()): Promise<void> {
+  // This runs every minute, so first a cheap check (two small reads) for whether anything could be due
+  const [subRows, timeRows] = await env.DB.batch([
+    env.DB.prepare('SELECT * FROM push_subs'),
+    env.DB.prepare('SELECT DISTINCT remind FROM tasks WHERE remind IS NOT NULL'),
+  ]);
+  const subs = subRows.results as unknown as SubRow[];
+  const times = (timeRows.results as { remind: string }[]).map((r) => r.remind);
+  if (!anyInWindow(times, [...new Set(subs.map((s) => s.tz))], at)) return;
+  const { tasks, done } = await loadReminders(env, at);
   const lists = new Map(
     (
       await env.DB.prepare('SELECT id, title, emoji FROM lists').all<{ id: string; title: string; emoji: string }>()
@@ -167,7 +191,7 @@ export async function sendReminders(env: Env): Promise<void> {
   );
   const sub = await subject(env);
   for (const s of subs) {
-    for (const { task: t, day } of dueReminders(tasks, done, s.person, s.tz)) {
+    for (const { task: t, day } of dueReminders(tasks, done, s.person, s.tz, at)) {
       // Claim it first, so overlapping cron runs don't both send
       const { meta } = await env.DB.prepare(
         'INSERT OR IGNORE INTO push_sent (task_id, day, endpoint, sent_at) VALUES (?, ?, ?, ?)',
@@ -199,7 +223,11 @@ export async function sendReminders(env: Env): Promise<void> {
       }
     }
   }
+}
+
+/** Daily cron: forget reminders sent over a month ago (push_sent only has to cover today and yesterday) */
+export async function prunePushSent(env: Env, at = new Date()): Promise<void> {
   await env.DB.prepare('DELETE FROM push_sent WHERE day < ?')
-    .bind(shiftDay(localNow('UTC').day, -30))
+    .bind(shiftDay(localNow('UTC', at).day, -30))
     .run();
 }

@@ -4,7 +4,15 @@ import { authenticate, signIn, signOut, type Device } from './auth';
 import { signInPage } from './signin-page';
 import { privacyPage } from './privacy-page';
 import { getNews, refreshNews } from './news/news';
-import { addGrocery, clearGroceries, deleteGrocery, editGrocery, getGroceries, orderGroceries } from './groceries';
+import {
+  addGrocery,
+  clearGroceries,
+  clearPurchased,
+  deleteGrocery,
+  editGrocery,
+  getGroceries,
+  orderGroceries,
+} from './groceries';
 import {
   addItem,
   addList,
@@ -32,7 +40,7 @@ import {
   restoreEvent,
   syncCalendars,
 } from './google';
-import { deletePush, getPush, savePush, sendReminders, testPush } from './push';
+import { deletePush, getPush, prunePushSent, savePush, sendReminders, testPush } from './push';
 import { getVerse, getWeather, refreshWeather } from './weather';
 import { getFamily } from './home';
 import { kitchenRoute } from './kitchen';
@@ -80,7 +88,8 @@ export default {
   // no screen is asking
   async scheduled(controller, env, ctx) {
     // Runs every minute (so reminders are on time); news only every 5
-    const minute = new Date(controller.scheduledTime).getUTCMinutes();
+    const at = new Date(controller.scheduledTime);
+    const minute = at.getUTCMinutes();
     if (minute % 5 === 0) ctx.waitUntil(refreshNews(env));
     // Weather every 15 minutes (worker/weather.ts)
     if (minute % 15 === 2) ctx.waitUntil(refreshWeather(env).catch((e) => console.error('Weather', e)));
@@ -88,7 +97,12 @@ export default {
     if (minute % 15 === 7)
       ctx.waitUntil(syncCalendars(env, 10 * 60 * 1000).catch((e) => console.error('Calendar sync', e)));
     if (minute === 3) ctx.waitUntil(refreshCalendarLists(env).catch((e) => console.error('Calendar lists', e)));
-    ctx.waitUntil(sendReminders(env).catch((e) => console.error('Reminders', e)));
+    ctx.waitUntil(sendReminders(env, at).catch((e) => console.error('Reminders', e)));
+    // Once a day, at a quiet hour (04:00 UTC is late evening to early morning across the US), tidy up
+    if (minute === 0 && at.getUTCHours() === 4) {
+      ctx.waitUntil(prunePushSent(env, at).catch((e) => console.error('Prune reminders', e)));
+      ctx.waitUntil(clearPurchased(env, at.getTime()).catch((e) => console.error('Clear groceries', e)));
+    }
   },
 } satisfies ExportedHandler<Env>;
 

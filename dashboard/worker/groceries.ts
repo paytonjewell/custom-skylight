@@ -1,7 +1,7 @@
 // Grocery list API (D1: groceries, grocery_names). Ids are made by the app, so changes show at once
 // there and are saved here in the background, one at a time. Every name added is remembered with its
 // aisle (grocery_names), so adding it again later puts it back in the same aisle. Purchased (checked
-// off) items are cleared automatically after a few days.
+// off) items are cleared automatically after a few days: hidden from then on, and deleted by the daily cron.
 import type { Grocery } from '../src/data/types';
 import { AISLES, OTHER, STORES } from '../src/data/grocery';
 import { bad, done, json, notFound, now, readJson } from './http';
@@ -49,14 +49,22 @@ const remember = (env: Env, name: string, cat: string, used: boolean) =>
        uses = grocery_names.uses + excluded.uses, last_used = excluded.last_used`,
   ).bind(nameKey(name), name.trim(), cat, used ? 1 : 0, now());
 
+/** Purchased before this (ISO) means cleared */
+const purchasedBefore = (at = Date.now()) => new Date(at - PURCHASED_DAYS * 24 * 3600 * 1000).toISOString();
+
+/** Daily cron: delete items purchased more than a few days ago */
+export async function clearPurchased(env: Env, at = Date.now()): Promise<void> {
+  await env.DB.prepare('DELETE FROM groceries WHERE done = 1 AND done_at < ?').bind(purchasedBefore(at)).run();
+}
+
 /** GET /api/groceries: { items (in order), known: [[name, aisle], …] (most used first) } */
 export async function getGroceries(env: Env): Promise<Response> {
-  // Clear items purchased more than a few days ago (runs on every load: the app loads every few
-  // minutes, and it covers local dev, which has no cron). Writes nothing when there's nothing to clear.
-  const cutoff = new Date(Date.now() - PURCHASED_DAYS * 24 * 3600 * 1000).toISOString();
-  await env.DB.prepare('DELETE FROM groceries WHERE done = 1 AND done_at < ?').bind(cutoff).run();
+  // Items purchased over a few days ago are left out here, so they're gone on time even though the
+  // daily cron (clearPurchased) only deletes them once a day, and locally, where there is no cron
   const [items, known] = await env.DB.batch([
-    env.DB.prepare('SELECT id, name, cat, qty, store, done, note FROM groceries ORDER BY position, added_at'),
+    env.DB.prepare(
+      'SELECT id, name, cat, qty, store, done, note FROM groceries WHERE NOT (done = 1 AND done_at < ?) ORDER BY position, added_at',
+    ).bind(purchasedBefore()),
     env.DB.prepare('SELECT name, cat FROM grocery_names ORDER BY uses DESC, last_used DESC LIMIT 2000'),
   ]);
   return json({
