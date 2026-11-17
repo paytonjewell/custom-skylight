@@ -25,7 +25,7 @@ export const peopleWithPhones = () => state.get().info?.people ?? [];
 const registration = () => navigator.serviceWorker.ready;
 
 /** Load who has reminders on, and whether this device does */
-export async function loadPush(): Promise<void> {
+async function loadPush(): Promise<void> {
   const info = await api.push();
   const sub = pushSupported ? await (await registration()).pushManager.getSubscription() : null;
   const mine = sub ? info.mine.find((m) => m.endpoint === sub.endpoint) : undefined;

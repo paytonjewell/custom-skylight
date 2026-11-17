@@ -25,7 +25,7 @@ type Json = unknown;
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', frac12: '½', frac14: '¼', frac34: '¾', deg: '°', ndash: '–', mdash: '—', rsquo: '’', lsquo: '‘', ldquo: '“', rdquo: '”', hellip: '…' };
 /** Plain text: no tags or entities, spaces tidied */
-export function plain(s: string): string {
+function plain(s: string): string {
   return s
     .replace(/<[^>]*>/g, ' ')
     .replace(/&(#x?[0-9a-f]+|[a-z0-9]+);/gi, (m, e: string) =>

@@ -18,7 +18,6 @@ const sync = createSync({
 });
 
 export const saveList = sync.save;
-export const refreshLists = sync.refresh;
 export const useListStatus = sync.useStatus;
 export const startListSync = () => sync.start(flushTitles);
 

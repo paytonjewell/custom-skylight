@@ -28,7 +28,7 @@ function validTz(tz: string | undefined): tz is string {
 }
 
 /** Who the dashboard shows when FAMILY isn't set */
-export const SAMPLE_FAMILY: Person[] = [
+const SAMPLE_FAMILY: Person[] = [
   { id: 'john', name: 'John', tone: 1 },
   { id: 'mary', name: 'Mary', tone: 2 },
   { id: 'jacob', name: 'Jacob', age: 10, tone: 3 },
@@ -43,7 +43,7 @@ export const SAMPLE_FAMILY: Person[] = [
  * off the task screens (calendar only); "calendar": false makes a tasks-only profile, such as a
  * project's to-do list, that isn't on the calendar or part of "everyone".
  */
-export function family(env: Env): Person[] {
+function family(env: Env): Person[] {
   if (!env.FAMILY) return SAMPLE_FAMILY;
   try {
     const list = JSON.parse(env.FAMILY) as Partial<Person>[];

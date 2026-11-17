@@ -15,7 +15,7 @@ export const IS_KIOSK = /; wv\)/.test(navigator.userAgent);
  * The frame's screen in CSS pixels: the Skylight Calendar 2 is 1920×1080 at density 240, and the
  * kiosk is full screen, so its WebView sees 1280×720.
  */
-export const FRAME_VIEWPORT = { w: 1280, h: 720 } as const;
+const FRAME_VIEWPORT = { w: 1280, h: 720 } as const;
 
 /**
  * Local dev (npm run dev): show the app exactly as the frame does, in a 1280×720 box centred in the
@@ -23,7 +23,7 @@ export const FRAME_VIEWPORT = { w: 1280, h: 720 } as const;
  * kiosk (frame's user agent) in Chrome 124 (scripts/frame-chrome.mjs). Add ?fit to the address to
  * fill the window with the usual layout picking instead.
  */
-export const FRAME_PREVIEW = import.meta.env.DEV && !new URLSearchParams(location.search).has('fit');
+const FRAME_PREVIEW = import.meta.env.DEV && !new URLSearchParams(location.search).has('fit');
 
 /** The area the frame layout fits its stage into: the preview box, or the visible window */
 export function viewportSize(): { w: number; h: number } {
@@ -37,7 +37,7 @@ export function viewportSize(): { w: number; h: number } {
 const phoneQuery = matchMedia('(max-width: 760px), (max-height: 500px) and (pointer: coarse)');
 const pick = (): Layout => (!IS_KIOSK && !FRAME_PREVIEW && phoneQuery.matches ? 'phone' : 'frame');
 
-export const layout = createStore<Layout>(pick());
+const layout = createStore<Layout>(pick());
 const apply = () => document.documentElement.classList.toggle('phone', layout.get() === 'phone');
 apply();
 phoneQuery.addEventListener('change', () => {

@@ -297,7 +297,7 @@ function EventForm({ event, onAdded, day: startDay }: { event?: CalEvent; onAdde
 const calOf = (list: Calendar[], id: string) => list.find((c) => c.id === id);
 
 /** A calendar's colour dot and whose it is */
-export function CalendarMark({ c }: { c: Calendar }) {
+function CalendarMark({ c }: { c: Calendar }) {
   const data = useData();
   return (
     <span className={css.mark}>

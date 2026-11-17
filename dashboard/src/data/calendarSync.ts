@@ -19,5 +19,4 @@ const sync = createSync({
 
 export const saveEvent = sync.save;
 export const refreshEvents = sync.refresh;
-export const useCalendarStatus = sync.useStatus;
 export const startCalendarSync = () => sync.start();

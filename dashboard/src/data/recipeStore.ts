@@ -8,7 +8,7 @@ import { api } from './api';
 import { saveKitchen } from './kitchenSync';
 import { addGrocery, removeGrocery, setGroceryDone, setQty } from './actions';
 import { categorize } from './select';
-import { guessPlace, onHand, type Place } from './kitchen';
+import { guessPlace, type Place } from './kitchen';
 import { core, foodKey, setTaught } from './names';
 
 const set = dataStore.set;
@@ -110,9 +110,6 @@ export function restoreInventory(item: InventoryItem): void {
   set((d) => ({ ...d, inventory: [...d.inventory, item] }));
   saveKitchen(() => api.addInventory(item));
 }
-
-/** Is an ingredient on hand? */
-export const haveIt = (name: string): boolean => !!onHand(dataStore.get().inventory, name);
 
 // ------------------------------------------------------------ taught matches ("I have this")
 const setAliases = (pairs: [string, string][]) => {

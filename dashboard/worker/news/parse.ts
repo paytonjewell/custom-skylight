@@ -34,7 +34,7 @@ const NAMED: Record<string, string> = {
   rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', bull: '•', middot: '·', copy: '©', reg: '®', trade: '™',
 };
 /** Decode HTML entities left in feed text (summaries are often HTML inside CDATA) */
-export function decode(s: string): string {
+function decode(s: string): string {
   return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) => {
     if (e[0] === '#') {
       const n = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);

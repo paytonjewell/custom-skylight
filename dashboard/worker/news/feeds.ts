@@ -30,7 +30,7 @@ export interface Feed {
 }
 
 
-export const FEEDS: Feed[] = [
+const FEEDS: Feed[] = [
   // Top: politics and national news
   { topic: 'top', source: 'Fox News', url: 'https://moxie.foxnews.com/google-publisher/politics.xml' },
   { topic: 'top', source: 'Fox News', url: 'https://moxie.foxnews.com/google-publisher/us.xml' },

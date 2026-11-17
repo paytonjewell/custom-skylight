@@ -20,7 +20,7 @@ const kept = <T>(key: string): T | null => {
 const setWeather = (weather: Weather) => dataStore.set((d) => ({ ...d, weather }));
 const setVerse = (verse: Verse) => dataStore.set((d) => ({ ...d, verse }));
 
-export async function refreshWeather(): Promise<void> {
+async function refreshWeather(): Promise<void> {
   await Promise.all([
     api.weather().then((w) => { setWeather(w); store(WEATHER, JSON.stringify(w)); }, () => {}),
     api.verse().then((v) => { setVerse(v); store(VERSE, JSON.stringify(v)); }, () => {}),

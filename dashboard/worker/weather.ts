@@ -18,7 +18,7 @@ const setConfig = (env: Env, key: string, value: unknown) =>
     .bind(key, JSON.stringify(value)).run();
 
 /** Today's date at home ('YYYY-MM-DD') */
-export const homeDay = (tz: string, at = new Date()) => at.toLocaleDateString('en-CA', { timeZone: tz });
+const homeDay = (tz: string, at = new Date()) => at.toLocaleDateString('en-CA', { timeZone: tz });
 
 // ------------------------------------------------------------ weather
 /** Open-Meteo's weather code (WMO) → our condition; clear and partly cloudy differ by day and night */

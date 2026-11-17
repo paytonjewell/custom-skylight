@@ -9,7 +9,7 @@ import { calendarPeople } from './select';
 const localDay = (day: string) => new Date(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10)));
 
 /** People named in a title, as whole words ("Jacob dentist", "John & Mary dinner", "Jacob's game") */
-export function namesIn(title: string, people: Person[]): string[] {
+function namesIn(title: string, people: Person[]): string[] {
   const words = new Set(title.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []);
   return people.filter((p) => words.has(p.name.toLowerCase())).map((p) => p.id);
 }

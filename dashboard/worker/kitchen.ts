@@ -9,7 +9,7 @@ import { LIST_ID } from './lists';
 import { json } from './photos';
 import { importRecipe } from './recipeImport';
 
-export const RECIPE_ID = /^[a-z0-9-]{3,40}$/;
+const RECIPE_ID = /^[a-z0-9-]{3,40}$/;
 
 const bad = (error: string, status = 400) => json({ error }, status);
 const done = () => new Response(null, { status: 204 });
@@ -29,7 +29,7 @@ const toRecipe = (r: RecipeRow): Recipe => ({
 });
 
 /** GET /api/kitchen: recipes, the dinner plan, what's on hand, and where names were last kept */
-export async function getKitchen(env: Env): Promise<Response> {
+async function getKitchen(env: Env): Promise<Response> {
   const [recipes, plan, inv, names, aliases] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM recipes ORDER BY position'),
     env.DB.prepare('SELECT day, recipe_id FROM meal_plan WHERE day >= ?').bind(new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10)),
@@ -47,7 +47,7 @@ export async function getKitchen(env: Env): Promise<Response> {
 }
 
 /** A recipe from the app, checked (null if anything's off) */
-export function recipeFields(v: unknown): Omit<Recipe, 'favorite' | 'made'> | null {
+function recipeFields(v: unknown): Omit<Recipe, 'favorite' | 'made'> | null {
   const b = v as Partial<Recipe> | null;
   if (!b || typeof b !== 'object') return null;
   if (typeof b.id !== 'string' || !RECIPE_ID.test(b.id) || !str(b.title, 200) || !b.title.trim() || !str(b.emoji, 16)) return null;
@@ -79,7 +79,7 @@ export function recipeFields(v: unknown): Omit<Recipe, 'favorite' | 'made'> | nu
 }
 
 /** POST /api/recipes: a new recipe, last in the list */
-export async function addRecipe(req: Request, env: Env): Promise<Response> {
+async function addRecipe(req: Request, env: Env): Promise<Response> {
   const r = recipeFields(await body(req));
   if (!r) return bad('Expected a recipe');
   await env.DB.prepare(
@@ -90,7 +90,7 @@ export async function addRecipe(req: Request, env: Env): Promise<Response> {
 }
 
 /** PATCH /api/recipes/:id ({ favorite?, made? }) */
-export async function editRecipe(req: Request, env: Env, id: string): Promise<Response> {
+async function editRecipe(req: Request, env: Env, id: string): Promise<Response> {
   const b = await body<{ favorite?: unknown; made?: unknown }>(req);
   if (!b || (b.favorite === undefined && b.made === undefined)) return bad('Expected { favorite?, made? }');
   if (b.favorite !== undefined && typeof b.favorite !== 'boolean') return bad('Bad favorite');
@@ -103,7 +103,7 @@ export async function editRecipe(req: Request, env: Env, id: string): Promise<Re
 }
 
 /** PUT /api/plan/:day ({ recipe }) and DELETE /api/plan/:day */
-export async function setPlan(req: Request, env: Env, day: string): Promise<Response> {
+async function setPlan(req: Request, env: Env, day: string): Promise<Response> {
   const b = await body<{ recipe?: unknown }>(req);
   if (!b || typeof b.recipe !== 'string' || !RECIPE_ID.test(b.recipe)) return bad('Expected { recipe }');
   const r = await env.DB.prepare('SELECT 1 FROM recipes WHERE id = ?').bind(b.recipe).first();
@@ -111,7 +111,7 @@ export async function setPlan(req: Request, env: Env, day: string): Promise<Resp
   await env.DB.prepare('INSERT INTO meal_plan (day, recipe_id) VALUES (?, ?) ON CONFLICT(day) DO UPDATE SET recipe_id = excluded.recipe_id').bind(day, b.recipe).run();
   return done();
 }
-export async function clearPlan(env: Env, day: string): Promise<Response> {
+async function clearPlan(env: Env, day: string): Promise<Response> {
   await env.DB.prepare('DELETE FROM meal_plan WHERE day = ?').bind(day).run();
   return done();
 }
@@ -122,7 +122,7 @@ const remember = (env: Env, name: string, place: string) =>
   env.DB.prepare('INSERT INTO inventory_names (name, place) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET place = excluded.place').bind(name.toLowerCase(), place);
 
 /** POST /api/inventory ({ id, name, place, qty?, note? }) */
-export async function addInventory(req: Request, env: Env): Promise<Response> {
+async function addInventory(req: Request, env: Env): Promise<Response> {
   const b = await body<Partial<InventoryItem>>(req);
   if (!b || typeof b.id !== 'string' || !LIST_ID.test(b.id) || !str(b.name, 200) || !b.name.trim() || !isPlace(b.place)) return bad('Expected { id, name, place }');
   const qty = typeof b.qty === 'number' && Number.isInteger(b.qty) && b.qty >= 1 && b.qty <= 999 ? b.qty : 1;
@@ -137,7 +137,7 @@ export async function addInventory(req: Request, env: Env): Promise<Response> {
 }
 
 /** PATCH /api/inventory/:id ({ name?, place?, qty?, note? }) */
-export async function editInventory(req: Request, env: Env, id: string): Promise<Response> {
+async function editInventory(req: Request, env: Env, id: string): Promise<Response> {
   const b = await body<Partial<InventoryItem>>(req);
   if (!b) return bad('Expected changes');
   const sets: string[] = [], vals: unknown[] = [];
@@ -158,7 +158,7 @@ export async function editInventory(req: Request, env: Env, id: string): Promise
 }
 
 /** DELETE /api/inventory/:id */
-export async function deleteInventory(env: Env, id: string): Promise<Response> {
+async function deleteInventory(env: Env, id: string): Promise<Response> {
   await env.DB.prepare('DELETE FROM inventory WHERE id = ?').bind(id).run();
   return done();
 }
@@ -166,7 +166,7 @@ export async function deleteInventory(env: Env, id: string): Promise<Response> {
 // ------------------------------------------------------------ taught matches
 const ALIAS = /^[a-z0-9 ]{1,120}$/;
 /** PUT /api/aliases ({ name, sameAs }): a recipe's name (its core) counts as an on-hand item's */
-export async function teach(req: Request, env: Env): Promise<Response> {
+async function teach(req: Request, env: Env): Promise<Response> {
   const b = await body<{ name?: unknown; sameAs?: unknown }>(req);
   if (!b || typeof b.name !== 'string' || !ALIAS.test(b.name) || typeof b.sameAs !== 'string' || !ALIAS.test(b.sameAs)) return bad('Expected { name, sameAs }');
   if (b.name === b.sameAs) return done();
@@ -175,7 +175,7 @@ export async function teach(req: Request, env: Env): Promise<Response> {
   return done();
 }
 /** DELETE /api/aliases ({ name }) */
-export async function unteach(req: Request, env: Env): Promise<Response> {
+async function unteach(req: Request, env: Env): Promise<Response> {
   const b = await body<{ name?: unknown }>(req);
   if (!b || typeof b.name !== 'string' || !ALIAS.test(b.name)) return bad('Expected { name }');
   await env.DB.prepare('DELETE FROM food_aliases WHERE name = ?').bind(b.name).run();

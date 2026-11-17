@@ -15,7 +15,3 @@ export function newId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(20));
   return Array.from(bytes, (b) => (b % 36).toString(36)).join('');
 }
-
-let seq = 0;
-/** Unique id for client-created records that stay on this device */
-export const uid = (prefix: string) => prefix + Date.now().toString(36) + (seq++).toString(36);

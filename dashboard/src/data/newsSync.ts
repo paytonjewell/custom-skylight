@@ -14,7 +14,7 @@ export const useNewsStatus = () => useStore(status, (s) => s);
 const updated = createStore<Date | null>(null);
 export const useNewsUpdated = () => useStore(updated, (u) => u);
 
-export async function refreshNews(): Promise<void> {
+async function refreshNews(): Promise<void> {
   try {
     const n = await api.news();
     dataStore.set((d) => ({ ...d, news: n.stories, newsTopics: n.topics }));

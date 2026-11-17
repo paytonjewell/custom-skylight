@@ -28,7 +28,7 @@ const STATE_COOKIE = 'hq_gstate';
 const BACK_DAYS = 90;
 const AHEAD_DAYS = 400;
 /** Loading events refreshes calendars whose copy is older than this */
-export const STALE_MS = 3 * 60 * 1000;
+const STALE_MS = 3 * 60 * 1000;
 /** Our ids for calendars (and Google accounts' ids are digits) */
 const OUR_ID = /^[a-z0-9]{8,32}$/;
 const ACCOUNT_ID = /^[0-9]{1,64}$/;

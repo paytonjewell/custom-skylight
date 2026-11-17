@@ -43,7 +43,7 @@ export const dayOf = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 export const weekdayOf = (day: string): Weekday => new Date(toMs(day)).getUTCDay() as Weekday;
 /** `day` moved by n months; the 31st lands on the last day of shorter months */
-export function shiftMonths(day: string, n: number): string {
+function shiftMonths(day: string, n: number): string {
   const d = new Date(toMs(day));
   const y = d.getUTCFullYear(), m = d.getUTCMonth() + n;
   const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();

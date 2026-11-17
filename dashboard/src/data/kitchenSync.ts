@@ -16,6 +16,5 @@ const sync = createSync({
 });
 
 export const saveKitchen = sync.save;
-export const refreshKitchen = sync.refresh;
 export const useKitchenStatus = sync.useStatus;
 export const startKitchenSync = () => sync.start();

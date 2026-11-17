@@ -26,7 +26,7 @@ export const weekStart = (d: Date) => addDays(dayStart(d), -dayStart(d).getDay()
 interface Placed { e: CalEvent; a: number; b: number; lane: number }
 
 /** A week's events placed in lanes: longer all-day spans first, then all-day, then by time */
-export function placeWeek(events: CalEvent[], start: Date): Placed[] {
+function placeWeek(events: CalEvent[], start: Date): Placed[] {
   const end = addDays(start, 7);
   const col = (t: Date) => Math.round((+dayStart(t) - +start) / DAY_MS);
   const items = events

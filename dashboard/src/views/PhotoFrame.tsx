@@ -13,7 +13,7 @@ import { usePixelShift } from '../ui/hooks';
 import { Slideshow, type SlideshowHandle } from './Slideshow';
 import css from './PhotoFrame.module.css';
 
-export const FRAME_INTERVAL = 10000;
+const FRAME_INTERVAL = 10000;
 
 export function PhotoFrame({ active, showCountdowns, slideshowRef }: {
   active: boolean;

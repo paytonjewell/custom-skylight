@@ -4,7 +4,7 @@ const enc = new TextEncoder();
 
 export const b64url = (b: ArrayBuffer | Uint8Array): string =>
   btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-export function unb64url(s: string): Uint8Array {
+function unb64url(s: string): Uint8Array {
   const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4));
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }

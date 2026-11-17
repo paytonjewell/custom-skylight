@@ -147,7 +147,7 @@ function sendDelete(id: string): void {
  * (reload, pull-to-refresh, app closed or backgrounded); otherwise the timer dies with the page and
  * the photo comes back. keepalive lets the request finish after the page is gone.
  */
-export function flushPendingDeletes(): void {
+function flushPendingDeletes(): void {
   for (const [id, timer] of deleteTimers) {
     clearTimeout(timer);
     deleteTimers.delete(id);

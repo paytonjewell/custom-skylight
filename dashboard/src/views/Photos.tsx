@@ -139,7 +139,7 @@ const uploads = createStore<[number, number] | null>(null);
 let queue: Promise<void> = Promise.resolve();
 
 /** Add photos (resized, duplicates skipped), one batch at a time, then say how it went */
-export function importPhotos(files: File[]): Promise<void> {
+function importPhotos(files: File[]): Promise<void> {
   if (!files.length) return queue;
   queue = queue.then(async () => {
     uploads.set([0, files.length]);

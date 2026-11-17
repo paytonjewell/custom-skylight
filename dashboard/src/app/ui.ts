@@ -14,7 +14,7 @@ export interface SheetSpec {
   cls?: string;
   onClose?: () => void;
 }
-export interface ToastSpec {
+interface ToastSpec {
   id: number;
   content: ReactNode;
   icon?: IconName;

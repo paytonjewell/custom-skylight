@@ -22,7 +22,7 @@ const VERSES: Verse[] = [
 export const FAMILY_KEY = 'family.last';
 
 /** The people from the last load on this device, or none yet */
-export function keptFamily(): Person[] {
+function keptFamily(): Person[] {
   try {
     const list = JSON.parse(stored(FAMILY_KEY, '[]')) as Person[];
     return Array.isArray(list) ? list.filter((p) => p && typeof p.id === 'string') : [];
