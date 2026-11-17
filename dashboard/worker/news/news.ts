@@ -6,6 +6,7 @@
 // answers "304 Not Modified" without being downloaded or parsed. /api/news does the same as a
 // fallback when feeds are overdue (which is also how local dev, with no cron, stays current).
 import type { NewsStory } from '../../src/data/types';
+import { json } from '../photos';
 import { TOPICS, feedsFor, type Feed } from './feeds';
 import { parseFeed, slim, type ParsedStory } from './parse';
 
@@ -244,10 +245,5 @@ export async function getNews(env: Env, ctx: ExecutionContext): Promise<Response
   const last = await env.DB.prepare('SELECT MAX(checked_at) AS t FROM news_feeds WHERE error IS NULL').first<{
     t: number | null;
   }>();
-  return new Response(
-    JSON.stringify({ topics: TOPICS, updated: new Date(last?.t ?? Date.now()).toISOString(), stories }),
-    {
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-    },
-  );
+  return json({ topics: TOPICS, updated: new Date(last?.t ?? Date.now()).toISOString(), stories });
 }

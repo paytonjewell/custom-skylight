@@ -158,10 +158,10 @@ async function editRecipe(req: Request, env: Env, id: string): Promise<Response>
     sets.push('made = ?');
     vals.push(b.made);
   }
-  await env.DB.prepare(`UPDATE recipes SET ${sets.join(', ')} WHERE id = ?`)
+  const { meta } = await env.DB.prepare(`UPDATE recipes SET ${sets.join(', ')} WHERE id = ?`)
     .bind(...vals, id)
     .run();
-  return done();
+  return meta.changes ? done() : bad('No such recipe', 404);
 }
 
 /** PUT /api/plan/:day ({ recipe }) and DELETE /api/plan/:day */
@@ -178,8 +178,8 @@ async function setPlan(req: Request, env: Env, day: string): Promise<Response> {
   return done();
 }
 async function clearPlan(env: Env, day: string): Promise<Response> {
-  await env.DB.prepare('DELETE FROM meal_plan WHERE day = ?').bind(day).run();
-  return done();
+  const { meta } = await env.DB.prepare('DELETE FROM meal_plan WHERE day = ?').bind(day).run();
+  return meta.changes ? done() : bad('Nothing planned that day', 404);
 }
 
 // ------------------------------------------------------------ what's on hand
@@ -243,14 +243,14 @@ async function editInventory(req: Request, env: Env, id: string): Promise<Respon
       .first<{ name: string; place: string }>();
     if (row) stmts.push(remember(env, b.name?.trim() ?? row.name, (b.place as string | undefined) ?? row.place));
   }
-  await env.DB.batch(stmts);
-  return done();
+  const [changed] = await env.DB.batch(stmts);
+  return changed.meta.changes ? done() : bad('No such item', 404);
 }
 
 /** DELETE /api/inventory/:id */
 async function deleteInventory(env: Env, id: string): Promise<Response> {
-  await env.DB.prepare('DELETE FROM inventory WHERE id = ?').bind(id).run();
-  return done();
+  const { meta } = await env.DB.prepare('DELETE FROM inventory WHERE id = ?').bind(id).run();
+  return meta.changes ? done() : bad('No such item', 404);
 }
 
 // ------------------------------------------------------------ taught matches
