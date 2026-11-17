@@ -29,5 +29,8 @@ export function inSavedOrder<T>(items: T[], saved: string[] | null, idOf: (item:
   if (!saved) return items;
   const byId = new Map(items.map((x) => [idOf(x), x]));
   const known = new Set(saved);
-  return [...saved.flatMap((id) => byId.get(id) ?? []), ...items.filter((x) => !known.has(idOf(x)))];
+  // Not flatMap(id => byId.get(id) ?? []): that would also flatten items that are arrays themselves
+  // (the news topics are [id, label] pairs), leaving loose strings in their place
+  const ordered = saved.map((id) => byId.get(id)).filter((x): x is T => x !== undefined);
+  return [...ordered, ...items.filter((x) => !known.has(idOf(x)))];
 }
