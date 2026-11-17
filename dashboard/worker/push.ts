@@ -22,6 +22,30 @@ interface SubRow extends Subscription {
   tz: string;
 }
 
+/**
+ * Browsers' push services. The Worker POSTs to a saved endpoint every time a reminder is due, so only
+ * these are accepted: otherwise any signed-in device could have it send requests anywhere.
+ * Chrome, Edge on Android and Samsung Internet use FCM; Firefox, Mozilla's autopush; Safari, Apple's;
+ * Edge on Windows, WNS.
+ */
+const PUSH_HOSTS = [
+  /^fcm\.googleapis\.com$/,
+  /\.push\.services\.mozilla\.com$/,
+  /^web\.push\.apple\.com$/,
+  /\.notify\.windows\.com$/,
+];
+
+/** Whether a subscription's endpoint is one of the push services */
+export function isPushService(endpoint: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  return url.protocol === 'https:' && !url.port && !url.username && PUSH_HOSTS.some((h) => h.test(url.hostname));
+}
+
 /** The app's address, for the VAPID "sub" claim (push services want a way to reach the sender) */
 async function subject(env: Env): Promise<string> {
   const row = await env.DB.prepare("SELECT value FROM config WHERE key = 'origin'").first<{ value: string }>();
@@ -57,8 +81,7 @@ export async function savePush(req: Request, env: Env, device: Device): Promise<
     p256dh = b?.keys?.p256dh,
     auth = b?.keys?.auth,
     person = b?.person;
-  if (typeof endpoint !== 'string' || !endpoint.startsWith('https://') || endpoint.length > 1000)
-    return bad('Bad endpoint');
+  if (typeof endpoint !== 'string' || endpoint.length > 1000 || !isPushService(endpoint)) return bad('Bad endpoint');
   if (typeof p256dh !== 'string' || !/^[A-Za-z0-9_-]{80,100}$/.test(p256dh)) return bad('Bad key');
   if (typeof auth !== 'string' || !/^[A-Za-z0-9_-]{16,32}$/.test(auth)) return bad('Bad key');
   if (typeof person !== 'string' || !PERSON.test(person) || person === 'any') return bad('Bad person');

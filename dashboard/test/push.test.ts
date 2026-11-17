@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDecipheriv, createECDH, hkdfSync, randomBytes } from 'node:crypto';
 import { b64url, encrypt } from '../worker/webpush.ts';
-import { anyInWindow, dueReminders, localNow } from '../worker/push.ts';
+import { anyInWindow, dueReminders, isPushService, localNow } from '../worker/push.ts';
 import type { Task, TaskDone } from '../src/data/types.ts';
 
 test('encrypted payload decrypts on the phone side (RFC 8291)', async () => {
@@ -118,4 +118,27 @@ test('the every-minute check: nothing loads unless some reminder time is in its 
   assert.equal(anyInWindow(['23:59'], [TZ], at('2026-11-16T00:03:00')), true); // yesterday's, just after midnight
   assert.equal(anyInWindow([], [TZ], now), false); // no reminders
   assert.equal(anyInWindow(['08:00'], [], now), false); // no phones
+});
+
+test('phones can only subscribe with a browser push service', () => {
+  for (const ok of [
+    'https://fcm.googleapis.com/fcm/send/abc:def',
+    'https://fcm.googleapis.com/wp/abc',
+    'https://updates.push.services.mozilla.com/wpush/v2/abc',
+    'https://web.push.apple.com/QGxx',
+    'https://wns2-par02p.notify.windows.com/w/?token=abc',
+  ])
+    assert.equal(isPushService(ok), true, ok);
+  for (const no of [
+    'https://example.com/push',
+    'http://fcm.googleapis.com/fcm/send/abc', // not https
+    'https://fcm.googleapis.com:8443/fcm/send/abc',
+    'https://storage.googleapis.com/bucket/x', // another Google API
+    'https://fcm.googleapis.com.evil.example/x',
+    'https://evilpush.services.mozilla.com.example/x',
+    'https://user@fcm.googleapis.com/x',
+    'https://web.push.apple.com.evil.example/',
+    'not a url',
+  ])
+    assert.equal(isPushService(no), false, no);
 });
