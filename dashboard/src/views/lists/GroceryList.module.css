@@ -41,36 +41,18 @@
 /* An aisle heading. While dragging, it's a place to drop: an item dragged past it joins that aisle. */
 .catHead { display: flex; justify-content: space-between; padding: 6px 4px 6px; margin: 14px 0 0; }
 .catHead:first-child { margin-top: 0; }
-/* A row: the swipe actions behind, and the sliding part (checkbox, name, count) on top */
+/* A row (SwipeRow): Edit behind its start; Move to the other store behind its end, in "All" */
 .row {
-  position: relative; overflow: hidden;
   border-bottom: 1px solid var(--line); max-height: 120px;
-  cursor: grab; -webkit-touch-callout: none;
+  cursor: grab;
 }
 .slide {
-  position: relative; z-index: 1;
   display: flex; align-items: center; min-height: 72px;
-  /* sideways moves are swipes (useSwipeReveal); up and down still scroll */
-  touch-action: pan-y;
-  transition: transform .22s cubic-bezier(.2, .8, .2, 1);
 
   :global(.phone) & { min-height: 56px; }
 }
-.swiping { transition: none; }
 /* Flat on the page normally; solid while swiped, so the action it's sliding over doesn't show through */
-.showStart .slide, .showEnd .slide { background: var(--paper); }
-/* The actions behind a row: Edit at the start (swipe right), Move to the other store at the end
-   (swipe left, in "All"). Each is only there while its side is open (and until the row has slid back). */
-.action {
-  position: absolute; top: 0; bottom: 0; width: 88px; /* = REVEAL in useSwipeReveal */
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  font-size: 13px; font-weight: 600;
-  visibility: hidden; transition: visibility 0s .22s;
-}
-.action:active { filter: brightness(.9); }
-.editAction { left: 0; background: var(--accent); color: #fff; }
-.moveAction { right: 0; background: var(--ink); color: var(--on-ink); }
-.showStart .editAction, .showEnd .moveAction { visibility: visible; transition: none; }
+.row[data-open] .slide { background: var(--paper); }
 .list[data-dragging] .row { cursor: grabbing; }
 /* While dragging: the item's empty slot, and the copy under the finger */
 .row.isLifted { border-bottom-color: transparent; border-radius: 12px; box-shadow: inset 0 0 0 2px var(--line); }

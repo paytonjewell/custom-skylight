@@ -30,7 +30,8 @@ import { EmptyNote } from '../../ui/EmptyNote';
 import { usePendingAction } from '../../ui/hooks';
 import { useHoldReorder } from '../../ui/useHoldReorder';
 import { store as remember, stored } from '../../lib/store';
-import { useSwipeReveal, type SwipeSide } from '../../ui/useSwipeReveal';
+import type { SwipeSide } from '../../ui/useSwipeReveal';
+import { SwipeRow, editAction } from '../../ui/SwipeRow';
 import { EditField } from '../../ui/EditField';
 import css from './GroceryList.module.css';
 import { pluralize } from '../../lib/fmt';
@@ -434,99 +435,80 @@ function Row({
   /** The new name, or null if editing was cancelled */
   onEditDone?: (value: string | null) => void;
 }) {
-  const swipe = useSwipeReveal({
-    open,
-    onOpenChange: onOpenChange ?? (() => {}),
-    start: !!onEdit,
-    end: !!moveTo,
-    disabled: lifted || editing || !props,
-  });
-  // The count and action buttons aren't drag handles: holding one shouldn't lift the row
-  const noDrag = (e: { stopPropagation(): void }) => e.stopPropagation();
-  const action = (label: string, run: () => void) => ({
-    'aria-label': label,
-    tabIndex: open ? 0 : -1,
-    onPointerDown: noDrag,
-    onClick: (e: { stopPropagation(): void }) => {
-      e.stopPropagation();
-      run();
-    },
-  });
+  // The count buttons aren't drag handles (holding one shouldn't lift the row) and aren't the row's tap
+  const own = { onPointerDown: (e: { stopPropagation(): void }) => e.stopPropagation() };
+  const stop = (run: () => void) => (e: { stopPropagation(): void }) => {
+    e.stopPropagation();
+    run();
+  };
   // While editing, the name is a text field, so the tap area can't be a button
   const Hit = editing ? 'div' : 'button';
   return (
-    <div
+    <SwipeRow
+      open={open}
+      onOpenChange={onOpenChange ?? (() => {})}
+      onTap={editing ? undefined : () => onCheck(g)}
+      disabled={lifted || editing || !props}
       className={
         css.row +
         (checking ? ' ' + css.isChecking : '') +
         (flash ? ' ' + css.isFlash : '') +
         (lifted ? ' ' + css.isLifted : '') +
-        (forRecipes ? ' ' + css.isForRecipe : '') +
-        (swipe.offset > 0 ? ' ' + css.showStart : swipe.offset < 0 ? ' ' + css.showEnd : '')
+        (forRecipes ? ' ' + css.isForRecipe : '')
       }
-      data-id={g.id}
-      {...props}
+      slideClass={css.slide}
+      rowProps={{ ...props, 'data-id': g.id }}
+      // Edit behind the start; behind the end, Move to the other store (in "All")
+      start={onEdit ? [editAction(g.name, onEdit)] : []}
+      end={
+        moveTo && onMove
+          ? [
+              {
+                icon: 'cart',
+                tone: 'move',
+                label: 'Move ' + g.name + ' to ' + storeName(moveTo),
+                text: storeName(moveTo),
+                run: () => onMove(moveTo),
+                iconSize: 22,
+              },
+            ]
+          : []
+      }
     >
-      {/* Behind the row: Edit is revealed by swiping it right, Move by swiping it left */}
-      {onEdit && (
-        <button className={css.action + ' ' + css.editAction} {...action('Edit ' + g.name, onEdit)}>
-          <Icon name="edit" size={24} />
-        </button>
-      )}
-      {moveTo && onMove && (
-        <button
-          className={css.action + ' ' + css.moveAction}
-          {...action('Move ' + g.name + ' to ' + storeName(moveTo), () => onMove(moveTo))}
-        >
-          <Icon name="cart" size={22} />
-          <span>{storeName(moveTo)}</span>
-        </button>
-      )}
-      <div
-        className={css.slide + (swipe.swiping ? ' ' + css.swiping : '')}
-        style={swipe.offset ? { transform: `translateX(${swipe.offset}px)` } : undefined}
-        {...swipe.handlers}
-      >
-        <Hit
-          className={css.hit}
-          onClick={() => {
-            if (!swipe.consumeSwipe() && !editing) onCheck(g);
-          }}
-        >
-          <span className={css.box}>
-            <Icon name="check" size={22} />
-          </span>
-          <span className={css.name}>
-            {editing && onEditDone ? (
-              <EditField className={css.editField} value={g.name} label="Item name" onDone={onEditDone} />
-            ) : (
-              <b>
-                {g.name}
-                {!counts && g.qty > 1 && <span className={css.times}>×{g.qty}</span>}
-              </b>
-            )}
-            {g.note && <small>{g.note}</small>}
-            {forRecipes && <small className={css.forRecipe}>For {forRecipes}</small>}
-            {have && <small className={css.have}>Have {have}</small>}
-          </span>
-          {/* In "All", items for a store other than the usual one are marked */}
-          {showStore && g.store !== STORES[0].id && (
-            <span className={css.store + ' label label--sm'}>{storeName(g.store)}</span>
+      <Hit className={css.hit}>
+        <span className={css.box}>
+          <Icon name="check" size={22} />
+        </span>
+        <span className={css.name}>
+          {editing && onEditDone ? (
+            <EditField className={css.editField} value={g.name} label="Item name" onDone={onEditDone} />
+          ) : (
+            <b>
+              {g.name}
+              {!counts && g.qty > 1 && <span className={css.times}>×{g.qty}</span>}
+            </b>
           )}
-        </Hit>
-        {counts && (
-          <div className={css.qty}>
-            <button aria-label={g.qty > 1 ? 'Less' : 'Remove'} onPointerDown={noDrag} onClick={() => onLess(g)}>
-              <Icon name="minus" size={22} />
-            </button>
-            <span className="num">{g.qty}</span>
-            <button aria-label="More" onPointerDown={noDrag} onClick={() => setQty(g.id, g.qty + 1)}>
-              <Icon name="plus" size={22} />
-            </button>
-          </div>
+          {g.note && <small>{g.note}</small>}
+          {forRecipes && <small className={css.forRecipe}>For {forRecipes}</small>}
+          {have && <small className={css.have}>Have {have}</small>}
+        </span>
+        {/* In "All", items for a store other than the usual one are marked */}
+        {showStore && g.store !== STORES[0].id && (
+          <span className={css.store + ' label label--sm'}>{storeName(g.store)}</span>
         )}
-      </div>
-    </div>
+      </Hit>
+      {counts && (
+        <div className={css.qty}>
+          <button aria-label={g.qty > 1 ? 'Less' : 'Remove'} {...own} onClick={stop(() => onLess(g))}>
+            <Icon name="minus" size={22} />
+          </button>
+          <span className="num">{g.qty}</span>
+          <button aria-label="More" {...own} onClick={stop(() => setQty(g.id, g.qty + 1))}>
+            <Icon name="plus" size={22} />
+          </button>
+        </div>
+      )}
+    </SwipeRow>
   );
 }
 

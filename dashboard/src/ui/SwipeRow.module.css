@@ -1,26 +1,26 @@
-/* Swipeable row: Edit behind the start (swipe right), Delete behind the end (swipe left). Each action
-   is only there while its side is open, so no edge of it shows around the card's rounded corners. */
-.row { position: relative; overflow: hidden; border-radius: 14px; flex: none; -webkit-touch-callout: none; }
+/* Swipeable row: actions behind the start (swipe right) and the end (swipe left). Each is only there
+   while its side is open (and until the row has slid back), so no edge of one shows around the card's
+   rounded corners. */
+.row { position: relative; overflow: hidden; flex: none; -webkit-touch-callout: none; }
 .slide {
   position: relative; z-index: 1;
   /* sideways moves are swipes (useSwipeReveal); up and down still scroll */
   touch-action: pan-y;
-  transition: transform .22s cubic-bezier(.2, .8, .2, 1);
+  transition: transform .22s var(--ease-glide);
 }
 .swiping { transition: none; }
 .action {
   position: absolute; top: 0; bottom: 0; width: 88px; /* = REVEAL in useSwipeReveal */
-  display: grid; place-items: center; color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-size: 13px; font-weight: 600; color: #fff;
   visibility: hidden; transition: visibility 0s .22s;
 }
 .action:active { filter: brightness(.9); }
-.edit { left: 0; background: var(--accent); }
-.delete { right: 0; background: var(--alert); }
-/* Move to tomorrow: beside Delete, when the row has it */
-.later { right: 88px; background: var(--ink-2); }
-.showStart .edit,
-.showEnd .delete,
-.showEnd .later { visibility: visible; transition: none; }
+.row[data-open="start"] .start,
+.row[data-open="end"] .end { visibility: visible; transition: none; }
 
-/* Picked up and being dragged elsewhere (the copy follows the finger) */
-.lifted { opacity: .35; }
+.edit { background: var(--accent); }
+.delete { background: var(--alert); }
+.later { background: var(--ink-2); }
+.remind { background: var(--amber); }
+.move { background: var(--ink); color: var(--on-ink); }

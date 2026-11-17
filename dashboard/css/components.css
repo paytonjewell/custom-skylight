@@ -162,7 +162,7 @@ a.btn--solid { color: var(--on-ink); }
   }
 }
 .sheet-layer.is-open .sheet { transform: translate(-50%, -50%); opacity: 1; }
-.phone .sheet-layer.is-open .sheet { transform: none; animation: sheet-up .26s cubic-bezier(.2, .8, .2, 1); }
+.phone .sheet-layer.is-open .sheet { transform: none; animation: sheet-up .26s var(--ease-glide); }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   .phone .sheet-layer.is-open .sheet { animation: none; }

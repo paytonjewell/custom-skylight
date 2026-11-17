@@ -33,7 +33,8 @@ import { Icon } from '../../ui/Icon';
 import { PageHeader, SheetHeader } from '../../ui/headers';
 import { EmptyNote } from '../../ui/EmptyNote';
 import { useHoldReorder } from '../../ui/useHoldReorder';
-import { REVEAL, useSwipeReveal, type SwipeSide } from '../../ui/useSwipeReveal';
+import type { SwipeSide } from '../../ui/useSwipeReveal';
+import { SwipeRow, deleteAction, editAction } from '../../ui/SwipeRow';
 import { EditField } from '../../ui/EditField';
 import css from './ChecklistView.module.css';
 
@@ -283,60 +284,33 @@ function Row({
   /** Add (or edit) a reminder: items only, not headings */
   onRemind?: () => void;
 }) {
-  const swipe = useSwipeReveal({
-    open,
-    onOpenChange,
-    start: true,
-    end: true,
-    // Items have Edit and Remind behind their start
-    startWidth: onRemind ? REVEAL * 2 : REVEAL,
-    disabled: lifted || editing,
-  });
-  // The actions aren't drag handles: a press on one shouldn't lift the row
-  const action = (label: string, run: () => void) => ({
-    'aria-label': label,
-    tabIndex: open ? 0 : -1,
-    onPointerDown: (e: { stopPropagation(): void }) => e.stopPropagation(),
-    onClick: (e: { stopPropagation(): void }) => {
-      e.stopPropagation();
-      run();
-    },
-  });
   return (
-    <div
-      className={
-        rowClass(i) +
-        (lifted ? ' ' + css.isLifted : '') +
-        (swipe.offset > 0 ? ' ' + css.showStart : swipe.offset < 0 ? ' ' + css.showEnd : '')
-      }
-      {...props}
-      onClick={() => {
-        if (!swipe.consumeSwipe() && !editing) onTap();
-      }}
+    <SwipeRow
+      open={open}
+      onOpenChange={onOpenChange}
+      onTap={editing ? undefined : onTap}
+      disabled={lifted || editing}
+      className={rowClass(i) + (lifted ? ' ' + css.isLifted : '')}
+      slideClass={slideClass(i)}
+      rowProps={props}
+      // Items have Edit and Remind behind their start, Delete behind their end
+      start={[
+        editAction(i.text, onEdit),
+        ...(onRemind
+          ? [
+              {
+                icon: 'bell',
+                tone: 'remind',
+                label: (reminder ? 'Edit reminder for ' : 'Remind me: ') + i.text,
+                run: onRemind,
+              } as const,
+            ]
+          : []),
+      ]}
+      end={[deleteAction(i.text, onRemove)]}
     >
-      {/* Behind the row: Edit is revealed by swiping it right, Delete by swiping it left */}
-      <button className={css.action + ' ' + css.editAction} {...action('Edit ' + i.text, onEdit)}>
-        <Icon name="edit" size={24} />
-      </button>
-      {onRemind && (
-        <button
-          className={css.action + ' ' + css.remindAction}
-          {...action((reminder ? 'Edit reminder for ' : 'Remind me: ') + i.text, onRemind)}
-        >
-          <Icon name="bell" size={24} />
-        </button>
-      )}
-      <button className={css.action + ' ' + css.deleteAction} {...action('Delete ' + i.text, onRemove)}>
-        <Icon name="trash" size={26} />
-      </button>
-      <div
-        className={slideClass(i) + (swipe.swiping ? ' ' + css.swiping : '')}
-        style={swipe.offset ? { transform: `translateX(${swipe.offset}px)` } : undefined}
-        {...swipe.handlers}
-      >
-        <RowBody i={i} editing={editing} onEditDone={onEditDone} reminder={reminder} />
-      </div>
-    </div>
+      <RowBody i={i} editing={editing} onEditDone={onEditDone} reminder={reminder} />
+    </SwipeRow>
   );
 }
 

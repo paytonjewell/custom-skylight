@@ -62,14 +62,10 @@
     gap: 6px;
   }
 }
-/* A row: the trash button behind, and the sliding part (checkbox + text) on top */
+/* A row (SwipeRow): Edit and Remind behind its start, Delete behind its end */
 .row {
-  position: relative;
-  overflow: hidden;
   border-radius: 12px;
-  flex: none;
   cursor: grab;
-  -webkit-touch-callout: none;
 }
 .list[data-dragging] .row {
   cursor: grabbing;
@@ -77,8 +73,6 @@
 /* An item is a card in the surface colour (its .surface class adds Glass's frosted edge); a heading
    sits flat on the page */
 .slide {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -86,9 +80,6 @@
   padding: 0 16px;
   border-radius: 12px;
   background: var(--card);
-  /* sideways moves are swipes (useSwipeReveal); up and down still scroll */
-  touch-action: pan-y;
-  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 
   :global(.phone) & {
     min-height: 54px;
@@ -96,45 +87,6 @@
     padding: 0 12px;
   }
 }
-.swiping {
-  transition: none;
-}
-/* The actions behind a row: Edit at the start (swipe right), Delete at the end (swipe left). Each is
-   only there while its side is open (and until the row has slid back), so no edge of one shows around
-   the card's rounded corners. */
-.action {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 88px; /* = REVEAL in useSwipeReveal */
-  display: grid;
-  place-items: center;
-  color: #fff;
-  visibility: hidden;
-  transition: visibility 0s 0.22s;
-}
-.action:active {
-  filter: brightness(0.9);
-}
-.editAction {
-  left: 0;
-  background: var(--accent);
-}
-.remindAction {
-  left: 88px; /* after Edit */
-  background: #e0a33a;
-}
-.deleteAction {
-  right: 0;
-  background: var(--alert);
-}
-.showStart .editAction,
-.showStart .remindAction,
-.showEnd .deleteAction {
-  visibility: visible;
-  transition: none;
-}
-
 .box {
   width: 34px;
   height: 34px;

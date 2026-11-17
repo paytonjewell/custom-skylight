@@ -22,7 +22,7 @@ export interface Ghost {
 const MOVE_SLOP = 10; // px a finger may wander during the hold
 const EDGE = 90; // px from the scroller's top/bottom edge where dragging auto-scrolls
 const SCROLL_SPEED = 14; // px per frame at the very edge
-const GLIDE = 'transform 220ms cubic-bezier(.2, .8, .2, 1)';
+const GLIDE = 'transform 220ms var(--ease-glide)';
 
 /**
  * The dragged order, brought up to date with the list as it is now: items removed while dragging (a

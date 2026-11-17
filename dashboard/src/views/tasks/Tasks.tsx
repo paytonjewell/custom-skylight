@@ -28,7 +28,7 @@ import { Ring } from '../../ui/Ring';
 import { Avatar, toneStyle } from '../../ui/people';
 import { PageHeader, SheetHeader } from '../../ui/headers';
 import { PersonPicker } from '../../ui/PersonPicker';
-import { SwipeRow } from '../../ui/SwipeRow';
+import { SwipeRow, deleteAction, editAction, laterAction } from '../../ui/SwipeRow';
 import { usePendingAction } from '../../ui/hooks';
 import { celebrate } from '../../ui/confetti';
 import { dataStore } from '../../data/store';
@@ -440,6 +440,19 @@ export function useTaskRows(
   return { rowProps, layer: dnd.layer };
 }
 
+/** SwipeRow's props for a task or habit row: Edit behind the start; Delete (and Later) behind the end */
+function swipeRowProps(title: string, r: Omit<RowProps, 'checking' | 'streak'>) {
+  return {
+    open: r.open,
+    onOpenChange: r.onOpenChange,
+    onTap: r.onTap,
+    disabled: r.lifted,
+    start: [editAction(title, r.onEdit)],
+    end: [deleteAction(title, r.onDelete), ...(r.onLater ? [laterAction(title, r.onLater)] : [])],
+    rowProps: { ...r.drag, 'data-drop': r.drop, 'data-drop-sides': r.drop ? '' : undefined },
+  };
+}
+
 export interface RowProps {
   open: SwipeSide | null;
   onOpenChange: (side: SwipeSide | null) => void;
@@ -713,9 +726,10 @@ function TaskRow({ x, viewing, checking, streak: _streak, ...swipe }: { x: DueIt
     ) : null;
   return (
     <SwipeRow
-      label={t.title}
-      {...swipe}
-      className={(done ? css.isDone : '') + (x.overdue ? ' ' + css.isOverdue : '')}
+      {...swipeRowProps(t.title, swipe)}
+      className={
+        (done ? css.isDone : '') + (x.overdue ? ' ' + css.isOverdue : '') + (swipe.lifted ? ' ' + css.lifted : '')
+      }
       slideClass={css.task + (t.emoji ? '' : ' ' + css.plain)}
     >
       {/* No emoji: no box at all, just the text (done shows as struck through) */}
@@ -748,9 +762,8 @@ function HabitRow({ x, checking, streak, ...swipe }: { x: DueItem } & RowProps) 
   const done = !!x.done || checking;
   return (
     <SwipeRow
-      label={t.title}
-      {...swipe}
-      className={done ? css.isDone : ''}
+      {...swipeRowProps(t.title, swipe)}
+      className={(done ? css.isDone : '') + (swipe.lifted ? ' ' + css.lifted : '')}
       slideClass={css.habit + (t.emoji ? '' : ' ' + css.plain)}
     >
       {t.emoji && <span className={css.habitMark}>{done ? <Icon name="check" size={20} /> : t.emoji}</span>}

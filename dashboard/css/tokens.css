@@ -39,6 +39,13 @@
   --r: 16px;
   --pad: 28px;
   --tap: 60px;
+
+  /* motion: things that glide into place (swipes, reorders, sheets) */
+  --ease-glide: cubic-bezier(.2, .8, .2, 1);
+
+  /* the same in every theme: reminders (amber) and streaks (flame orange) */
+  --amber: #E0A33A;
+  --flame: #F08A3C;
 }
 
 /* ---------------------------------------------------------------- Pastel (default) */

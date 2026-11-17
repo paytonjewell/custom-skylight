@@ -15,7 +15,7 @@
 
   :global(.phone) & { height: 56px; margin: 2px 0; font-size: 26px; }
 }
-.bigInput::placeholder { color: #C4C4C4; }
+.bigInput::placeholder { color: var(--mute); }
 .add :global(.label) { margin: 22px 0 10px; }
 :global(.phone) .add :global(.label) { margin: 16px 0 8px; }
 .note { margin: 12px 0 0; font-size: 16px; color: var(--ink-2); }

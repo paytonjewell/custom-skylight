@@ -10,7 +10,7 @@ import { dayDiff, describeRepeat } from '../../lib/repeat';
 import { toast } from '../../app/ui';
 import { Avatar, toneStyle } from '../../ui/people';
 import { Icon } from '../../ui/Icon';
-import { SwipeRow } from '../../ui/SwipeRow';
+import { SwipeRow, deleteAction, editAction } from '../../ui/SwipeRow';
 import type { SwipeSide } from '../../ui/useSwipeReveal';
 import { openTaskSheet } from './TaskSheet';
 import css from './AllTasks.module.css';
@@ -65,12 +65,11 @@ export function AllTasks({
             {list.map(({ t, next }) => (
               <SwipeRow
                 key={t.id}
-                label={t.title}
                 open={swiped?.id === t.id ? swiped.side : null}
                 onOpenChange={(side) => setSwiped(side ? { id: t.id, side } : null)}
                 onTap={() => openTaskSheet(t)}
-                onEdit={() => openTaskSheet(t)}
-                onDelete={() => remove(t)}
+                start={[editAction(t.title, () => openTaskSheet(t))]}
+                end={[deleteAction(t.title, () => remove(t))]}
                 className={next.done ? css.isDone : ''}
                 slideClass={css.row + (t.emoji ? '' : ' ' + css.plain)}
               >

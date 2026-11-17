@@ -61,7 +61,7 @@ export function Slideshow({ interval, active, ref }: Props) {
   const setX = (x: number, ms = 0) => {
     const el = track.current;
     if (!el) return;
-    el.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2, .8, .2, 1)` : 'none';
+    el.style.transition = ms ? `transform ${ms}ms var(--ease-glide)` : 'none';
     el.style.transform = x ? `translate3d(${x}px, 0, 0)` : '';
   };
   // The strip is re-centred in the same frame the new photo becomes current, so nothing flickers
