@@ -2,6 +2,7 @@
 // gathers what they need for the grocery list), what can be made from what's on hand (Inventory),
 // then the recipes as cards, with search and filter chips. A card opens the recipe (RecipeSheet):
 // ingredients to add to groceries, steps, and Cook mode.
+import { Chip } from '../../ui/Chip';
 import { useRef, useState } from 'react';
 import type { Recipe } from '../../data/types';
 import { useData } from '../../data/store';
@@ -141,10 +142,10 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
               ['All', 'Ready to make', 'Favorites', 'Quick'].includes(f) ||
               data.recipes.some((r) => r.tags.includes(f)),
           ).map((f) => (
-            <button key={f} className={'chip' + (filter === f ? ' is-on' : '')} onClick={() => setFilter(f)}>
+            <Chip key={f} on={filter === f} onClick={() => setFilter(f)}>
               {f === 'Favorites' && <Icon name="heart" size={16} />}
               {f}
-            </button>
+            </Chip>
           ))}
         </div>
 

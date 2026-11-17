@@ -3,6 +3,7 @@
 // change how many (− at one means it's used up, with Undo); tap an item to rename it, move it, add a
 // note, or put it on the shopping list. Hold an item and drag it to another column to move it there.
 // Recipes use this to tell what can be made.
+import { Chip } from '../../ui/Chip';
 import { useState } from 'react';
 import type { Data, InventoryItem } from '../../data/types';
 import { knownGroceries } from '../../data/select';
@@ -328,13 +329,9 @@ function ItemSheet({ id }: { id: string }) {
         <span className="label">Kept in</span>
         <div className="chips">
           {PLACES.map((p) => (
-            <button
-              key={p}
-              className={'chip' + (i.place === p ? ' is-on' : '')}
-              onClick={() => editInventory(i.id, { place: p })}
-            >
+            <Chip key={p} on={i.place === p} onClick={() => editInventory(i.id, { place: p })}>
               {PLACE_EMOJI[p]} {p}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>

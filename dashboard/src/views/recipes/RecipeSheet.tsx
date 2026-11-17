@@ -1,6 +1,8 @@
 // One recipe: servings (amounts scale), ingredients (those already on the grocery list say so;
 // pantry staples start unticked) with "Add to Groceries", the steps, planning it for a day, and Cook
 // mode. Also the "Shop for this week" sheet, which does the same for every planned dinner at once.
+import { Stepper } from '../../ui/Stepper';
+import { Chip } from '../../ui/Chip';
 import { useEffect, useRef, useState } from 'react';
 import { dataStore, useData } from '../../data/store';
 import { onHand } from '../../data/kitchen';
@@ -106,24 +108,14 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
         <section className={css.ingredients}>
           <div className={css.secHead}>
             <div className="label">Ingredients</div>
-            <div className={css.stepper} aria-label="Servings">
-              <button
-                className="icon-btn"
-                aria-label="Fewer servings"
-                onClick={() => setServings(Math.max(1, servings - 1))}
-              >
-                −
-              </button>
-              <b className="num">{servings}</b>
-              <button
-                className="icon-btn"
-                aria-label="More servings"
-                onClick={() => setServings(Math.min(24, servings + 1))}
-              >
-                +
-              </button>
-              <small>servings</small>
-            </div>
+            <Stepper
+              value={servings}
+              onChange={setServings}
+              max={24}
+              label="servings"
+              unit={() => 'servings'}
+              compact
+            />
           </div>
           <ul className={css.ingList}>
             {r.ingredients.map((i) => {
@@ -203,15 +195,15 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
               const other = data.recipes.find((x) => x.id === data.mealPlan[d] && x.id !== r.id);
               const mine = data.mealPlan[d] === r.id;
               return (
-                <button
+                <Chip
                   key={d}
-                  className={'chip' + (mine ? ' is-on' : '')}
+                  on={mine}
                   title={other ? 'Replaces ' + other.title : undefined}
                   onClick={() => planDinner(d, mine ? null : r.id)}
                 >
                   {dayLabel(d, today)}
                   {other && <small className={css.replaces}>{other.emoji}</small>}
-                </button>
+                </Chip>
               );
             })}
           </div>

@@ -1,0 +1,19 @@
+.row { display: flex; align-items: center; gap: 16px; }
+.emoji {
+  flex: none; width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
+  font-size: 36px; background: var(--paper-2); color: var(--mute);
+
+  :global(.phone) & { width: 52px; height: 52px; border-radius: 14px; font-size: 28px; }
+}
+.emoji:active { transform: scale(.95); }
+.emoji.isOn { box-shadow: inset 0 0 0 2px var(--ink); }
+.title {
+  flex: 1; min-width: 0; height: 72px; border: 0; border-bottom: 1px solid var(--ink); background: transparent;
+  font-family: var(--sans); font-size: 34px; font-weight: 400; color: var(--ink); outline: none;
+  margin: 4px 0; padding: 0;
+
+  :global(.phone) & { height: 56px; font-size: 26px; }
+}
+.title::placeholder { color: var(--mute); }
+.isMissing { border-bottom: 2px solid var(--alert); }
+.picker { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 14px; }

@@ -3,6 +3,7 @@
 // Who it's for starts as whose the calendar says (names in the title, on one that goes by names) and
 // can be changed; a change is kept on the event. The title is saved exactly as typed.
 // Editing one occurrence of a repeating event changes just that occurrence.
+import { Stepper } from '../../ui/Stepper';
 import { Chip, DateChip } from '../../ui/Chip';
 import { useState } from 'react';
 import type { CalEvent, Calendar } from '../../data/types';
@@ -14,8 +15,7 @@ import { addDays, dayStart, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow } from '../../lib/clock';
 import { closeSheet, openSheet, toast } from '../../app/ui';
-import { EmojiPicker } from '../../ui/EmojiPicker';
-import { Icon } from '../../ui/Icon';
+import { EmojiTitle } from '../../ui/EmojiTitle';
 import { Avatar } from '../../ui/people';
 import { PersonPicker } from '../../ui/PersonPicker';
 import { openCalendarSettings } from './CalendarSettings';
@@ -123,7 +123,6 @@ function EventForm({
   const [end, setEnd] = useState(first.end);
   const [loc, setLoc] = useState(event?.loc ?? '');
   const [notes, setNotes] = useState(event?.notes ?? '');
-  const [picking, setPicking] = useState(false);
 
   if (!choices.length) {
     return (
@@ -221,48 +220,17 @@ function EventForm({
   return (
     <div className={'sheet-pad ' + css.add}>
       <div className="label">{event ? 'Edit event' : 'New event'}</div>
-      <div className={css.titleRow}>
-        {/* Its own emoji, or else the calendar's (🎂 on Birthdays), which it gets without saving one */}
-        <button
-          className={css.emojiBtn + (picking ? ' ' + css.isOn : '')}
-          aria-label={emoji ? 'Change emoji' : 'Add an emoji'}
-          onClick={() => setPicking(!picking)}
-        >
-          {emoji || cal?.emoji || <Icon name="smile" size={28} />}
-        </button>
-        <input
-          className={css.bigInput + ' serif'}
-          placeholder="What’s happening?"
-          value={title}
-          autoFocus={!event}
-          enterKeyHint="done"
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          }}
-        />
-      </div>
-      {picking && (
-        <div className={css.picker}>
-          <EmojiPicker
-            onPick={(e) => {
-              setEmoji(e);
-              setPicking(false);
-            }}
-          />
-          {emoji && (
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                setEmoji('');
-                setPicking(false);
-              }}
-            >
-              No emoji
-            </button>
-          )}
-        </div>
-      )}
+      {/* Its own emoji, or else the calendar's (🎂 on Birthdays), which it gets without saving one */}
+      <EmojiTitle
+        emoji={emoji}
+        onEmoji={setEmoji}
+        fallback={cal?.emoji || undefined}
+        clearable
+        title={title}
+        onTitle={setTitle}
+        placeholder="What’s happening?"
+        autoFocus={!event}
+      />
       {record?.recurring && (
         <p className={css.note}>This is one occurrence of a repeating event; changes apply to this one only.</p>
       )}
@@ -318,16 +286,7 @@ function EventForm({
       </div>
       {allDay ? (
         <div className={css.more}>
-          <div className={css.stepper}>
-            <button className="icon-btn" aria-label="Fewer days" onClick={() => setDays(Math.max(1, days - 1))}>
-              −
-            </button>
-            <b className="num">{days}</b>
-            <button className="icon-btn" aria-label="More days" onClick={() => setDays(Math.min(60, days + 1))}>
-              +
-            </button>
-            <span>{days === 1 ? 'day' : 'days'}</span>
-          </div>
+          <Stepper value={days} onChange={setDays} max={60} label="days" unit={(n) => (n === 1 ? 'day' : 'days')} />
         </div>
       ) : (
         <div className={css.more}>

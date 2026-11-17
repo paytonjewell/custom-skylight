@@ -25,10 +25,6 @@
   :global(.phone) & { grid-template-columns: 1fr; gap: 20px; }
 }
 .secHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.stepper { display: flex; align-items: center; gap: 4px; }
-.stepper :global(.icon-btn) { width: 40px; height: 40px; font-size: 22px; background: var(--card); }
-.stepper b { min-width: 28px; text-align: center; font-size: 19px; }
-.stepper small { font-size: 14px; color: var(--mute); margin-left: 2px; }
 
 .ingRow { display: flex; align-items: center; gap: 4px; }
 .ingRow > .ing { flex: 1; min-width: 0; }

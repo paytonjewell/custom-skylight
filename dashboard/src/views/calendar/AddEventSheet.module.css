@@ -1,21 +1,4 @@
 /* Add or edit an event */
-.titleRow { display: flex; align-items: center; gap: 16px; }
-.emojiBtn {
-  flex: none; width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
-  font-size: 36px; background: var(--paper-2); color: var(--mute);
-
-  :global(.phone) & { width: 52px; height: 52px; border-radius: 14px; font-size: 28px; }
-}
-.emojiBtn:active { transform: scale(.95); }
-.emojiBtn.isOn { box-shadow: inset 0 0 0 2px var(--ink); }
-.picker { margin-top: 12px; }
-.bigInput {
-  flex: 1; min-width: 0; height: 80px; border: 0; border-bottom: 1px solid var(--ink); background: transparent;
-  font-family: var(--sans); font-size: 40px; font-weight: 400; outline: none; margin: 4px 0; padding: 0;
-
-  :global(.phone) & { height: 56px; margin: 2px 0; font-size: 26px; }
-}
-.bigInput::placeholder { color: var(--mute); }
 .add :global(.label) { margin: 22px 0 10px; }
 :global(.phone) .add :global(.label) { margin: 16px 0 8px; }
 .note { margin: 12px 0 0; font-size: 16px; color: var(--ink-2); }
@@ -31,10 +14,6 @@
 }
 .more :global(.chip) { background: var(--paper); }
 .more :global(.chip.is-on) { background: var(--ink); }
-.stepper { display: flex; align-items: center; gap: 12px; font-size: 18px; }
-.stepper :global(.icon-btn) { width: 52px; height: 52px; border-radius: 50%; background: var(--paper); font-size: 26px; }
-.stepper b { min-width: 2ch; text-align: center; font-size: 26px; font-weight: 600; }
-.stepper span { color: var(--ink-2); }
 .times { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .times label { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--ink-2); }
 .times input {

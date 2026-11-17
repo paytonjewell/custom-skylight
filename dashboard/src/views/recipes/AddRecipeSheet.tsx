@@ -5,6 +5,8 @@
 // Or start from a link: the Worker reads the page's recipe (worker/recipeImport.ts) and fills the form
 // to check over. A site that won't let apps read it: paste the recipe's text instead, and it's split at
 // its "Ingredients" and "Instructions" headings.
+import { Stepper } from '../../ui/Stepper';
+import { Chip } from '../../ui/Chip';
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { Ingredient } from '../../data/types';
 import { useData, newId } from '../../data/store';
@@ -14,7 +16,7 @@ import type { ImportedRecipe } from '../../data/types';
 import { addRecipe } from '../../data/kitchenActions';
 import { closeSheet, go, openSheet, toast } from '../../app/ui';
 import { store } from '../../lib/store';
-import { EmojiPicker } from '../../ui/EmojiPicker';
+import { EmojiTitle } from '../../ui/EmojiTitle';
 import { Icon } from '../../ui/Icon';
 import { SheetHeader } from '../../ui/headers';
 import { openRecipe } from './RecipeSheet';
@@ -57,7 +59,6 @@ function AddRecipe({ link: startLink }: { link?: string }) {
   const data = useData('recipes');
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🍽️');
-  const [picking, setPicking] = useState(false);
   const [tags, setTags] = useState<string[]>(['Dinner']);
   const [minutes, setMinutes] = useState(30);
   const [servings, setServings] = useState(4);
@@ -221,37 +222,22 @@ function AddRecipe({ link: startLink }: { link?: string }) {
         )}
       </div>
 
-      <div className={css.titleRow}>
-        <button
-          className={css.emojiBtn + (picking ? ' ' + css.isOn : '')}
-          aria-label="Choose an emoji"
-          onClick={() => setPicking(!picking)}
-        >
-          {emoji}
-        </button>
-        <input
-          className={css.title + ' serif' + (tried && !title.trim() ? ' ' + css.isMissing : '')}
-          placeholder="Recipe name"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          enterKeyHint="next"
-        />
-      </div>
-      {picking && (
-        <EmojiPicker
-          onPick={(e) => {
-            setEmoji(e);
-            setPicking(false);
-          }}
-        />
-      )}
+      <EmojiTitle
+        emoji={emoji}
+        onEmoji={setEmoji}
+        title={title}
+        onTitle={setTitle}
+        placeholder="Recipe name"
+        invalid={tried && !title.trim()}
+        enterKeyHint="next"
+      />
 
       <div className="label">Tags</div>
       <div className="chips">
         {TAGS.map((t) => (
-          <button key={t} className={'chip' + (tags.includes(t) ? ' is-on' : '')} onClick={() => toggleTag(t)}>
+          <Chip key={t} on={tags.includes(t)} onClick={() => toggleTag(t)}>
             {t}
-          </button>
+          </Chip>
         ))}
       </div>
 
@@ -269,28 +255,16 @@ function AddRecipe({ link: startLink }: { link?: string }) {
             />
             <div className="chips">
               {MINUTES.map((m) => (
-                <button
-                  key={m}
-                  className={'chip chip--ghost' + (minutes === m ? ' is-on' : '')}
-                  onClick={() => setMinutes(m)}
-                >
+                <Chip key={m} on={minutes === m} className="chip--ghost" onClick={() => setMinutes(m)}>
                   {m}
-                </button>
+                </Chip>
               ))}
             </div>
           </div>
         </div>
         <div>
           <div className="label">Serves</div>
-          <div className={css.stepper}>
-            <button className="icon-btn" aria-label="Fewer" onClick={() => setServings(Math.max(1, servings - 1))}>
-              <Icon name="minus" size={20} />
-            </button>
-            <b className="num">{servings}</b>
-            <button className="icon-btn" aria-label="More" onClick={() => setServings(Math.min(100, servings + 1))}>
-              <Icon name="plus" size={20} />
-            </button>
-          </div>
+          <Stepper value={servings} onChange={setServings} max={100} label="servings" compact />
         </div>
       </div>
 
