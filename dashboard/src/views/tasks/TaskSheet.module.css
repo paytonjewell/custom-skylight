@@ -21,7 +21,7 @@
   display: flex; align-items: center; gap: 16px; margin-top: 22px; padding: 14px 16px;
   border-radius: var(--r); background: var(--paper-2);
 }
-.toggle input { width: 28px; height: 28px; accent-color: var(--ink); flex: none; }
+.toggle input { width: 28px; height: 28px; flex: none; }
 .toggle span { display: flex; flex-direction: column; gap: 2px; }
 .toggle b { font-size: 18px; font-weight: 500; }
 .toggle small { font-size: 14px; color: var(--mute); }
@@ -30,7 +30,7 @@
 
 /* Reminder: its time, and a note when someone it goes to has no phone set up */
 .time {
-  height: 52px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--paper);
+  height: 52px; padding: 0 14px; border: 0; border-radius: var(--r-sm); background: var(--paper);
   font: inherit; font-size: 20px; color: var(--ink);
 }
 .hint { margin: 0; font-size: 15px; color: var(--mute); }

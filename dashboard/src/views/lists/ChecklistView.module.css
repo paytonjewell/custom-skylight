@@ -64,7 +64,7 @@
 }
 /* A row (SwipeRow): Edit and Remind behind its start, Delete behind its end */
 .row {
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   cursor: grab;
 }
 .list[data-dragging] .row {
@@ -78,7 +78,7 @@
   gap: 14px;
   min-height: 68px;
   padding: 0 16px;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: var(--card);
 
   :global(.phone) & {
@@ -250,7 +250,7 @@
   flex: none; width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center;
   font-size: 38px; line-height: 1; background: var(--paper-2);
 
-  :global(.phone) & { width: 48px; height: 48px; font-size: 28px; border-radius: 12px; }
+  :global(.phone) & { width: 48px; height: 48px; font-size: 28px; border-radius: var(--r-sm); }
 }
 .emojiBtn:active { transform: scale(.95); }
 

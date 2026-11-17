@@ -3,7 +3,7 @@
 .recipe { display: flex; flex-direction: column; gap: 18px; }
 .head { display: flex; align-items: center; gap: 18px; padding-right: 40px; }
 .art {
-  width: 96px; height: 96px; flex: none; border-radius: 24px; display: grid; place-items: center; font-size: 54px;
+  width: 96px; height: 96px; flex: none; border-radius: 24px; display: grid; place-items: center; line-height: 1; font-size: 54px;
   background: var(--c-tint); filter: var(--emoji-filter);
 
   :global(.phone) & { width: 64px; height: 64px; font-size: 36px; border-radius: 16px; }
@@ -34,7 +34,7 @@
 }
 .haveIt:active { background: var(--card); }
 .haveAdd {
-  width: 100%; min-height: 64px; padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 12px; text-align: left;
+  width: 100%; min-height: 64px; padding: 10px 16px; border-radius: var(--r-sm); display: flex; align-items: center; gap: 12px; text-align: left;
   background: var(--ink); color: var(--on-ink);
 }
 .haveAdd:active { transform: scale(.99); }
@@ -42,15 +42,15 @@
 .haveAdd b { font-size: 18px; font-weight: 600; }
 .haveAdd small { font-size: 14px; opacity: .75; }
 .haveOr { margin: 18px 0 10px !important; font-size: 16px; }
-.haveSearch { width: 100%; height: 50px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--card); font: inherit; font-size: 17px; color: var(--ink); outline: none; }
+.haveSearch { width: 100%; height: 50px; padding: 0 16px; border: 0; border-radius: var(--r-sm); background: var(--card); font: inherit; font-size: 17px; color: var(--ink); outline: none; }
 .haveList { list-style: none; margin: 12px 0 0; padding: 0; max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-.haveRow { width: 100%; min-height: 52px; padding: 0 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card); text-align: left; font-size: 17px; }
+.haveRow { width: 100%; min-height: 52px; padding: 0 14px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card); text-align: left; font-size: 17px; }
 .haveRow:active { background: var(--paper-2); }
 .haveRow b { font-weight: 500; }
 .ingList, .shopList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .shopList { max-height: 420px; overflow-y: auto; }
 .ing {
-  width: 100%; min-height: 46px; padding: 6px 10px; border-radius: 12px; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 16px;
+  width: 100%; min-height: 46px; padding: 6px 10px; border-radius: var(--r-sm); display: flex; align-items: center; gap: 12px; text-align: left; font-size: 16px;
 }
 .ing:active:not(:disabled) { background: var(--card); }
 .ing:disabled { opacity: 1; }
@@ -74,14 +74,9 @@
 .steps li { display: flex; gap: 14px; }
 .n { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--c-tint); font-weight: 700; }
 .steps p { margin: 4px 0 0; font-size: 17px; line-height: 1.45; }
-.notes { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--card); font-size: 15px; color: var(--ink-2); }
+.notes { margin: 16px 0 0; padding: 12px 14px; border-radius: var(--r-sm); background: var(--card); font-size: 15px; color: var(--ink-2); }
 
-.recipe :global(.sheet-actions) {
-  position: sticky; bottom: -32px; z-index: 2; margin: 0 -36px -32px; padding: 14px 36px 20px;
-  background: var(--paper); border-top: 1px solid var(--line);
-
-  :global(.phone) & { margin: 0 -18px -20px; padding: 12px 18px 16px; }
-}
+.recipe :global(.sheet-actions) { margin-top: 0; }
 .planRow { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
 .planRow :global(.chip) { display: flex; align-items: center; gap: 6px; }
 .replaces { font-size: 14px; }

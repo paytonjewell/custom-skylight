@@ -5,12 +5,12 @@
 
   :global(.phone) & { height: auto; }
 }
-.count { font-size: 16px; color: var(--mute); }
+.count { font-size: 16px; color: var(--mute); white-space: nowrap; }
 .count b { font-size: 26px; color: var(--ink); margin-right: 4px; }
 
 .addBar {
   position: relative; /* the suggestions hang below it */
-  width: 520px; height: 56px; padding: 0 6px 0 18px; border-radius: 28px; display: flex; align-items: center; gap: 8px; background: var(--card);
+  width: 440px; height: 56px; padding: 0 6px 0 18px; border-radius: 28px; display: flex; align-items: center; gap: 8px; background: var(--card);
 
   :global(.phone) & { width: 100%; height: 52px; }
 }
@@ -34,8 +34,8 @@
 .colHead b { font-size: 24px; flex: 1; }
 .list { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 4px; }
 :global(.phone) .list { overflow: visible; }
-.row { display: flex; align-items: center; gap: 6px; min-height: 52px; padding: 4px 4px 4px 0; border-radius: 12px; background: var(--paper); }
-.rowMain { flex: 1; min-width: 0; align-self: stretch; padding: 4px 12px; display: flex; flex-direction: column; justify-content: center; text-align: left; border-radius: 12px; }
+.row { display: flex; align-items: center; gap: 6px; min-height: 52px; padding: 4px 4px 4px 0; border-radius: var(--r-sm); background: var(--paper); }
+.rowMain { flex: 1; min-width: 0; align-self: stretch; padding: 4px 12px; display: flex; flex-direction: column; justify-content: center; text-align: left; border-radius: var(--r-sm); }
 .rowMain:active { background: var(--paper-2); }
 .rowMain b { font-size: 17px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rowMain small { font-size: 13px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -55,7 +55,7 @@
 }
 .nameField:focus { border-bottom-color: var(--ink); }
 .sheetRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.noteField { width: 100%; height: 50px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--card); font: inherit; font-size: 16px; color: var(--ink); outline: none; }
+.noteField { width: 100%; height: 50px; padding: 0 14px; border: 0; border-radius: var(--r-sm); background: var(--card); font: inherit; font-size: 16px; color: var(--ink); outline: none; }
 
 /* Suggestions while typing, under the add bar */
 .sugg {
@@ -63,7 +63,7 @@
   border-radius: 18px; background: var(--paper); box-shadow: 0 12px 36px rgb(0 0 0 / .16), 0 0 0 1px var(--line);
 }
 .sugg button {
-  width: 100%; min-height: 48px; padding: 0 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; min-height: 48px; padding: 0 14px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: space-between; gap: 10px;
   text-align: left; font-size: 17px;
 }
 .sugg button:active, .sugg button:hover { background: var(--card); }
@@ -73,7 +73,7 @@
 /* Dragging an item to another column */
 .row.isLifted { opacity: .35; }
 .ghost {
-  min-height: 52px; padding: 0 16px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 52px; padding: 0 16px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: space-between; gap: 10px;
   background: var(--paper); font-size: 17px;
 }
 .ghost b { font-weight: 500; }

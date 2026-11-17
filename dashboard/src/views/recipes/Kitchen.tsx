@@ -8,17 +8,17 @@ import { foodKey } from '../../data/names';
 import { dayOf, shiftDay } from '../../lib/repeat';
 import { useNow } from '../../lib/clock';
 import { store, stored } from '../../lib/store';
-import { Segmented } from '../../ui/Segmented';
 import { GroceryList } from '../lists/GroceryList';
 import { RecipesTab } from './Recipes';
 import { Inventory } from './Inventory';
+import { KitchenTitle } from './kitchenTitle';
 import css from './Kitchen.module.css';
 
 type Tab = 'recipes' | 'inventory' | 'shopping';
 const TABS = [
   ['recipes', 'Recipes'],
   ['inventory', 'Inventory'],
-  ['shopping', 'Shopping List'],
+  ['shopping', 'Shopping'],
 ] as const;
 const KEY = 'kitchen.tab';
 
@@ -33,12 +33,27 @@ export function Kitchen() {
   };
   return (
     <div className={css.kitchen}>
-      <Segmented className={css.tabs} options={TABS} value={tab} onChange={pick} />
-      <div className={css.body}>
+      <KitchenTitle.Provider
+        value={
+          <span className={css.tabs} role="tablist">
+            {TABS.map(([t, label]) => (
+              <button
+                key={t}
+                role="tab"
+                aria-selected={t === tab}
+                className={t === tab ? css.isOn : undefined}
+                onClick={() => pick(t)}
+              >
+                {label}
+              </button>
+            ))}
+          </span>
+        }
+      >
         {tab === 'recipes' && <RecipesTab onInventory={() => pick('inventory')} />}
         {tab === 'inventory' && <Inventory />}
         {tab === 'shopping' && <Shopping />}
-      </div>
+      </KitchenTitle.Provider>
     </div>
   );
 }

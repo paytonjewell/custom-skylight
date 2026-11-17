@@ -14,11 +14,11 @@
 
 .row {
   display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 8px 14px 8px 8px;
-  border-radius: 14px; background: var(--paper); text-align: left;
+  border-radius: var(--r-sm); background: var(--paper); text-align: left;
 }
 .row:active { transform: scale(.985); }
 .mark {
-  flex: none; width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center;
+  flex: none; width: 48px; height: 48px; border-radius: var(--r-sm); display: grid; place-items: center;
   font-size: 26px; background: var(--c-tint); filter: var(--emoji-filter);
 
   :global(.phone) & { width: 42px; height: 42px; font-size: 22px; }

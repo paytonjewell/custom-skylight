@@ -94,7 +94,7 @@ function SleepSetting() {
         aria-checked={on}
         onClick={() => setSleep({ on: !on })}
       >
-        <Icon name="moon" size={24} />
+        <Icon name="bed" size={24} />
         <span>
           <b>Sleep at night</b>
           <small>When nobody is using the frame, the screen goes dark instead of showing photos. Tap to wake it.</small>

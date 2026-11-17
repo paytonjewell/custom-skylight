@@ -168,9 +168,7 @@ function TaskRow({ x, viewing, checking, streak: _streak, ...swipe }: { x: DueIt
       <Icon name="bell" size={13} />
       {list.emoji} {list.title || 'Untitled list'}
     </>
-  ) : t.due ? (
-    'Once'
-  ) : null;
+  ) : null; // a one-off needs no note: being on today's list says when it's due
   // Its phone reminder's time (list reminders already show a bell)
   const at =
     t.remind && !done ? (
@@ -208,6 +206,8 @@ function TaskRow({ x, viewing, checking, streak: _streak, ...swipe }: { x: DueIt
           </small>
         )}
       </span>
+      {/* No emoji box to turn into a check: a tick at the end says it's done */}
+      {!t.emoji && done && <Icon name="check" size={20} className={css.doneTick} />}
     </SwipeRow>
   );
 }

@@ -38,7 +38,7 @@
   mask: url('../assets/white-lotus.svg') center / contain no-repeat;
 }
 .item {
-  width: 68px; height: 68px; border-radius: 14px;
+  width: 68px; height: 68px; border-radius: var(--r-sm);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   font-size: 11px; font-weight: 500;
   color: var(--mute);
@@ -50,7 +50,7 @@
 .item:active { background: var(--line); }
 .theme { margin-top: auto; height: 60px; }
 .theme :global(.i) { width: 22px; height: 22px; }
-.clock { padding: 10px 0; width: 100%; text-align: center; line-height: 1; position: relative; overflow: hidden; border-radius: 12px; }
+.clock { padding: 10px 0; width: 100%; text-align: center; line-height: 1; position: relative; overflow: hidden; border-radius: var(--r-sm); }
 .clock b { display: block; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .clock span { font-size: 11px; font-weight: 500; letter-spacing: .12em; color: var(--mute); }
 
@@ -92,7 +92,9 @@
   flex: none; display: flex;
   height: calc(var(--tabbar-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
-  background: var(--shell); border-top: 1px solid var(--line);
+  /* The page's own colour: Android paints its gesture bar below an installed app in the theme colour,
+     which is this same --paper (theme.ts), so the two read as one surface. A hairline marks the top. */
+  background: var(--paper); border-top: 1px solid var(--line);
   position: relative; z-index: 5;
 
   :global(.phone[data-theme="glass"]) & { background: transparent; border-top-color: rgba(255, 255, 255, .6); }
@@ -121,7 +123,7 @@
 .menuItem {
   width: 100%; min-height: 52px; padding: 0 14px;
   display: flex; align-items: center; gap: 14px;
-  border-radius: 12px; font-size: 16px; font-weight: 500;
+  border-radius: var(--r-sm); font-size: 16px; font-weight: 500;
 }
 .menuItem :global(.i) { color: var(--ink-2); }
 .menuItem.isActive { background: var(--paper-2); }

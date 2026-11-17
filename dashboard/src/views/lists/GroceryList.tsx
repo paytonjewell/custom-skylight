@@ -33,6 +33,7 @@ import { store as remember, stored } from '../../lib/store';
 import type { SwipeSide } from '../../ui/useSwipeReveal';
 import { SwipeRow, editAction } from '../../ui/SwipeRow';
 import { EditField } from '../../ui/EditField';
+import { useKitchenTitle } from '../recipes/kitchenTitle';
 import css from './GroceryList.module.css';
 import { pluralize } from '../../lib/fmt';
 
@@ -56,6 +57,7 @@ export interface KitchenMode {
 
 export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?: KitchenMode }) {
   const data = useData('catOrder', 'catalog', 'groceries', 'groceryNames', 'inventory', 'stores', 'usuals');
+  const title = useKitchenTitle('Groceries');
   const [store, setStore] = useState('all');
   const [query, setQuery] = useState('');
   const [drawer, setDrawer] = useState(false);
@@ -166,10 +168,10 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
             : status === 'error'
               ? 'Couldn’t load the list'
               : kitchen
-                ? 'Groceries · food only'
+                ? 'Kitchen · food only'
                 : 'Shared list · pinned'
         }
-        title={kitchen ? 'Shopping List' : 'Groceries'}
+        title={title}
         meta={
           <div className={css.count}>
             <span className="num display-num">{open.length}</span> to get

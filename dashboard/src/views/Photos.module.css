@@ -22,7 +22,7 @@
   }
 }
 .tile {
-  position: relative; overflow: hidden; border-radius: 12px; background: var(--paper-2);
+  position: relative; overflow: hidden; border-radius: var(--r-sm); background: var(--paper-2);
   -webkit-touch-callout: none; cursor: grab;
 
   :global(.phone) & { border-radius: 0; }

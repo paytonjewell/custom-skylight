@@ -19,7 +19,9 @@ import { useStore } from '../../lib/store';
 import { useNow } from '../../lib/clock';
 import { openSheet, useUI } from '../../app/ui';
 import { Icon } from '../../ui/Icon';
-import { Ring, ringLabel } from '../../ui/Ring';
+import { Fab } from '../../ui/Fab';
+import { useLayout } from '../../app/layout';
+import { Ring } from '../../ui/Ring';
 import { Avatar, toneStyle } from '../../ui/people';
 import { PageHeader } from '../../ui/headers';
 import { openTaskSheet } from './TaskSheet';
@@ -85,6 +87,9 @@ export function Tasks() {
   const left = counted.filter((x) => !x.done).length;
 
   const shownPeople = focus ? [focus] : lanes;
+  const phone = useLayout() === 'phone';
+  const newTask = () =>
+    openTaskSheet(undefined, focus ? { who: focus } : people?.length === 1 ? { who: people[0] } : undefined);
   const allCount = data.tasks.filter((t) => shownPeople.includes(t.who)).length;
   const habitCount = data.tasks.filter((t) => t.habit && shownPeople.includes(t.who)).length;
   const kicker =
@@ -154,15 +159,14 @@ export function Tasks() {
           <Icon name="settings" size={28} />
           {(people || sections || show !== 'all') && <i className={css.cogDot} />}
         </button>
-        <button
-          className="btn btn--solid"
-          onClick={() =>
-            openTaskSheet(undefined, focus ? { who: focus } : people?.length === 1 ? { who: people[0] } : undefined)
-          }
-        >
-          <Icon name="plus" size={22} />
-          New task
-        </button>
+        {phone ? (
+          <Fab label="New task" onClick={newTask} />
+        ) : (
+          <button className="btn btn--solid" onClick={newTask}>
+            <Icon name="plus" size={22} />
+            New task
+          </button>
+        )}
       </PageHeader>
       {mode === 'all' ? (
         <AllTasks data={data} people={shownPeople} today={today} />
@@ -277,11 +281,14 @@ function Lane({
           <b>{laneName(data, who)}</b>
           <span className={css.sub}>{tasks.length ? `${done} of ${tasks.length}` : 'Nothing'}</span>
         </div>
+        {/* The count is written beside the name, so the ring only shows progress (and ✓ when all done) */}
         <div className={css.ring}>
-          <Ring done={done} total={tasks.length || 1} size={46} />
-          <span className={'num' + (ringLabel(done, tasks.length).length > 3 ? ' ' + css.long : '')}>
-            {ringLabel(done, tasks.length)}
-          </span>
+          <Ring done={done} total={tasks.length || 1} size={40} />
+          {tasks.length > 0 && done === tasks.length && (
+            <span className="num">
+              <Icon name="check" size={18} />
+            </span>
+          )}
         </div>
       </button>
       <PersonList

@@ -7,14 +7,17 @@ export function Ring({ done, total, size }: { done: number; total: number; size:
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
       <circle cx={m} cy={m} r={r} className="ring-bg" />
-      <circle
-        cx={m}
-        cy={m}
-        r={r}
-        className="ring-fg"
-        strokeDasharray={`${c * f} ${c}`}
-        transform={`rotate(-90 ${m} ${m})`}
-      />
+      {/* Nothing done: no arc at all (a zero-length arc still draws a dot with its round cap) */}
+      {f > 0 && (
+        <circle
+          cx={m}
+          cy={m}
+          r={r}
+          className="ring-fg"
+          strokeDasharray={`${c * f} ${c}`}
+          transform={`rotate(-90 ${m} ${m})`}
+        />
+      )}
     </svg>
   );
 }

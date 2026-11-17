@@ -10,7 +10,8 @@ import { addDays, dayStart, DAY_MS, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow, useNow } from '../../lib/clock';
 import { Icon } from '../../ui/Icon';
-import { Dots, toneStyle } from '../../ui/people';
+import { Avatar, Dots, toneStyle } from '../../ui/people';
+import { Fab } from '../../ui/Fab';
 import { Segmented } from '../../ui/Segmented';
 import { EmptyNote } from '../../ui/EmptyNote';
 import { openEventSheet, openMoreSheet } from './EventSheet';
@@ -182,13 +183,7 @@ export function Calendar({ active }: { active: boolean }) {
         <button className={'icon-btn ' + css.cog} aria-label="Calendar settings" onClick={openCalendarSettings}>
           <Icon name="settings" size={26} />
         </button>
-        <button
-          className={css.fab}
-          aria-label="Add event"
-          onClick={() => openAddEventSheet(onAdded, mode === 'month' ? undefined : date)}
-        >
-          <Icon name="plus" size={26} />
-        </button>
+        <Fab label="Add event" onClick={() => openAddEventSheet(onAdded, mode === 'month' ? undefined : date)} />
       </header>
       {data.googleConfigured && !data.googleAccounts.length && (
         <button className={css.sample} onClick={openCalendarSettings}>
@@ -347,12 +342,15 @@ function Blocks({ list, day, now, lane }: { list: CalEvent[]; day: Date; now: Da
   );
 }
 
-function Hours() {
+/** The hour lines and their labels. `pill`: where the now line's time label sits, so the hour
+ *  label it would cover is left out */
+function Hours({ pill }: { pill?: Date }) {
   const rows = [];
   for (let i = START; i <= END; i++) {
+    const covered = pill && Math.abs(y(pill) - (i - START) * PX) < 22;
     rows.push(
       <div key={i} className={css.hr} style={{ top: (i - START) * PX }}>
-        <span>{i === 12 ? 'Noon' : (i % 12 || 12) + (i < 12 ? ' AM' : ' PM')}</span>
+        {!covered && <span>{i === 12 ? 'Noon' : (i % 12 || 12) + (i < 12 ? ' AM' : ' PM')}</span>}
       </div>,
     );
   }
@@ -370,7 +368,17 @@ function NowLine({ days, now, indexed }: { days: Date[]; now: Date; indexed?: bo
 }
 
 /** Scrollable hour grid; scrolls to just above "now" when the day/mode changes or the screen opens */
-function GridScroll({ resetKey, active, children }: { resetKey: string; active: boolean; children: ReactNode }) {
+function GridScroll({
+  resetKey,
+  active,
+  pill,
+  children,
+}: {
+  resetKey: string;
+  active: boolean;
+  pill?: Date;
+  children: ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: scrolls again when the day or mode (resetKey) changes
   useLayoutEffect(() => {
@@ -379,7 +387,7 @@ function GridScroll({ resetKey, active, children }: { resetKey: string; active: 
   return (
     <div className={css.gridScroll} ref={ref}>
       <div className={css.grid} style={{ height: (END - START) * PX }}>
-        <Hours />
+        <Hours pill={pill} />
         {children}
       </div>
     </div>
@@ -402,6 +410,18 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
   const t = 't:' + dayOf(date);
   return (
     <div className={css.day}>
+      {/* Whose lane is whose */}
+      {!single && (
+        <div className={css.lanesHead} style={{ gridTemplateColumns: `var(--gutter) repeat(${lanes.length}, 1fr)` }}>
+          <div />
+          {lanes.map((p) => (
+            <div key={p.id} className={css.personHead} style={toneStyle(p)}>
+              <Avatar p={p} size={28} />
+              <b>{p.name}</b>
+            </div>
+          ))}
+        </div>
+      )}
       {allDay.length > 0 && (
         <div className={css.allday}>
           <div className={css.gutter + ' label'}>All day</div>
@@ -436,7 +456,7 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
           </div>
         </div>
       )}
-      <GridScroll resetKey={resetKey} active={active}>
+      <GridScroll resetKey={resetKey} active={active} pill={sameDay(date, now) ? now : undefined}>
         {single ? (
           <div className={css.lanes} style={{ gridTemplateColumns: '1fr' }}>
             <div className={css.lane} data-drop={t}>
@@ -526,7 +546,7 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
           </div>
         </div>
       )}
-      <GridScroll resetKey={resetKey} active={active}>
+      <GridScroll resetKey={resetKey} active={active} pill={sameDay(days[0], now) ? now : undefined}>
         <div className={css.lanes + ' ' + css.lanes3}>
           {days.map((d) => (
             <div key={+d} className={css.lane + (sameDay(d, now) ? ' ' + css.isToday : '')} data-drop={'t:' + dayOf(d)}>

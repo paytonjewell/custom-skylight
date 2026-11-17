@@ -14,6 +14,7 @@ import { closeSheet, go, openSheet } from '../app/ui';
 import { GROCERY, openList } from './lists/Lists';
 import { useLayout } from '../app/layout';
 import { openThemeSheet } from '../app/ThemeSheet';
+import { EmptyNote } from '../ui/EmptyNote';
 import { Icon } from '../ui/Icon';
 import { Ring, ringLabel } from '../ui/Ring';
 import { CountdownChip } from '../ui/CountdownChip';
@@ -269,6 +270,13 @@ function GroceriesCard() {
           <button className={css.addRow} onClick={() => setAdding(true)}>
             <Icon name="plus" size={20} /> Add item
           </button>
+        )}
+        {!open.length && !adding && (
+          <EmptyNote className={css.shopEmpty}>
+            All stocked up.
+            <br />
+            <i>Nothing left to buy.</i>
+          </EmptyNote>
         )}
         {[...open].reverse().map((g) => {
           const ticked = groceries.isChecking(g.id);

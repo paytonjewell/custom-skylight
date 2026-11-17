@@ -7,8 +7,8 @@
 }
 .chip:active { transform: scale(.97); }
 .icon {
-  width: 48px; height: 48px; flex: none; border-radius: 12px;
-  display: grid; place-items: center; font-size: 24px;
+  width: 48px; height: 48px; flex: none; border-radius: var(--r-sm);
+  display: grid; place-items: center; line-height: 1; font-size: 24px;
   background: var(--c-tint-fill, var(--c-tint)); color: var(--c);
 }
 .emoji { filter: var(--emoji-filter); line-height: 1; }

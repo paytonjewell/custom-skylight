@@ -3,7 +3,7 @@
   flex: none; width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
   font-size: 36px; background: var(--paper-2); color: var(--mute);
 
-  :global(.phone) & { width: 52px; height: 52px; border-radius: 14px; font-size: 28px; }
+  :global(.phone) & { width: 52px; height: 52px; border-radius: var(--r-sm); font-size: 28px; }
 }
 .emoji:active { transform: scale(.95); }
 .emoji.isOn { box-shadow: inset 0 0 0 2px var(--ink); }

@@ -50,8 +50,9 @@ export function useApplyTheme(): ThemeName {
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
     store('themeApplied', theme);
-    // Phone browsers tint their status bar with theme-color; the frame's kiosk ignores it. On a phone
-    // the bar sits over the screen's panel (--paper), unless that's see-through (Glass).
+    // Phone browsers tint their status bar with theme-color (and Android its gesture bar below an
+    // installed app); the frame's kiosk ignores it. On a phone both bars border the screen's panel and
+    // the tab bar, which are --paper, unless that's see-through (Glass).
     const css = getComputedStyle(document.documentElement);
     const paper = css.getPropertyValue('--paper').trim();
     const bar = phone && !paper.startsWith('rgba') ? paper : css.getPropertyValue('--shell').trim();

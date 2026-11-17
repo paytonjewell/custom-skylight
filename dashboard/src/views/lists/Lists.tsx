@@ -8,6 +8,8 @@ import { useListStatus } from '../../data/listSync';
 import { useGroceryStatus } from '../../data/grocerySync';
 import { createStore, useStore } from '../../lib/store';
 import { Icon } from '../../ui/Icon';
+import { Fab } from '../../ui/Fab';
+import { useLayout } from '../../app/layout';
 import { PageHeader } from '../../ui/headers';
 import { useHoldReorder } from '../../ui/useHoldReorder';
 import { GroceryList } from './GroceryList';
@@ -62,6 +64,7 @@ function Grid({ lists }: { lists: Checklist[] }) {
   const dragged = ghost && byId.get(ghost.id);
   const status = useListStatus();
   const groceryStatus = useGroceryStatus();
+  const phone = useLayout() === 'phone';
   const kicker =
     status === 'loading'
       ? 'Loading lists…'
@@ -74,10 +77,14 @@ function Grid({ lists }: { lists: Checklist[] }) {
   return (
     <div className={css.lists} ref={view}>
       <PageHeader kicker={kicker} title="Lists">
-        <button className="btn btn--solid" onClick={create}>
-          <Icon name="plus" size={22} />
-          New list
-        </button>
+        {phone ? (
+          <Fab label="New list" onClick={create} />
+        ) : (
+          <button className="btn btn--solid" onClick={create}>
+            <Icon name="plus" size={22} />
+            New list
+          </button>
+        )}
       </PageHeader>
       <div className={css.grid} ref={grid} data-dragging={ghost ? '' : undefined} data-scroll-top>
         <button className={css.card + ' ' + css.pinned + ' surface'} onClick={() => openList(GROCERY)}>

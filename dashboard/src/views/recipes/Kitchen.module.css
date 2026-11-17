@@ -1,13 +1,16 @@
-/* Kitchen (Kitchen.tsx): the tabs, then the tab's own screen below */
+/* Kitchen (Kitchen.tsx): the tab's own screen, whose page title is the row of tabs */
 .kitchen {
-  height: 100%; display: flex; flex-direction: column; gap: 14px;
+  height: 100%; display: flex; flex-direction: column;
 
-  :global(.phone) & { height: auto; gap: 12px; }
+  :global(.phone) & { height: auto; }
 }
-.tabs { align-self: flex-start; }
-:global(.phone) .tabs { align-self: stretch; }
-.body {
-  flex: 1; min-height: 0;
+/* The tabs, set as the page title: the open one in ink, the others quieter. Smaller than a one-word
+   title so all three fit beside the tab's controls. */
+.tabs {
+  display: flex; align-items: baseline; gap: 28px; font-size: 44px;
 
-  :global(.phone) & { min-height: auto; }
+  :global(.phone) & { gap: 14px; font-size: 24px; }
 }
+.tabs button { color: var(--mute); opacity: .6; white-space: nowrap; }
+.tabs button:active { opacity: .4; }
+.tabs button.isOn { color: var(--ink); opacity: 1; }

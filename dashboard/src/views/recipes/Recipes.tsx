@@ -24,6 +24,8 @@ import { openRecipe, openShopSheet } from './RecipeSheet';
 import { openAddRecipe } from './AddRecipeSheet';
 import { useLayout } from '../../app/layout';
 import { dayLabel, madeAgo } from './days';
+import { useKitchenTitle } from './kitchenTitle';
+import { Fab } from '../../ui/Fab';
 import css from './Recipes.module.css';
 
 const FILTERS = [
@@ -43,6 +45,7 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
   const data = useData('inventory', 'kitchenLoaded', 'mealPlan', 'recipes');
   const now = useNow();
   const today = dayOf(now);
+  const title = useKitchenTitle('Recipes');
   const status = useKitchenStatus();
   const phone = useLayout() === 'phone';
   const [query, setQuery] = useState('');
@@ -109,7 +112,7 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
 
   return (
     <div className={css.page}>
-      <PageHeader kicker={status === 'loading' && !data.kitchenLoaded ? 'Loading…' : 'Kitchen'} title="Recipes">
+      <PageHeader kicker={status === 'loading' && !data.kitchenLoaded ? 'Loading…' : 'Kitchen'} title={title}>
         <label className={css.search}>
           <Icon name="search" size={20} />
           <input
@@ -127,11 +130,7 @@ export function RecipesTab({ onInventory }: { onInventory: () => void }) {
       </PageHeader>
 
       {/* Phones: + adds a recipe (typing one in is a phone job; the frame just shows them) */}
-      {phone && (
-        <button className={css.fab} aria-label="Add a recipe" onClick={() => openAddRecipe()}>
-          <Icon name="plus" size={26} />
-        </button>
-      )}
+      {phone && <Fab label="Add a recipe" onClick={() => openAddRecipe()} />}
       <div className={css.scroll}>
         <WeekPlan days={week} today={today} drag={(rec, from) => dnd.bind({ rec, from })} lifted={dnd.dragging?.from} />
         <FromKitchen ready={ready} hasInventory={data.inventory.length > 0} onInventory={onInventory} />
@@ -204,14 +203,16 @@ function WeekPlan({
     <section className={css.week}>
       <div className={css.weekHead}>
         <div className="label">Dinners this week</div>
-        <button
-          className={'btn ' + (toBuy ? 'btn--solid' : 'btn--ghost') + ' ' + css.shopBtn}
-          disabled={!planned.length}
-          onClick={() => openShopSheet(days)}
-        >
-          <Icon name="cart" size={20} />
-          {!planned.length ? 'Plan a dinner to shop for it' : toBuy ? `Shop this week · ${toBuy}` : 'All on the list'}
-        </button>
+        {/* Nothing planned yet: no button (each day's "+ Plan" is the way in) */}
+        {planned.length > 0 && (
+          <button
+            className={'btn ' + (toBuy ? 'btn--solid' : 'btn--ghost') + ' ' + css.shopBtn}
+            onClick={() => openShopSheet(days)}
+          >
+            <Icon name="cart" size={18} />
+            {toBuy ? `Shop this week · ${toBuy}` : 'All on the list'}
+          </button>
+        )}
       </div>
       <div className={css.days}>
         {days.map((day) => {

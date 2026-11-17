@@ -35,8 +35,10 @@
   --fs-label: 13px;
   --fs-min: 14px;
 
-  /* shape + space */
+  /* shape + space: --r for cards and panels; --r-sm for what sits inside one (rows, tiles, emoji
+     boxes, inputs). Pills use 999px, or half their height. */
   --r: 16px;
+  --r-sm: 12px;
   --pad: 28px;
   --tap: 60px;
 
@@ -187,6 +189,15 @@
   --alert: #E0839F;
   --warm: #FFD9B0;
 
+}
+
+/* A calendar's own colour (ownColor in src/ui/people.tsx) is set inline; under Dark it switches to its
+   dimmed version. !important: the only way a stylesheet outranks an inline value. */
+[data-theme="dark"] [style*="--c-dim-rgb"] {
+  --c: rgb(var(--c-dim-rgb)) !important;
+  --c-rgb: var(--c-dim-rgb) !important;
+  --c-ink: var(--c-dim-ink) !important;
+  --c-tint: rgb(var(--c-dim-rgb) / var(--tint)) !important;
 }
 
 /* ---------------------------------------------------------------- Glass */

@@ -25,12 +25,14 @@ import { Icon } from '../../ui/Icon';
 import { PageHeader, SheetHeader } from '../../ui/headers';
 import { EmptyNote } from '../../ui/EmptyNote';
 import { useDragDrop, type DragProps } from '../../ui/useDragDrop';
+import { useKitchenTitle } from './kitchenTitle';
 import css from './Inventory.module.css';
 
 const PLACE_EMOJI: Record<Place, string> = { Pantry: '🥫', Fridge: '🧊', Freezer: '❄️' };
 
 export function Inventory() {
   const data = useData('catalog', 'groceryNames', 'inventory', 'inventoryNames', 'recipes');
+  const title = useKitchenTitle('Inventory');
   const [name, setName] = useState('');
   /** Where the typed name will go: chosen, or the guess */
   const [chosen, setChosen] = useState<Place | null>(null);
@@ -83,7 +85,7 @@ export function Inventory() {
     <div className={css.inv}>
       <PageHeader
         kicker="Kitchen"
-        title="Inventory"
+        title={title}
         meta={
           <span className={css.count}>
             <b className="num">{data.inventory.length}</b> on hand

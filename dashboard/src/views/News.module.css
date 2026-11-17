@@ -117,15 +117,7 @@
   & :global(.sheet-h) { font-size: 36px; line-height: 1.1; margin-bottom: 14px; }
   :global(.phone) & :global(.sheet-h) { font-size: 26px; }
 
-  /* Keep the actions visible at the bottom while a longer story scrolls */
-  & :global(.sheet-actions) {
-    position: sticky; bottom: 0; z-index: 1;
-    margin: 20px -36px -32px; padding: 16px 36px 24px;
-    background: var(--paper); border-top: 1px solid var(--line);
-  }
-
-  :global([data-theme="glass"]) & :global(.sheet-x),
-  :global([data-theme="glass"]) & :global(.sheet-actions) { background: rgba(255, 255, 255, .92); }
+  :global([data-theme="glass"]) & :global(.sheet-x) { background: rgba(255, 255, 255, .92); }
 }
 .sheetImg {
   height: 210px;
@@ -141,7 +133,7 @@
 /* QR code (frame layout) to read the full article on a phone */
 .qr { display: flex; align-items: center; gap: 22px; margin-top: 22px; padding: 16px; border-radius: var(--r); background: var(--card); }
 .qrCode {
-  flex: none; width: 132px; height: 132px; padding: 8px; border-radius: 12px; background: #fff;
+  flex: none; width: 132px; height: 132px; padding: 8px; border-radius: var(--r-sm); background: #fff;
 
   & svg { display: block; width: 100%; height: 100%; }
 }

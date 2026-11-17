@@ -3,6 +3,7 @@
 // Only the icons imported here end up in the bundle.
 import {
   Asterisk,
+  Bed,
   Bell,
   Calendar,
   ChefHat,
@@ -106,6 +107,7 @@ export const ICONS = {
   // weather (names match WxCond in src/data/types.ts)
   sun: Sun,
   moon: Moon,
+  bed: Bed,
   cloud: Cloud,
   rain: CloudRain,
   partly: CloudSun,

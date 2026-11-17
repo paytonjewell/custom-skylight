@@ -93,10 +93,16 @@ function ownColor(hex: string): Record<string, string> {
     g = (n >> 8) & 255,
     b = n & 255;
   const light = 0.299 * r + 0.587 * g + 0.114 * b > 160;
+  // Dark's own version: 35% of the way to Dark's panel colour, so a bright calendar colour (Google's
+  // birthday yellow) sits with Dark's muted tones. Used only under Dark (css/tokens.css).
+  const [dr, dg, db] = [r, g, b].map((v, i) => Math.round(v + ([28, 28, 33][i] - v) * 0.35));
+  const dimLight = 0.299 * dr + 0.587 * dg + 0.114 * db > 160;
   return {
     '--c': hex,
     '--c-rgb': `${r} ${g} ${b}`,
     '--c-ink': light ? '#1F1B24' : '#FFFFFF',
     '--c-tint': `rgb(${r} ${g} ${b} / var(--tint))`,
+    '--c-dim-rgb': `${dr} ${dg} ${db}`,
+    '--c-dim-ink': dimLight ? '#1F1B24' : '#FFFFFF',
   };
 }

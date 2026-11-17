@@ -167,7 +167,7 @@ function Week({ start, now, next }: { start: Date; now: Date; next: () => void }
           // The whole day opens it on the Calendar screen; its events open themselves
           <div
             key={i}
-            className={css.cell + (today ? ' ' + css.isToday : '')}
+            className={css.cell + (today ? ' ' + css.isToday : '') + (list.length ? '' : ' ' + css.isEmpty)}
             role="button"
             tabIndex={0}
             {...tappable(() => openCalendarAt(d))}
@@ -178,7 +178,8 @@ function Week({ start, now, next }: { start: Date; now: Date; next: () => void }
                 {fmt.dayShort(d)} <span className={css.dayNum + ' num'}>{d.getDate()}</span>
               </span>
               {wx && <Icon name={wx} size={22} />}
-              <small>{list.length ? list.length + (list.length === 1 ? ' event' : ' events') : 'No events'}</small>
+              {/* The events themselves follow (with "+2 more" if they don't fit), so only an empty day says so */}
+              {!list.length && <small>No events</small>}
             </div>
             {fits.map((e) => (
               <button
