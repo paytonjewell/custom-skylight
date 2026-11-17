@@ -1,0 +1,110 @@
+/* The calendar card on Today (HomeCalendar.tsx). On the frame it fills the left column without
+   scrolling; on a phone it grows with its content. */
+.card {
+  height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px;
+
+  :global(.phone) & { height: auto; padding: 14px 12px; }
+}
+
+/* ---------------------------------------------------------------- header */
+.head { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.label {
+  display: flex; align-items: center; gap: 6px; padding: 0 4px;
+
+  /* Phone: no room beside the controls */
+  :global(.phone) & { display: none; }
+}
+.title {
+  flex: 1; min-width: 0; margin-left: 8px; font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+
+  :global(.phone) & { display: none; }
+}
+.menuWrap {
+  position: relative; margin-left: auto;
+
+  :global(.phone) & { margin-left: 0; margin-right: auto; }
+}
+.viewBtn {
+  height: 40px; padding: 0 12px 0 16px; border-radius: 20px; display: flex; align-items: center; gap: 4px;
+  font-size: 16px; font-weight: 500; background: var(--paper-2);
+}
+.scrim { position: fixed; inset: 0; z-index: 20; }
+.menu {
+  position: absolute; z-index: 21; top: calc(100% + 6px); right: 0; width: 200px; padding: 6px;
+
+  /* Phone: the button is on the left, so the menu opens to the right of it */
+  :global(.phone) & { right: auto; left: 0; }
+  display: flex; flex-direction: column; gap: 4px;
+  border-radius: var(--r); background: var(--paper); box-shadow: 0 12px 36px rgb(0 0 0 / .18), 0 0 0 1px var(--line);
+}
+.item {
+  height: 52px; padding: 0 14px 0 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;
+  font-size: 17px; text-align: left;
+}
+.item:active { background: var(--paper-2); }
+/* a radio dot on the right */
+.item i { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--line); }
+.item.isOn { background: var(--paper-2); font-weight: 600; }
+.item.isOn i { box-shadow: inset 0 0 0 6px var(--ink); }
+.today {
+  height: 40px; padding: 0 12px; border-radius: 20px; font-size: 15px; font-weight: 500; color: var(--ink-2);
+}
+.today.isAtToday { opacity: .35; }
+
+.body { flex: 1; min-height: 0; }
+
+/* ---------------------------------------------------------------- week: 4 × 2 days */
+.week {
+  height: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 6px;
+
+  :global(.phone) & { height: auto; grid-template-columns: 1fr; grid-template-rows: none; }
+}
+.cell {
+  min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 5px;
+  padding: 8px; border-radius: 14px; background: var(--paper); text-align: left;
+}
+.cell.isToday { box-shadow: inset 0 0 0 2px var(--ink); }
+.dayHead {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; padding: 2px 4px 4px; text-align: left; color: var(--mute);
+}
+.dayHead small { grid-column: 1 / -1; font-size: 14px; color: var(--mute); }
+.dayName { font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.1; color: var(--ink); white-space: nowrap; }
+.dayNum { font-family: var(--serif); }
+.isToday .dayNum {
+  display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 17px;
+  background: var(--ink); color: var(--on-ink); font-size: 20px; vertical-align: 3px;
+}
+.ev {
+  flex: none; min-width: 0; padding: 6px 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 1px; text-align: left;
+  background: var(--c-tint); color: var(--ink);
+}
+.ev b { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev small { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev.isAllDay { background: var(--c); color: var(--c-ink); }
+.ev.isAllDay small { color: inherit; opacity: .8; }
+.ev.isPast { opacity: .5; }
+.ev:active { filter: brightness(.95); }
+.more { flex: none; padding: 4px 10px; text-align: left; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.next { justify-content: flex-start; padding: 10px 12px; gap: 6px; }
+.next small { font-size: 15px; color: var(--ink-2); }
+.next small + small { color: var(--mute); }
+.next:active { opacity: .6; }
+.cell { cursor: pointer; }
+.open { height: 100%; cursor: pointer; }
+
+/* ---------------------------------------------------------------- day: a schedule */
+.schedule { list-style: none; margin: 0; padding: 0; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.row {
+  width: 100%; min-height: 64px; padding: 10px 14px; border-radius: 14px; display: flex; align-items: center; gap: 14px; text-align: left;
+  background: var(--paper);
+}
+.row.isPast { opacity: .5; }
+.row.isNow { box-shadow: inset 0 0 0 2px var(--c); }
+.when { width: 84px; flex: none; display: flex; flex-direction: column; font-size: 15px; color: var(--ink-2); }
+.when b { font-size: 17px; font-weight: 600; color: var(--ink); }
+.when small { font-size: 13px; color: var(--mute); }
+.bar { width: 6px; align-self: stretch; flex: none; border-radius: 3px; background: var(--c); }
+.what { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.what b { font-size: 19px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.what small { font-size: 14px; color: var(--ink-2); }
+.empty { padding: 24px 8px; font-size: 22px; }

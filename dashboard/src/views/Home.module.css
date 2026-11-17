@@ -1,0 +1,219 @@
+/* Today: 1136 × 752 content box, no scrolling, on the frame. On phones it becomes one scrolling
+   column: date and weather, the calendar, tasks, groceries and the verse. */
+.home {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+
+  :global(.phone) & { height: auto; display: flex; flex-direction: column; gap: 16px; }
+}
+
+/* ---------------------------------------------------------------- top row: clock | countdown chips | weather */
+.top {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 32px;
+  padding-bottom: 18px; border-bottom: 1px solid var(--line);
+
+  /* Phone: date (with the theme button), weather, then countdown chips; no big clock */
+  :global(.phone) & {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "date theme" "wx wx" "cds cds";
+    gap: 14px 8px; padding-bottom: 0; border-bottom: 0;
+  }
+}
+.clock {
+  :global(.phone) & { display: none; }
+}
+.theme {
+  :global(.phone) & { grid-area: theme; align-self: start; margin-right: -8px; }
+}
+
+.time { font-size: 136px; font-weight: 800; line-height: .8; letter-spacing: -.03em; display: flex; align-items: flex-start; }
+.ampm { font-size: 24px; font-weight: 400; letter-spacing: .04em; color: var(--mute); margin: 6px 0 0 10px; }
+.date {
+  font-size: 26px; font-weight: 400; color: var(--ink-2);
+  font-family: var(--serif);
+}
+.date b { font-weight: 700; color: var(--ink); margin-right: 4px; }
+:global(.phone) .date b { display: block; font-size: 34px; margin: 0; }
+.dateComma {
+  :global(.phone) & { display: none; }
+}
+
+/* middle column: countdown chips on top, date centered along the bottom */
+.mid {
+  min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
+
+  :global(.phone) & { display: contents; }
+}
+.mid .date { align-self: center; }
+:global(.phone) .mid .date { grid-area: date; align-self: center; font-size: 22px; line-height: 1.15; }
+
+/* scrolls sideways; useEdgeFade (src/ui/hooks.ts) sets --fade-l / --fade-r only on edges with hidden chips */
+.cds {
+  min-width: 0; display: flex; gap: 10px;
+  overflow-x: auto; overscroll-behavior-x: contain;
+  --fade-l: 0px; --fade-r: 0px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+
+  :global(.phone) & { grid-area: cds; margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); }
+  :global(.phone) &:empty { display: none; }
+}
+
+.wx {
+  max-width: 420px; padding-right: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+
+  :global(.phone) & {
+    grid-area: wx; max-width: none;
+    flex-direction: row; justify-content: space-between; gap: 12px;
+    padding: 12px 14px; border-radius: var(--r); background: var(--card); text-align: left;
+  }
+}
+.wx:active { opacity: .6; }
+.wxNow {
+  display: flex; align-items: center; gap: 12px;
+
+  :global(.phone) & { gap: 8px; }
+}
+.wxIcon {
+  color: var(--ink-2);
+
+  :global(.phone) & :global(.i) { width: 34px; height: 34px; }
+}
+.wxTemp {
+  font-size: 72px; font-weight: 600; line-height: .85; letter-spacing: -.02em;
+
+  :global(.phone) & { font-size: 44px; }
+}
+/* high over low, in a narrow column beside the temperature */
+.wxMeta {
+  display: flex; flex-direction: column; gap: 2px; margin-left: 2px; font-size: 17px; line-height: 1.2; text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap;
+
+  :global(.phone) & { font-size: 14px; }
+}
+.wxMeta span:first-child { color: var(--ink-2); font-weight: 500; }
+.wxMeta span:last-child { color: var(--mute); }
+.wxSay {
+  display: flex; align-items: center; gap: 6px; font-size: 17px; line-height: 1.3; color: var(--ink-2);
+
+  :global(.phone) & { flex: 1; min-width: 0; justify-content: flex-end; text-align: right; font-size: 14px; }
+}
+.wxSay b { font-weight: 500; color: var(--ink); }
+/* the arrow hangs outside so the two lines center under the temperature */
+.wxSay { position: relative; }
+.wxSay :global(.i) { position: absolute; left: 100%; top: 50%; margin: -9px 0 0 6px; color: var(--mute); }
+:global(.phone) .wxSay :global(.i) { position: static; margin: 0; flex: none; }
+
+/* ---------------------------------------------------------------- main column: the calendar (HomeCalendar) */
+.main {
+  grid-column: 1 / 9; min-height: 0; display: flex; flex-direction: column;
+}
+
+/* ---------------------------------------------------------------- side column */
+.side {
+  grid-column: 9 / 13; display: grid; grid-template-rows: 76px 144px minmax(170px, 1fr) minmax(0, auto); gap: 12px; min-height: 0;
+
+  :global(.phone) & { display: flex; flex-direction: column; gap: 12px; }
+}
+/* verse of the day, tinted with palette slot 1 (purple / sage / dusty blue, depending on the theme) */
+.verse { display: flex; flex-direction: column; gap: 14px; min-height: 0; max-height: 232px; overflow: hidden; text-align: left; background: rgb(var(--t1-rgb) / calc(var(--tint) * 1.6)); }
+.verse::after {
+  content: '\201C'; position: absolute; right: 18px; top: -6px; pointer-events: none;
+  font-family: var(--serif); font-size: 110px; font-weight: 700; line-height: 1; color: var(--t1); opacity: .35;
+}
+.verseText {
+  position: relative; z-index: 1; margin: auto 0; font-size: 21px; font-weight: 500; line-height: 1.3;
+  /* Too long for the card: it fades out above the reference (tap for the whole verse) */
+  /* (the fade sits over empty padding when the verse fits) */
+  min-height: 0; overflow: hidden; padding-bottom: 12px;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent); mask-image: linear-gradient(#000 calc(100% - 16px), transparent);
+
+  :global(.phone) & { font-size: 19px; }
+}
+.verseText.isLong {
+  font-size: 18px;
+
+  :global(.phone) & { font-size: 18px; }
+}
+/* the longest verses still fit the card on the frame */
+.verseText.isVeryLong {
+  font-size: 15px; line-height: 1.32;
+
+  :global(.phone) & { font-size: 17px; }
+}
+.verseRef { position: relative; z-index: 1; flex: none; font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.verse:active { filter: brightness(.97); }
+.verseFull { margin: 12px 0 14px; font-size: 26px; font-weight: 500; line-height: 1.35; }
+.verseRef span { margin-left: 6px; font-size: 11px; font-weight: 500; letter-spacing: .12em; color: var(--mute); }
+.sc { font-variant: small-caps; }
+
+.chores { display: flex; flex-direction: column; gap: 12px; }
+.choresHead { display: flex; align-items: center; gap: 2px; align-self: flex-start; }
+.rings {
+  display: flex; justify-content: space-between;
+
+  /* Phone: chore rings scroll sideways (edges fade like the countdowns) instead of overflowing the card */
+  :global(.phone) & {
+    justify-content: flex-start; gap: 14px; overflow-x: auto; overscroll-behavior-x: contain;
+    margin: 0 -20px; padding: 0 20px;
+    --fade-l: 0px; --fade-r: 0px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+  }
+}
+.ring {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; border-radius: 12px;
+
+  :global(.phone) & { flex: none; }
+}
+.ring :global(.num) { position: absolute; top: 0; left: 0; width: 64px; height: 64px; display: grid; place-items: center; font-size: 18px; }
+.ring span { font-size: var(--fs-min); color: var(--ink-2); }
+.ring.isDone :global(.ring-bg) { fill: var(--c); }
+.ring.isDone :global(.num) { color: var(--c-ink); }
+.ring:active { transform: scale(.94); }
+
+/* Groceries: heading and count, then "Add item" and the items, which scroll */
+.shop {
+  display: flex; flex-direction: column; gap: 10px; min-height: 0; padding-bottom: 12px;
+
+  :global(.phone) & { max-height: 300px; }
+}
+.shopHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.shopHead :global(.label) { display: flex; align-items: center; gap: 2px; }
+.count { font-size: 15px; color: var(--mute); white-space: nowrap; }
+.count b { font-size: 22px; font-weight: 600; color: var(--ink); margin-right: 2px; }
+.shopList {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 6px;
+  margin: 0 -6px; padding: 0 6px;
+}
+.addRow, .item {
+  flex: none; min-height: 48px; width: 100%; padding: 0 14px; border-radius: 12px;
+  display: flex; align-items: center; gap: 8px; text-align: left; font-size: 17px;
+}
+.addRow { color: var(--ink-2); background: rgb(var(--accent-rgb) / .22); font-weight: 500; }
+.addRow:active { background: rgb(var(--accent-rgb) / .35); }
+.addInput { border: 0; outline: none; color: var(--ink); font: inherit; font-size: 17px; box-shadow: inset 0 0 0 2px var(--accent); }
+.item { justify-content: space-between; background: var(--paper); }
+.item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item small { color: var(--mute); font-size: 15px; }
+/* the check circle */
+.item i { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 2px var(--line); color: var(--on-ink); }
+.item:active { background: var(--paper-2); }
+.item.isTicked span { text-decoration: line-through; color: var(--mute); }
+.item.isTicked i { background: var(--accent-deep); box-shadow: none; }
+
+/* Tonight's dinner: one row (emoji, title, time and what's missing) */
+/* (button.dinner: outranks the shared button.card { display: block }) */
+button.dinner {
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; text-align: left; min-height: 0;
+  background: var(--c-tint, var(--card));
+}
+.dinner:active { filter: brightness(.97); }
+.dinnerArt { width: 56px; height: 56px; flex: none; border-radius: 14px; display: grid; place-items: center; font-size: 32px; background: var(--paper); filter: var(--emoji-filter); }
+.dinnerText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dinnerText b { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dinnerText small { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dinnerGo { display: flex; align-items: center; gap: 2px; font-size: 15px; font-weight: 600; color: var(--ink-2); }

@@ -1,8 +1,31 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "home-dashboard",
+  "main": "./worker/index.ts",
   "compatibility_date": "2026-09-30",
   "assets": {
-    "directory": "./dist"
-  }
+    "binding": "ASSETS",
+    // Every request goes through the Worker first, so nothing (not even the app's JS) is served
+    // to a device that hasn't signed in with the PIN.
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "home-dashboard",
+      "database_id": "200ed56d-cd0d-429d-b3a4-cffd29a90af2",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Every minute: send task reminders that are due (worker/push.ts). Every 5th minute also refreshes
+  // up to 3 news feeds that are due (worker/news/news.ts; each is checked about hourly).
+  "triggers": { "crons": ["* * * * *"] },
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "home-dashboard-photos"
+    }
+  ]
+  // Secret (not in this file): DASHBOARD_PIN, set with `wrangler secret put DASHBOARD_PIN`.
+  // Locally it comes from .dev.vars (see .dev.vars.example).
 }

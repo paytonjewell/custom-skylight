@@ -1,0 +1,16 @@
+/* The emoji-mart picker fills the width it's given; its look comes from its CSS variables */
+.host {
+  display: flex; justify-content: center; min-height: 420px;
+
+  :global(.phone) & { min-height: 360px; }
+}
+.host :global(em-emoji-picker) {
+  height: 440px;
+  --border-radius: 18px;
+  --font-family: var(--sans);
+  --font-size: 17px;
+  --shadow: none;
+  --category-icon-size: 26px;
+}
+.phone :global(em-emoji-picker) { height: 380px; --font-size: 15px; --category-icon-size: 22px; }
+.loading { align-self: center; color: var(--mute); font-size: 16px; }

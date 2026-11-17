@@ -88,6 +88,7 @@ class Thread {
   void start() { pending=task; }
 }
 class SystemClock { static long elapsedRealtime() { return 0; }}
+class CookieManager { static CookieManager getInstance() { return new CookieManager(); } void flush() {} }
 class Log { static void i(String t, String m) {} static void w(String t, String m) {} }
 class Label { void setText(String s) {} }
 class WebResourceRequest {

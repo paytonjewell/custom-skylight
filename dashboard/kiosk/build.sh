@@ -7,6 +7,7 @@
 #     google-android-platform-34-installer
 # Install on the tablet: adb install -r kiosk/build/homehq.apk
 # Optional: KIOSK_SITE=<dir> bundles a static site, served at http://127.0.0.1:8765/ (README).
+# Optional: KIOSK_URL=https://your-dashboard/ is the address it opens until one is saved (README).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -34,8 +35,17 @@ fi
 "$BT/aapt2" link -o build/base.apk -I "$JAR" --manifest AndroidManifest.xml ${ASSETS[@]+"${ASSETS[@]}"} build/res.zip \
   --java build/gen --min-sdk-version 23 --target-sdk-version 28 --version-code 3 --version-name 1.2
 
+# The sources are compiled from a copy, with KIOSK_URL (if set) as the default address
+mkdir -p build/src && cp src/com/wesbos/homehq/*.java build/src/
+if [ -n "${KIOSK_URL:-}" ]; then
+  case "$KIOSK_URL" in http://*|https://*) ;; *) echo "KIOSK_URL must start with http:// or https://" >&2; exit 1 ;; esac
+  case "$KIOSK_URL" in *'"'*|*'\'*) echo "KIOSK_URL can't contain quotes or backslashes" >&2; exit 1 ;; esac
+  KIOSK_URL="$KIOSK_URL" perl -pi -e 's/(static final String DEFAULT_URL = )"[^"]*"/$1"$ENV{KIOSK_URL}"/' build/src/MainActivity.java
+  grep -q "DEFAULT_URL = \"$KIOSK_URL\"" build/src/MainActivity.java || { echo "Couldn't set KIOSK_URL" >&2; exit 1; }
+  echo "Default address: $KIOSK_URL"
+fi
 javac -nowarn -source 8 -target 8 -classpath "$JAR" -d build/classes \
-  src/com/wesbos/homehq/*.java build/gen/com/wesbos/homehq/R.java
+  build/src/*.java build/gen/com/wesbos/homehq/R.java
 
 "$BT/d8" --min-api 23 --lib "$JAR" --output build $(find build/classes -name '*.class')
 (cd build && zip -qj base.apk classes.dex)

@@ -1,0 +1,149 @@
+/* News: lead story + headline list (frame), stacked on phones, and the story sheet.
+   Nesting is flattened at build time (vite.config.ts). Phone tweaks sit inside the rule they change,
+   under :global(.phone) &, since html.phone is set by src/app/layout.ts. */
+
+.news {
+  height: 100%; display: flex; flex-direction: column;
+
+  :global(.phone) & { height: auto; }
+}
+
+/* Topic tabs (the shared Segmented control) */
+.topics {
+  & button { padding: 0 16px; }
+
+  /* Phone: six topics in a row that scrolls sideways rather than squeezing. Exactly screen-wide
+     (edge to edge, past the page padding) so the chips scroll inside it; as a flex item it would
+     otherwise grow to fit every chip and widen the whole page. */
+  :global(.phone) & {
+    flex: 0 0 calc(100% + 2 * var(--pad)); min-width: 0; width: auto;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    margin: 0 calc(-1 * var(--pad)); padding: 3px var(--pad); border-radius: 0; background: transparent; gap: 6px;
+
+    & button { flex: none; padding: 0 14px; background: var(--paper-2); border-radius: 999px; }
+    & button:global(.is-on) { background: var(--ink); }
+  }
+}
+
+.body {
+  flex: 1; min-height: 0; display: grid; grid-template-columns: 1.25fr 1fr; gap: 28px;
+
+  :global(.phone) & { display: flex; flex-direction: column; gap: 14px; }
+}
+
+.kicker b { font-weight: 600; color: var(--ink-2); }
+
+/* Images fill their box; the box sets the size */
+.media {
+  position: relative; overflow: hidden; background: var(--paper-2);
+
+  & img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+}
+
+/* ---------------------------------------------------------------- lead story */
+.lead {
+  min-height: 0; display: flex; flex-direction: column;
+  border-radius: var(--r); overflow: hidden; text-align: left;
+
+  &:active { transform: scale(.99); }
+}
+.leadImg {
+  display: block; flex: 1; min-height: 0;
+
+  :global(.phone) & { flex: none; height: 200px; }
+}
+.leadText {
+  flex: none; display: flex; flex-direction: column; gap: 10px; padding: 22px 26px 26px;
+
+  :global(.phone) & { padding: 14px 16px 18px; gap: 8px; }
+}
+.leadTitle {
+  font-size: 36px; line-height: 1.1;
+
+  :global(.phone) & { font-size: 26px; }
+}
+.leadSum {
+  font-size: 18px; line-height: 1.45; color: var(--ink-2);
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+
+  :global(.phone) & { font-size: 16px; }
+}
+/* No picture: the headline carries the card */
+.leadTextOnly {
+  justify-content: flex-end;
+
+  & .leadTitle { font-size: 48px; }
+  :global(.phone) & .leadTitle { font-size: 30px; }
+}
+
+/* ---------------------------------------------------------------- headline list */
+.list {
+  min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column;
+
+  :global(.phone) & { overflow: visible; }
+}
+.row {
+  flex: none; display: flex; align-items: center; gap: 18px;
+  min-height: 116px; padding: 16px 4px; border-bottom: 1px solid var(--line); text-align: left;
+
+  &:first-child { padding-top: 2px; }
+  &:active { background: var(--card); }
+  :global(.phone) & { gap: 12px; padding: 14px 2px; min-height: 96px; }
+}
+.rowText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rowTitle {
+  font-size: 19px; font-weight: 600; line-height: 1.28;
+  /* up to three lines of headline before it's cut off */
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+
+  :global(.phone) & { font-size: 16px; }
+}
+.rowThumb {
+  width: 128px; height: 92px; flex: none; border-radius: 10px;
+
+  :global(.phone) & { width: 96px; height: 76px; }
+}
+
+.empty { padding: 60px 0; text-align: center; }
+
+/* ---------------------------------------------------------------- story sheet
+   .sheet is added to the shared sheet wrapper (openSheet's cls), so it can style the shared
+   close button, title and actions bar inside it. */
+.sheet {
+  & :global(.sheet-x) { background: var(--paper); }
+  & :global(.sheet-h) { font-size: 36px; line-height: 1.1; margin-bottom: 14px; }
+  :global(.phone) & :global(.sheet-h) { font-size: 26px; }
+
+  /* Keep the actions visible at the bottom while a longer story scrolls */
+  & :global(.sheet-actions) {
+    position: sticky; bottom: 0; z-index: 1;
+    margin: 20px -36px -32px; padding: 16px 36px 24px;
+    background: var(--paper); border-top: 1px solid var(--line);
+  }
+
+  :global([data-theme="glass"]) & :global(.sheet-x),
+  :global([data-theme="glass"]) & :global(.sheet-actions) { background: rgba(255, 255, 255, .92); }
+}
+.sheetImg {
+  height: 210px;
+
+  :global(.phone) & { height: 200px; }
+}
+.sum {
+  font-size: 21px; line-height: 1.4; font-weight: 500; margin-bottom: 16px;
+
+  :global(.phone) & { font-size: 18px; }
+}
+
+/* QR code (frame layout) to read the full article on a phone */
+.qr { display: flex; align-items: center; gap: 22px; margin-top: 22px; padding: 16px; border-radius: var(--r); background: var(--card); }
+.qrCode {
+  flex: none; width: 132px; height: 132px; padding: 8px; border-radius: 12px; background: #fff;
+
+  & svg { display: block; width: 100%; height: 100%; }
+}
+.qrText {
+  display: flex; flex-direction: column; gap: 4px; font-size: 16px; color: var(--mute);
+
+  & b { font-size: 19px; font-weight: 600; color: var(--ink); }
+}

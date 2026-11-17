@@ -1,0 +1,344 @@
+/* One list: items on the left, adding on the right (as on the grocery list). On phones, one column
+   with the add box on top. */
+.check {
+  position: relative; /* the dragged row is drawn in here */
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  grid-template-rows: auto 1fr;
+  gap: 16px 24px;
+
+  :global(.phone) & {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+.head {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+
+  :global(.phone) & {
+    margin: 0;
+  }
+}
+/* the title block takes the free space, so the name field is wide */
+.head > :global(.page-head-title) {
+  flex: 1;
+  min-width: 0;
+}
+/* The list name, edited in place: looks like the page title */
+.title {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+.title::placeholder {
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- items */
+.list {
+  position: relative; /* rows are measured from here while dragging */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  :global(.phone) & {
+    order: 2;
+    overflow: visible;
+    padding-bottom: 0;
+    gap: 6px;
+  }
+}
+/* A row: the trash button behind, and the sliding part (checkbox + text) on top */
+.row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  flex: none;
+  cursor: grab;
+  -webkit-touch-callout: none;
+}
+.list[data-dragging] .row {
+  cursor: grabbing;
+}
+/* An item is a card in the surface colour (its .surface class adds Glass's frosted edge); a heading
+   sits flat on the page */
+.slide {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 68px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--card);
+  /* sideways moves are swipes (useSwipeReveal); up and down still scroll */
+  touch-action: pan-y;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  :global(.phone) & {
+    min-height: 54px;
+    gap: 12px;
+    padding: 0 12px;
+  }
+}
+.swiping {
+  transition: none;
+}
+/* The actions behind a row: Edit at the start (swipe right), Delete at the end (swipe left). Each is
+   only there while its side is open (and until the row has slid back), so no edge of one shows around
+   the card's rounded corners. */
+.action {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 88px; /* = REVEAL in useSwipeReveal */
+  display: grid;
+  place-items: center;
+  color: #fff;
+  visibility: hidden;
+  transition: visibility 0s 0.22s;
+}
+.action:active {
+  filter: brightness(0.9);
+}
+.editAction {
+  left: 0;
+  background: var(--accent);
+}
+.remindAction {
+  left: 88px; /* after Edit */
+  background: #e0a33a;
+}
+.deleteAction {
+  right: 0;
+  background: var(--alert);
+}
+.showStart .editAction,
+.showStart .remindAction,
+.showEnd .deleteAction {
+  visibility: visible;
+  transition: none;
+}
+
+.box {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: transparent;
+  box-shadow: inset 0 0 0 1.5px #bdbdbd;
+
+  :global(.phone) & {
+    width: 28px;
+    height: 28px;
+  }
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  font-size: 21px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+
+  :global(.phone) & {
+    font-size: 17px;
+  }
+}
+.isDone .box {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: none;
+}
+.isDone .text {
+  color: var(--mute);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* a heading: groups the items below it */
+.heading {
+  border-radius: 0;
+  margin-top: 10px;
+}
+.heading .slide {
+  min-height: 56px;
+  padding: 14px 4px 8px;
+  align-items: flex-end;
+  border-radius: 0;
+  border-bottom: 1px solid var(--ink);
+  background: var(--paper);
+}
+:global(.phone) .heading .slide {
+  min-height: 52px;
+  padding-top: 12px;
+}
+.headingText {
+  flex: 1;
+  min-width: 0;
+  font-size: 26px;
+  line-height: 1.1;
+
+  :global(.phone) & {
+    font-size: 21px;
+  }
+}
+
+/* Editing an item's text in place: the field takes the text's look, minus a checked item's strike */
+.slide .editField {
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 2px solid var(--accent);
+  border-radius: 0;
+  background: transparent;
+  outline: none;
+  color: var(--ink);
+  text-decoration: none;
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* While dragging: the row's empty slot, and the copy under the finger */
+.isLifted {
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.isLifted > * {
+  visibility: hidden;
+}
+/* (also has the row's classes, so a checked item or heading looks the same while it's dragged) */
+.ghost {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  transform: scale(1.03);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+.ghost > .slide {
+  height: 100%;
+}
+.empty {
+  padding: 80px 0;
+  text-align: center;
+
+  :global(.phone) & {
+    padding: 40px 0;
+  }
+}
+
+/* ---------------------------------------------------------------- adding */
+.side {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  /* Phone: its parts join the page's column, so the add box can stick to the top (a sticky element
+     only sticks within its parent) */
+  :global(.phone) & {
+    display: contents;
+  }
+}
+.add {
+  border-radius: var(--r);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  :global(.phone) & {
+    order: 1;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 8px;
+    gap: 8px;
+    border-radius: 16px;
+  }
+  /* Glass surfaces are see-through; the pinned box needs frosting so the list doesn't show through */
+  :global(.phone[data-theme="glass"]) & {
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
+  }
+}
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 76px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background: var(--field);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+
+  :global(.phone) & {
+    height: 52px;
+    padding: 0 14px;
+  }
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 24px;
+  font-weight: 400;
+
+  :global(.phone) & {
+    font-size: 17px;
+  }
+}
+.input::placeholder {
+  color: #b5b5b5;
+  font-weight: 400;
+}
+.addButtons {
+  display: flex;
+  gap: 10px;
+
+  & > * {
+    flex: 1;
+  }
+  :global(.phone) & > * {
+    min-height: 42px;
+  }
+}
+
+/* Emoji beside the list's name; tap to change it */
+.titleRow { display: flex; align-items: center; gap: 14px; }
+.titleRow .title { flex: 1; min-width: 0; }
+.emojiBtn {
+  flex: none; width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center;
+  font-size: 38px; line-height: 1; background: var(--paper-2);
+
+  :global(.phone) & { width: 48px; height: 48px; font-size: 28px; border-radius: 12px; }
+}
+.emojiBtn:active { transform: scale(.95); }
+
+/* An item's reminder on the Tasks screen: 🔔 Tomorrow */
+.reminder {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; margin-left: auto;
+  padding: 4px 10px; border-radius: 999px; background: var(--paper-2); color: var(--ink-2); font-size: 14px;
+}
+.isDone .reminder { opacity: .6; }

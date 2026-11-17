@@ -1,0 +1,13 @@
+# Copy to .dev.vars for local development (gitignored). At least 6 digits.
+DASHBOARD_PIN=
+
+# Your household (worker/home.ts). In production set each with `npx wrangler secret put NAME`.
+# Home, for the weather and the date. Leave the coordinates out to hide the weather.
+HOME_PLACE=Springfield
+HOME_LAT=39.80
+HOME_LON=-89.64
+HOME_TZ=America/Chicago
+# Who the dashboard is for, in order. Ids are saved with tasks and events: don't change one in use.
+FAMILY=[{"id":"john","name":"John"},{"id":"mary","name":"Mary"},{"id":"jacob","name":"Jacob","age":10},{"id":"pets","name":"Pets","pet":true}]
+# The News screen's Local topic: feeds, or Google News searches for a place.
+LOCAL_NEWS=[{"search":"Springfield"},{"source":"Local paper","url":"https://example.com/feed","limit":8}]

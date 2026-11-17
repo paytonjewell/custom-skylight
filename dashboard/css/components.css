@@ -1,0 +1,224 @@
+/* Shared building blocks: used by many components, or restyled by them from outside (e.g. the
+   calendar header's smaller buttons), so their class names stay global. Each rule carries its own
+   Glass and phone versions. Anything owned by a single component lives in its *.module.css.
+   Nesting is flattened at build time for the frame's WebView (vite.config.ts). */
+
+/* ---------------------------------------------------------------- surfaces */
+/* .surface: the card background; Glass gives every surface a bright hairline edge */
+.surface, .card { background: var(--card); }
+.card { border-radius: var(--r); padding: 18px 20px; position: relative; }
+button.card { display: block; width: 100%; }
+button.card:active { transform: scale(.99); }
+[data-theme="glass"] .card,
+[data-theme="glass"] .surface,
+[data-theme="glass"] .seg {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .75);
+}
+
+/* ---------------------------------------------------------------- page header (src/ui/headers.tsx)
+   Chores, Shopping, News, Photos: small label + big serif title, controls on the right */
+.page-head {
+  display: flex; align-items: center; gap: 24px; margin-bottom: 18px; flex: none;
+
+  .phone & { flex-wrap: wrap; gap: 10px 12px; margin-bottom: 14px; }
+}
+.page-head h1 { font-size: 56px; line-height: 1; }
+/* Back button: pulled left so its arrow lines up with the content edge, close to the title */
+.page-head-back {
+  margin: 0 -16px 0 -14px; align-self: center;
+
+  .phone & { margin: 0 -8px 0 -12px; }
+}
+.phone .page-head h1 { font-size: 34px; }
+.page-head-end {
+  margin-left: auto; display: flex; align-items: center; gap: 24px;
+
+  /* Phone: header controls drop to their own full-width row. min-width 0: a scrolling row inside
+     (News topics) must not stretch it past the screen */
+  .phone & { margin-left: 0; flex-basis: 100%; min-width: 0; gap: 12px; flex-wrap: wrap; }
+}
+
+/* ---------------------------------------------------------------- people */
+.avatar {
+  flex: none;
+  display: inline-grid; place-items: center;
+  border-radius: 50%;
+  background: var(--c); color: var(--c-ink);
+  font-weight: 500; line-height: 1;
+}
+.avatar-asterisk { stroke-width: 2.6; }
+.dots { display: inline-flex; gap: 4px; align-items: center; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px var(--card); }
+
+/* ---------------------------------------------------------------- buttons */
+.btn {
+  min-height: var(--tap); padding: 0 26px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border-radius: 999px; background: var(--paper-2);
+  font-size: 17px; font-weight: 500;
+
+  .phone & { padding: 0 18px; font-size: 15px; }
+}
+.btn:active { transform: scale(.97); }
+.btn--solid { background: var(--ink); color: var(--on-ink); }
+/* Links styled as buttons */
+a.btn { text-decoration: none; color: inherit; }
+a.btn--solid { color: var(--on-ink); }
+.btn--ghost { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.btn--danger { background: var(--alert); color: #fff; }
+.btn:disabled { opacity: .45; }
+.btn:disabled:active { transform: none; }
+
+.icon-btn {
+  width: var(--tap); height: var(--tap); flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%; color: var(--ink-2);
+}
+.icon-btn:active { background: var(--paper-2); }
+
+/* ---------------------------------------------------------------- segmented control (src/ui/Segmented.tsx) */
+.seg {
+  display: inline-flex; background: var(--paper-2); border-radius: 14px; padding: 4px; gap: 2px;
+
+  .phone & { display: flex; width: 100%; padding: 3px; }
+}
+.seg button {
+  min-height: 52px; padding: 0 20px; border-radius: 10px;
+  font-size: 16px; font-weight: 400;
+  color: var(--ink-2); white-space: nowrap; text-align: center;
+}
+.phone .seg button { flex: 1; min-width: 0; min-height: 40px; padding: 0 6px; font-size: 14px; }
+.seg button.is-on { background: var(--ink); color: var(--on-ink); font-weight: 500; }
+.seg button .num { font-size: 16px; opacity: .55; margin-left: 4px; }
+.phone .seg button .num { font-size: 13px; }
+
+/* ---------------------------------------------------------------- chips and pills */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 52px; padding: 0 18px;
+  display: inline-flex; align-items: center; gap: 10px;
+  border-radius: 999px; background: var(--paper-2);
+  font-size: 17px; font-weight: 400;
+
+  .phone & { min-height: 44px; padding: 0 14px; font-size: 15px; }
+}
+.chip.is-on { background: var(--ink); color: var(--on-ink); }
+.chip--ghost { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+/* A chip for a person (tone set inline) */
+.chip[style] { background: var(--c-tint); padding-left: 6px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 16px; border-radius: 999px;
+  background: rgba(255, 255, 255, .18); color: inherit;
+  font-size: 15px; font-weight: 500;
+}
+.pill--soon { background: #fff; color: #1F1E24; }
+.pill--alert { background: #fff; color: #1F1E24; font-weight: 700; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+/* Progress ring (src/ui/Ring.tsx) */
+.ring-bg { fill: none; stroke: var(--c-tint); stroke-width: 5; }
+.ring-fg { fill: none; stroke: var(--c); stroke-width: 5; stroke-linecap: round; }
+
+/* ---------------------------------------------------------------- sheets (src/app/Overlays.tsx, opened with openSheet)
+   Centred pop-ups on the frame; bottom sheets on phones. Sheets add their own class (openSheet's
+   cls) to restyle the parts below. */
+.sheet-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; pointer-events: none; }
+.sheet-layer.is-open { pointer-events: auto; }
+.sheet-scrim {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0, 0, 0, .5); opacity: 0;
+
+  [data-theme="glass"] & { background: rgba(70, 30, 100, .4); }
+}
+.sheet-layer.is-open .sheet-scrim { opacity: 1; }
+.sheet {
+  position: absolute; left: 50%; top: 50%;
+  width: 620px; max-height: 720px; overflow: auto;
+  background: var(--paper); border-radius: 24px;
+  transform: translate(-50%, -44%) scale(.97); opacity: 0;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .2);
+
+  /* Glass: frosted with real blur, since sheets sit over busy content */
+  [data-theme="glass"] & {
+    background: rgba(255, 255, 255, .78);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    backdrop-filter: blur(28px) saturate(1.4);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 30px 70px rgba(90, 40, 120, .25);
+  }
+  /* Phone: a bottom sheet */
+  .phone & {
+    left: 0; right: 0; top: auto; bottom: 0;
+    width: auto; max-height: calc(100% - 40px);
+    border-radius: 22px 22px 0 0;
+    padding-bottom: var(--safe-bottom);
+    transform: none;
+  }
+  /* Phone: grab handle */
+  .phone &::before {
+    content: ''; position: absolute; top: 8px; left: 50%; z-index: 3;
+    width: 36px; height: 4px; margin-left: -18px; border-radius: 2px;
+    background: rgba(128, 128, 128, .45);
+  }
+}
+.sheet-layer.is-open .sheet { transform: translate(-50%, -50%); opacity: 1; }
+.phone .sheet-layer.is-open .sheet { transform: none; animation: sheet-up .26s cubic-bezier(.2, .8, .2, 1); }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .phone .sheet-layer.is-open .sheet { animation: none; }
+}
+.sheet--wide { width: 900px; }
+.sheet-x {
+  position: absolute; right: 14px; top: 14px; z-index: 2;
+  width: var(--tap); height: var(--tap); border-radius: 50%;
+  display: grid; place-items: center; color: var(--ink-2);
+
+  /* Phone: stays in the top-right corner while the sheet scrolls: sticky, with a negative bottom
+     margin so it takes no room above the content */
+  .phone & {
+    position: sticky; top: 12px; right: auto; z-index: 4;
+    width: 40px; height: 40px; margin: 12px 10px -52px auto;
+    background: var(--paper-2); color: var(--ink);
+  }
+}
+.sheet-x:active { background: var(--paper-2); }
+.sheet-pad {
+  padding: 34px 36px 32px;
+
+  .phone & { padding: 28px 18px 20px; }
+}
+.sheet-h {
+  font-size: 44px; line-height: 1.05; margin: 6px 0 22px;
+
+  .phone & { font-size: 28px; margin: 4px 0 16px; padding-right: 40px; }
+}
+.sheet-p {
+  font-size: 19px; color: var(--ink-2); margin: -8px 0 24px;
+
+  .phone & { font-size: 16px; }
+}
+.sheet-actions {
+  display: flex; justify-content: flex-end; gap: 12px; margin-top: 26px;
+
+  /* Phone: pinned to the bottom of a sheet that scrolls (e.g. the add-event form) */
+  .phone & {
+    flex-wrap: wrap; position: sticky; bottom: -20px; z-index: 2;
+    margin: 20px -18px -20px; padding: 12px 18px 16px;
+    background: var(--paper); border-top: 1px solid var(--line);
+  }
+  .phone[data-theme="glass"] & { background: rgba(255, 255, 255, .92); }
+  .phone & .btn { flex: 1; }
+}
+
+/* Pager (src/ui/Pager.tsx): sideways drags page, so scroll areas inside it only scroll up and down.
+   Without this, a phone hands a sideways drag inside a scroll area to that area and the page never turns. */
+.pager, .pager * { touch-action: pan-y; }
+
+/* Drag and drop (src/ui/useDragDrop.tsx): the copy under the finger, and the target it's over */
+.drag-ghost {
+  position: fixed; z-index: 100; pointer-events: none;
+  transform: scale(1.04) rotate(-1deg); box-shadow: 0 16px 40px rgba(0, 0, 0, .28); border-radius: 14px; opacity: .95;
+}
+.drag-ghost--compact { width: max-content; max-width: 240px; }
+[data-drop] { transition: box-shadow .12s, background-color .12s; }
+[data-drop][data-drop-over] { box-shadow: inset 0 0 0 3px var(--ink) !important; }

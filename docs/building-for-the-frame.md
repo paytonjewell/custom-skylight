@@ -165,8 +165,9 @@ unit and workload. These are also useful implementation patterns when building y
   on every tick.
 - **Choose an inactive-view policy deliberately.** A simple site can retain fetched data
   and defer DOM updates while its view or the document is hidden, then render the latest
-  state on return. Keep fetch/cache/backoff independent of visual activity. The demo's
-  `js/app.js` deliberately prebuilds hidden views to improve navigation latency; removing
+  state on return. Keep fetch/cache/backoff independent of visual activity. The demo
+  dashboard keeps every view mounted (hidden with `content-visibility`) to improve navigation
+  latency (`dashboard/src/app/App.tsx`); removing
   that behavior has a tradeoff, so measure before changing it. Stop unnecessary slideshow
   timers when their view is inactive.
 - **Keep correctness deadlines independent.** Reducing clock/chart painting does not mean

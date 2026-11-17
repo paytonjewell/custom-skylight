@@ -1,0 +1,221 @@
+/* Grocery list: the list on the left, the add box and suggestions on the right. On phones it's one
+   column with the add box on top (it stays put while the list scrolls). */
+.shop {
+  position: relative; /* the dragged item is drawn in here */
+  height: 100%; display: grid; grid-template-columns: 1fr 440px; grid-template-rows: auto 1fr; gap: 16px 24px;
+
+  :global(.phone) & { height: auto; display: flex; flex-direction: column; gap: 12px; }
+}
+.head {
+  grid-column: 1 / -1; margin-bottom: 0;
+
+  :global(.phone) & { margin: 0; }
+}
+.count {
+  font-size: 20px; color: var(--mute); padding-top: 22px;
+
+  :global(.phone) & { padding-top: 0; font-size: 16px; }
+}
+.count :global(.num) { font-size: 34px; font-weight: 600; color: var(--ink); }
+:global(.phone) .count :global(.num) { font-size: 26px; }
+
+/* Store switcher + the show-all-aisles toggle beside it */
+.controls {
+  display: flex; align-items: center; gap: 10px;
+
+  :global(.phone) & { width: 100%; }
+}
+.stores {
+  :global(.phone) & { flex: 1; width: auto; }
+}
+.aisleToggle { background: var(--paper-2); }
+.aisleToggle[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+
+/* ---------------------------------------------------------------- the list */
+.list {
+  position: relative; /* rows are measured from here while dragging */
+  min-height: 0; overflow-y: auto; padding-bottom: 110px;
+
+  :global(.phone) & { order: 3; overflow: visible; padding-bottom: 0; }
+}
+/* An aisle heading. While dragging, it's a place to drop: an item dragged past it joins that aisle. */
+.catHead { display: flex; justify-content: space-between; padding: 6px 4px 6px; margin: 14px 0 0; }
+.catHead:first-child { margin-top: 0; }
+/* A row: the swipe actions behind, and the sliding part (checkbox, name, count) on top */
+.row {
+  position: relative; overflow: hidden;
+  border-bottom: 1px solid var(--line); max-height: 120px;
+  cursor: grab; -webkit-touch-callout: none;
+}
+.slide {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; min-height: 72px;
+  /* sideways moves are swipes (useSwipeReveal); up and down still scroll */
+  touch-action: pan-y;
+  transition: transform .22s cubic-bezier(.2, .8, .2, 1);
+
+  :global(.phone) & { min-height: 56px; }
+}
+.swiping { transition: none; }
+/* Flat on the page normally; solid while swiped, so the action it's sliding over doesn't show through */
+.showStart .slide, .showEnd .slide { background: var(--paper); }
+/* The actions behind a row: Edit at the start (swipe right), Move to the other store at the end
+   (swipe left, in "All"). Each is only there while its side is open (and until the row has slid back). */
+.action {
+  position: absolute; top: 0; bottom: 0; width: 88px; /* = REVEAL in useSwipeReveal */
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-size: 13px; font-weight: 600;
+  visibility: hidden; transition: visibility 0s .22s;
+}
+.action:active { filter: brightness(.9); }
+.editAction { left: 0; background: var(--accent); color: #fff; }
+.moveAction { right: 0; background: var(--ink); color: var(--on-ink); }
+.showStart .editAction, .showEnd .moveAction { visibility: visible; transition: none; }
+.list[data-dragging] .row { cursor: grabbing; }
+/* While dragging: the item's empty slot, and the copy under the finger */
+.row.isLifted { border-bottom-color: transparent; border-radius: 12px; box-shadow: inset 0 0 0 2px var(--line); }
+.row.isLifted > * { visibility: hidden; }
+.ghost {
+  position: absolute; z-index: 5; pointer-events: none;
+  padding: 0 8px; border-radius: 12px; background: var(--paper);
+  transform: scale(1.03); box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
+}
+.ghost > .row { height: 100%; max-height: none; border-bottom: 0; }
+.ghost .slide { height: 100%; }
+/* just added: a brief tint (over the row's content, so it shows on the sliding part too) */
+.row.isFlash .slide { box-shadow: inset 0 0 0 999px rgb(var(--accent-rgb) / .16); }
+.hit {
+  flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: 14px; padding: 0 10px 0 4px;
+
+  :global(.phone) & { gap: 12px; }
+}
+.box {
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; color: transparent;
+  box-shadow: inset 0 0 0 1.5px #BDBDBD;
+
+  :global(.phone) & { width: 28px; height: 28px; }
+}
+.name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.name b {
+  font-size: 21px; font-weight: 400; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative;
+}
+:global(.phone) .name b { font-size: 17px; }
+.name small { font-size: 16px; color: var(--mute); }
+:global(.phone) .name small { font-size: 13px; }
+/* Fixing an item's name in place: the field takes the name's look */
+.name .editField {
+  width: 100%; padding: 2px 0; border: 0; border-bottom: 2px solid var(--accent); border-radius: 0;
+  background: transparent; outline: none; color: var(--ink);
+  font-size: 21px; font-weight: 400; line-height: 1.15;
+  cursor: text; -webkit-user-select: text; user-select: text;
+}
+:global(.phone) .name .editField { font-size: 17px; }
+/* How many, after the name (when the count buttons are hidden) */
+.times { margin-left: 8px; font-weight: 600; color: var(--accent-deep); font-variant-numeric: tabular-nums; }
+.store { padding: 5px 9px; border-radius: 6px; background: rgb(var(--accent-rgb) / .16); color: var(--accent-deep); }
+.qty { display: flex; align-items: center; background: var(--paper-2); border-radius: 999px; margin-left: 4px; }
+.qty button { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; }
+:global(.phone) .qty button { width: 40px; height: 40px; }
+.qty button:active { background: var(--line); }
+.qty :global(.num) { min-width: 26px; text-align: center; font-size: 22px; }
+:global(.phone) .qty :global(.num) { min-width: 20px; font-size: 17px; }
+.row.isChecking .box { background: var(--accent); color: #fff; box-shadow: none; transform: scale(1.12); }
+.row.isChecking .name b { color: var(--mute); text-decoration: line-through; text-decoration-thickness: 1px; }
+.row.isChecking .qty { opacity: .3; }
+.empty {
+  padding: 80px 0; text-align: center;
+
+  :global(.phone) & { padding: 40px 0; }
+}
+
+/* "Got it" drawer under the list */
+.drawer { margin-top: 18px; border-radius: var(--r); overflow: hidden; }
+.drawerHead {
+  width: 100%; min-height: 68px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; font-size: 19px; font-weight: 500;
+
+  :global(.phone) & { min-height: 56px; padding: 0 16px; font-size: 16px; }
+}
+.drawerHead > span:first-child { display: flex; align-items: center; gap: 10px; }
+.drawerHead :global(.num) { font-size: 20px; }
+.drawerList { padding: 0 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+.got {
+  min-height: 60px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; font-size: 18px; color: var(--mute); text-decoration: line-through; border-radius: 12px;
+
+  :global(.phone) & { min-height: 48px; font-size: 16px; }
+}
+.got :global(.label) { text-decoration: none; }
+.got:active { background: var(--line); }
+.clear { margin-top: 8px; align-self: flex-start; }
+
+/* ---------------------------------------------------------------- right column */
+.side {
+  min-height: 0; display: flex; flex-direction: column; gap: 18px;
+
+  :global(.phone) & { display: contents; }
+}
+.add {
+  color: var(--ink); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 14px;
+
+  :global(.phone) & { order: 1; position: sticky; top: 0; z-index: 3; padding: 8px; border-radius: 16px; }
+  /* Glass surfaces are see-through; the pinned box needs frosting so the list doesn't show through */
+  :global(.phone[data-theme="glass"]) & {
+    background: rgba(255, 255, 255, .72);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  }
+}
+.inputWrap {
+  display: flex; align-items: center; gap: 12px; height: 76px; padding: 0 20px; border-radius: 12px; background: var(--field); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line);
+
+  :global(.phone) & { height: 52px; padding: 0 14px; }
+  :global(.phone) & :global(.i) { width: 24px; height: 24px; }
+}
+.input {
+  flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: transparent; font-size: 24px; font-weight: 400;
+
+  :global(.phone) & { font-size: 17px; }
+}
+.input::placeholder { color: #B5B5B5; font-weight: 400; }
+
+.suggest {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px;
+
+  :global(.phone) & { order: 2; flex: none; gap: 8px; }
+}
+.usuals {
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 8px; flex: 1; min-height: 0;
+
+  /* Phone: one row of tiles that scrolls sideways */
+  :global(.phone) & {
+    display: flex; flex: none; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain;
+    margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad);
+  }
+}
+.tile {
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 12px 14px; border-radius: 12px;
+  text-align: left;
+  min-height: 64px;
+
+  :global(.phone) & { flex: none; width: 128px; min-height: 60px; }
+}
+.tile:active { transform: scale(.94); }
+.tile b { font-size: 17px; font-weight: 500; line-height: 1.15; }
+.tile span { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mute); }
+.tile.isOn { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--mute); }
+.tile.isOn span { color: var(--accent); }
+.ac { display: flex; flex-direction: column; gap: 8px; }
+.acRow {
+  display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 0 18px 0 22px; border-radius: 14px;
+
+  :global(.phone) & { min-height: 52px; padding: 0 12px 0 16px; }
+}
+.acRow b { flex: 1; font-size: 20px; font-weight: 400; }
+:global(.phone) .acRow b { font-size: 16px; }
+.acRowNew { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+
+/* The Kitchen's Shopping List: items a planned dinner needs (say which) */
+.row.isForRecipe .name b { font-weight: 600; }
+.name small.forRecipe { color: var(--accent-deep); font-weight: 600; font-size: 14px; }
+.planned { margin-bottom: 18px; }
+.name small.have { color: var(--mute); font-size: 14px; }

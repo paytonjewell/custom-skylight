@@ -53,7 +53,7 @@ public class NavigationService extends AccessibilityService {
     position.gravity = Gravity.BOTTOM | Gravity.RIGHT;
     position.x = getSharedPreferences("kiosk", 0).getInt("nav_x", dp(12));
     position.y = getSharedPreferences("kiosk", 0).getInt("nav_y", dp(12));
-    position.setTitle("Home HQ navigation");
+    position.setTitle("White Lotus HQ navigation");
 
     TextView handle = new TextView(this);
     handle.setText("\u22ee");

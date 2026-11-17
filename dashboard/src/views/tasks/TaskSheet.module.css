@@ -1,0 +1,80 @@
+/* Add / edit task sheet */
+.sheet :global(.label) { margin: 22px 0 10px; }
+:global(.phone) .sheet :global(.label) { margin: 16px 0 8px; }
+
+.bigInput {
+  width: 100%; height: 72px; border: 0; border-bottom: 1px solid var(--ink); background: transparent;
+  font-family: var(--sans); font-size: 34px; font-weight: 400; outline: none; margin: 4px 0 6px; padding: 0;
+
+  :global(.phone) & { height: 56px; font-size: 24px; }
+}
+.bigInput::placeholder { color: var(--mute); }
+
+/* Extra controls under the chosen "how often" */
+.more {
+  display: flex; flex-direction: column; gap: 12px; margin-top: 12px; padding: 16px;
+  border-radius: var(--r); background: var(--paper-2);
+
+  :global(.phone) & { padding: 12px; }
+}
+.more :global(.chip) { background: var(--paper); }
+.more :global(.chip.is-on) { background: var(--ink); }
+
+.summary { margin-top: 10px; font-size: 16px; color: var(--ink-2); }
+
+/* − 3 + days */
+.stepper { display: flex; align-items: center; gap: 12px; font-size: 18px; }
+.stepper :global(.icon-btn) { width: 52px; height: 52px; border-radius: 50%; background: var(--paper); font-size: 26px; }
+.stepper b { min-width: 2ch; text-align: center; font-size: 26px; font-weight: 600; }
+.stepper span { color: var(--ink-2); }
+
+/* "Pick a day": the chip opens the hidden date input's picker (showPicker), anchored under the chip */
+.dateChip { position: relative; overflow: hidden; }
+.dateChip input { position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+
+.toggle {
+  display: flex; align-items: center; gap: 16px; margin-top: 22px; padding: 14px 16px;
+  border-radius: var(--r); background: var(--paper-2);
+}
+.toggle input { width: 28px; height: 28px; accent-color: var(--ink); flex: none; }
+.toggle span { display: flex; flex-direction: column; gap: 2px; }
+.toggle b { font-size: 18px; font-weight: 500; }
+.toggle small { font-size: 14px; color: var(--mute); }
+
+.delete { margin-right: auto; color: var(--alert); }
+
+/* Reminder: its time, and a note when someone it goes to has no phone set up */
+.time {
+  height: 52px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--paper);
+  font: inherit; font-size: 20px; color: var(--ink);
+}
+.hint { margin: 0; font-size: 15px; color: var(--mute); }
+
+/* Repeat from: the due date / when it's done */
+.basis {
+  display: flex; align-items: center; gap: 14px; margin-top: 12px; flex-wrap: wrap;
+
+  :global(.phone) & { gap: 8px; }
+}
+.basis > span { font-size: 16px; color: var(--ink-2); }
+
+/* Emoji button beside the name; tapping it opens the picker under them */
+.titleRow { display: flex; align-items: center; gap: 16px; }
+.emojiBtn {
+  flex: none; width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center;
+  font-size: 40px; color: var(--mute); background: var(--paper-2);
+
+  :global(.phone) & { width: 56px; height: 56px; font-size: 30px; border-radius: 14px; }
+}
+.emojiBtn:active { transform: scale(.95); }
+.emojiBtn.isOn { box-shadow: inset 0 0 0 2px var(--ink); }
+.picker { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 14px; }
+.titleRow .bigInput { flex: 1; min-width: 0; }
+
+/* "From 🎄 Xmas list  [Open list]" on a reminder made from a list item */
+.from {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding: 10px 10px 10px 16px;
+  border-radius: var(--r); background: var(--paper-2); font-size: 17px;
+}
+.from span { color: var(--mute); }
+.from b { flex: 1; min-width: 0; font-weight: 500; }

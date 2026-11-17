@@ -1,0 +1,246 @@
+/* Calendar: Today (a lane per person), 3 Day, Week and Month.
+   --gutter: width of the hour-labels column (narrower on phones) */
+.cal {
+  height: 100%; display: flex; flex-direction: column; --gutter: 64px;
+
+  :global(.phone) & { --gutter: 44px; }
+}
+
+/* ---------------------------------------------------------------- header: ‹ title › Today | views | + */
+.head {
+  display: flex; align-items: center; gap: 8px; height: 52px; margin-bottom: 8px; flex: none;
+
+  /* Phone row 1: ‹ title › Today. Row 2: view switcher. Add floats above the tab bar. */
+  :global(.phone) & { flex-wrap: wrap; height: auto; gap: 8px 2px; margin-bottom: 10px; }
+}
+.head :global(.icon-btn) { width: 52px; height: 52px; }
+:global(.phone) .head :global(.icon-btn) { width: 40px; height: 40px; }
+.head .fab { width: 52px; height: 52px; }
+.cog { width: 52px; height: 52px; border-radius: 50%; color: var(--ink-2); flex: none; }
+.cog:active { background: var(--paper-2); }
+
+/* Until Google Calendar is connected: a note that these are sample events */
+.sample {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px 16px; flex: none;
+  border-radius: var(--r); background: var(--paper-2); color: var(--ink-2); font-size: 15px; text-align: left;
+}
+.sample b { color: var(--ink); font-weight: 600; }
+:global(.phone) .head .fab {
+  position: fixed; right: 16px; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px); z-index: 20;
+  width: 56px; height: 56px; border-radius: 18px;
+}
+.head :global(.btn) { min-height: 52px; padding: 0 20px; font-size: 15px; }
+:global(.phone) .head :global(.btn) { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.head :global(.seg) { padding: 3px; }
+:global(.phone) .head :global(.seg) { flex-basis: 100%; }
+.head :global(.seg) button { min-height: 46px; padding: 0 18px; font-size: 15px; }
+:global(.phone) .head :global(.seg) button { min-height: 38px; padding: 0 6px; font-size: 14px; }
+.title {
+  display: flex; align-items: baseline; gap: 12px; min-width: 300px; padding: 0 6px;
+
+  :global(.phone) & { flex: 1; min-width: 0; flex-direction: column; align-items: center; gap: 2px; padding: 0; }
+}
+.title :global(.serif) { font-size: 32px; line-height: 1; white-space: nowrap; }
+:global(.phone) .title :global(.serif) { font-size: 22px; }
+.title :global(.label) {
+}
+:global(.phone) .title :global(.label) { font-size: 11px; letter-spacing: .1em; }
+/* Today (hidden, but still taking its space, when already on today) soaks up the free space, so
+   the view switcher and + stay pinned to the right whatever the title's width */
+.today { margin-right: auto; }
+.body {
+  flex: 1; min-height: 0; position: relative; overflow: hidden;
+}
+/* Add event */
+.fab {
+  width: 68px; height: 68px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%; background: var(--ink); color: var(--on-ink);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+.fab:active { transform: scale(.92); }
+
+/* ---------------------------------------------------------------- time grid (Today + 3 Day) */
+.day { height: 100%; display: flex; flex-direction: column; position: relative; }
+.lanesHead { display: grid; grid-template-columns: var(--gutter) repeat(4, 1fr); flex: none; }
+.three .lanesHead { grid-template-columns: var(--gutter) repeat(3, 1fr); }
+.dayHead { display: flex; align-items: baseline; gap: 10px; padding: 0 14px 8px; margin: 0 4px; border-bottom: 2px solid var(--ink); }
+.dayHead :global(.num) { font-size: 28px; font-weight: 600; line-height: .9; }
+:global(.phone) .dayHead :global(.num) { font-size: 22px; }
+.dayHead b { font-size: 16px; font-weight: 500; }
+:global(.phone) .dayHead b { font-size: 13px; }
+.dayHead small { margin-left: auto; }
+:global(.phone) .dayHead small { margin-left: 0; }
+.dayHead.isToday { background: var(--ink); color: var(--on-ink); border-radius: 12px 12px 0 0; padding-top: 8px; }
+/* Phone: after .dayHead.isToday, whose padding it overrides */
+:global(.phone) .dayHead { flex-direction: column; align-items: flex-start; gap: 0; margin: 0 2px; padding: 6px 8px; }
+
+.allday {
+  display: grid; grid-template-columns: var(--gutter) 1fr; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); flex: none;
+
+  :global(.phone) & { padding: 8px 0; }
+}
+.allday .gutter { font-size: 12px; padding-right: 6px; line-height: 1.1; }
+:global(.phone) .allday .gutter { font-size: 10px; letter-spacing: .06em; }
+.alldayGrid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 8px; padding: 0 4px;
+
+  :global(.phone) & { gap: 4px; }
+}
+.alldayGrid3 { grid-template-columns: repeat(3, 1fr); }
+/* an all-day event */
+.ad {
+  min-height: 44px; padding: 0 14px; border-radius: 10px;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--c); color: var(--c-ink);
+  font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+
+  :global(.phone) & { min-height: 36px; padding: 0 10px; border-radius: 8px; font-size: 14px; }
+}
+.ad small { font-size: var(--fs-min); opacity: .75; font-weight: 400; margin-left: 4px; }
+/* continues from an earlier day */
+.adCont { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+.gridScroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; position: relative; }
+.grid {
+  position: relative; margin: 14px 0;
+
+  :global(.phone) & { margin: 10px 0 90px; }
+}
+.hours { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+.hr { position: absolute; left: var(--gutter); right: 0; border-top: 1px solid var(--line); }
+.hr span {
+  position: absolute; left: calc(-1 * var(--gutter)); width: calc(var(--gutter) - 8px); top: -9px; text-align: right;
+  font-size: 13px; font-weight: 400; color: var(--mute); white-space: nowrap;
+}
+:global(.phone) .hr span { font-size: 11px; }
+.lanes { position: absolute; left: var(--gutter); right: 0; top: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+.lanes3 { grid-template-columns: repeat(3, 1fr); }
+.lane { position: relative; border-left: 1px solid var(--line); }
+.lane.isToday { background: rgb(var(--ink-rgb) / .03); }
+/* family events span every lane */
+.laneFam { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; }
+.laneFam .ev { pointer-events: auto; }
+
+/* ---------------------------------------------------------------- event block */
+.ev {
+  position: absolute;
+  display: flex; flex-direction: column; justify-content: flex-start; gap: 2px;
+  padding: 7px 12px; border-radius: 12px;
+  background: var(--c); color: var(--c-ink);
+  text-align: left; z-index: 1;
+}
+.ev:active { transform: scale(.98); }
+.evTitle {
+  font-size: 17px; font-weight: 500; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 30px;
+
+  :global(.phone) & { font-size: 14px; padding-right: 0; }
+}
+.evMeta {
+  font-size: var(--fs-min); font-weight: 400; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+
+  :global(.phone) & { font-size: 12px; }
+}
+.evMeta b { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; vertical-align: bottom; }
+.ev.isShort { flex-direction: row; align-items: center; gap: 8px; padding-top: 0; padding-bottom: 0; }
+.ev.isShort .evTitle { font-size: 16px; padding-right: 0; flex: none; max-width: 60%; }
+:global(.phone) .ev.isShort .evTitle { font-size: 13px; }
+.ev.isShort .evWith { display: none; }
+.ev.isHalf.isShort .evMeta { display: none; }
+.ev.isHalf.isShort .evTitle { max-width: 100%; flex: 1; min-width: 0; }
+.ev.isHalf .evWith { display: none; }
+.ev.isHalf .evTitle { padding-right: 0; }
+.ev.isPast { opacity: .38; }
+.ev.isNow {
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--c); z-index: 2;
+
+  :global(.phone) & { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--c); }
+}
+.ev.isFamily { background: var(--c); color: var(--c-ink); }
+/* Phone: after the state rules above, whose padding and title spacing these override */
+:global(.phone) .ev { padding: 5px 8px; border-radius: 8px; }
+:global(.phone) .calDay .evTitle { padding-right: 30px; }
+:global(.phone) .three .evWith { display: none; }
+/* the people on a shared event */
+.evWith { position: absolute; right: 8px; top: 9px; }
+.evWith :global(.dots) i { box-shadow: 0 0 0 2px rgba(255, 255, 255, .9); }
+/* travel time before the event */
+.travel {
+  position: absolute; left: 8px; right: 8px; bottom: 100%;
+  border-radius: 8px 8px 0 0;
+  background: repeating-linear-gradient(-45deg, rgb(var(--c-rgb) / .45) 0 5px, rgb(var(--c-rgb) / .08) 5px 10px);
+}
+/* "+2 more" when too many events overlap */
+.evMore {
+  background: var(--paper); color: var(--ink);
+  border: 1px dashed var(--mute);
+  align-items: center; justify-content: center; flex-direction: row; gap: 6px;
+  font-size: 22px; font-weight: 500;
+
+  :global(.phone) & { font-size: 16px; }
+}
+.evMore small { font-size: 13px; color: var(--mute); }
+
+/* the red "now" line; in 3 Day it covers only today's column (nowLine0–2) */
+.nowLine { position: absolute; left: var(--gutter); right: 0; height: 0; border-top: 2px solid var(--alert); z-index: 4; pointer-events: none; }
+.nowLine::before { content: ''; position: absolute; left: -7px; top: -8px; width: 12px; height: 12px; border-radius: 50%; background: var(--alert); }
+.nowLine span {
+  position: absolute; right: calc(100% + 10px); top: -15px;
+  background: var(--alert); color: #fff; border-radius: 8px; padding: 3px 7px;
+  font-size: 15px; line-height: 1.2;
+}
+:global(.phone) .nowLine span { right: calc(100% + 4px); padding: 2px 4px; font-size: 11px; }
+.nowLine0 { right: calc((100% - var(--gutter)) * 2 / 3); }
+.nowLine1 { left: calc(var(--gutter) + (100% - var(--gutter)) / 3); right: calc((100% - var(--gutter)) / 3); }
+.nowLine2 { left: calc(var(--gutter) + (100% - var(--gutter)) * 2 / 3); }
+.nowLine1 span, .nowLine2 span { display: none; }
+.empty {
+  position: absolute; left: var(--gutter); right: 0; top: 45%; text-align: center; pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- week (a scrolling 7-day agenda on phones) */
+.week {
+  height: 100%; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
+
+  :global(.phone) & { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; overscroll-behavior-y: contain; padding-bottom: 90px; }
+}
+.wkCol { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.wkHead {
+  display: flex; align-items: baseline; justify-content: space-between; padding: 6px 10px 8px; border-bottom: 2px solid var(--ink); margin-bottom: 4px;
+
+  :global(.phone) & { justify-content: flex-start; gap: 10px; padding: 6px 10px; }
+}
+.wkHead b { font-size: 16px; font-weight: 500; }
+.wkHead :global(.num) { font-size: 28px; font-weight: 600; line-height: .9; }
+.wkCol.isToday .wkHead { background: var(--ink); color: var(--on-ink); border-radius: 12px 12px 0 0; }
+.wkAd {
+  min-height: 40px; padding: 0 10px; border-radius: 8px;
+  background: var(--c); color: var(--c-ink);
+  font-size: var(--fs-min); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;
+
+  :global(.phone) & { min-height: 36px; font-size: 14px; }
+}
+.wkEv {
+  min-height: 60px; padding: 6px 10px; border-radius: 10px;
+  display: flex; flex-direction: column; gap: 1px;
+  background: var(--c-tint); text-align: left;
+
+  :global(.phone) & { min-height: 0; flex-direction: row; align-items: baseline; gap: 10px; padding: 10px 12px; }
+}
+.wkEv.isPast { opacity: .45; }
+.wkT::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 6px; vertical-align: 1px; }
+.wkT {
+  font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--ink-2);
+
+  :global(.phone) & { flex: none; width: 66px; }
+}
+.wkN {
+  font-size: 16px; font-weight: 500; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+
+  :global(.phone) & { font-size: 15px; }
+}
+.wkMore { min-height: 48px; font-size: 15px; font-weight: 500; text-align: left; padding: 0 10px; color: var(--ink-2); }
+.wkFree { padding: 8px 10px; }
+
+/* ---------------------------------------------------------------- month (MonthGrid.module.css) */
+.month { height: 100%; min-height: 0; }

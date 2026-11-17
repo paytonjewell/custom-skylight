@@ -1,0 +1,60 @@
+/* Overlays over the screens: toasts, the idle photo frame (Ambient) and the night clock.
+   Sheets are shared building blocks, styled in css/components.css. */
+
+/* ---------------------------------------------------------------- toasts */
+.toasts {
+  position: absolute; left: 84px; right: 0; bottom: 28px; display: flex; justify-content: center; pointer-events: none; z-index: 60;
+
+  /* Phone: just above the tab bar */
+  :global(.phone) & { left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px); }
+}
+.toast {
+  pointer-events: auto;
+  min-height: 64px; max-width: 760px; padding: 0 8px 0 22px;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--toast); color: #fff; border-radius: 16px;
+  font-size: 18px; position: relative; overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+  transform: translateY(140%);
+
+  [data-theme="glass"] & { box-shadow: 0 16px 40px rgba(70, 30, 100, .3); }
+  :global(.phone) & { min-height: 52px; max-width: 100%; padding-left: 16px; border-radius: 14px; font-size: 15px; animation: rise .2s ease-out; }
+}
+.toast.isIn { transform: none; }
+.msg {
+  padding: 16px 10px 16px 0;
+
+  :global(.phone) & { padding: 12px 6px 12px 0; }
+}
+.undo {
+  min-height: 50px; padding: 0 18px; margin-left: 6px;
+  display: inline-flex; align-items: center; gap: 8px;
+  border-radius: 12px; background: rgba(255, 255, 255, .12);
+  font-size: 16px; font-weight: 500;
+
+  :global(.phone) & { min-height: 40px; padding: 0 12px; font-size: 14px; }
+}
+.undo:active { background: rgba(255, 255, 255, .24); }
+.toast:not(:has(.undo)) {
+  padding-right: 26px;
+
+  :global(.phone) & { padding-right: 18px; }
+}
+@keyframes rise { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  :global(.phone) .toast { animation: none; }
+}
+
+/* ---------------------------------------------------------------- ambient (idle photo frame; contents in src/views/PhotoFrame.tsx) */
+/* touch-action: none, so sideways swipes reach the slideshow instead of the browser */
+.ambient { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 65; background: #000; display: none; color: #fff; cursor: pointer; touch-action: none; }
+/* data-mode is on the stage (App.tsx) */
+[data-mode="ambient"] .ambient { display: block; }
+
+/* ---------------------------------------------------------------- night (dim clock), kept above a minimum readable brightness */
+.night { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 66; background: #000; display: none; place-items: center; cursor: pointer; }
+[data-mode="night"] .night { display: grid; }
+.inner { text-align: center; color: var(--night-2); }
+.time { font-size: 240px; font-weight: 600; line-height: .8; letter-spacing: -.03em; color: var(--night); }
+.line { margin-top: 34px; font-size: 26px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--night-3); }
+.line b { color: var(--night); font-weight: 500; }

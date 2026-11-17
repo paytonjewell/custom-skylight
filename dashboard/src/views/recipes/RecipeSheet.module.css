@@ -1,0 +1,140 @@
+/* A recipe (RecipeSheet.tsx): title row, then ingredients beside steps; Cook mode fills the screen */
+.sheet { width: 1000px; }
+.recipe { display: flex; flex-direction: column; gap: 18px; }
+.head { display: flex; align-items: center; gap: 18px; padding-right: 40px; }
+.art {
+  width: 96px; height: 96px; flex: none; border-radius: 24px; display: grid; place-items: center; font-size: 54px;
+  background: var(--c-tint); filter: var(--emoji-filter);
+
+  :global(.phone) & { width: 64px; height: 64px; font-size: 36px; border-radius: 16px; }
+}
+.titleBlock { flex: 1; min-width: 0; }
+.titleBlock h2 { font-size: 40px; line-height: 1.05; margin: 4px 0 8px; }
+:global(.phone) .titleBlock h2 { font-size: 26px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 15px; color: var(--ink-2); }
+.meta span { display: flex; align-items: center; gap: 4px; }
+.planned { font-weight: 600; color: var(--ink); }
+.source { color: var(--ink-2); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.heart { width: 52px; height: 52px; flex: none; border-radius: 50%; display: grid; place-items: center; color: var(--mute); background: var(--card); }
+.heart.isFav { color: var(--alert); }
+.heart.isFav :global(svg) { fill: currentColor; }
+
+.cols {
+  display: grid; grid-template-columns: 5fr 6fr; gap: 28px; align-items: start;
+
+  :global(.phone) & { grid-template-columns: 1fr; gap: 20px; }
+}
+.secHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.stepper { display: flex; align-items: center; gap: 4px; }
+.stepper :global(.icon-btn) { width: 40px; height: 40px; font-size: 22px; background: var(--card); }
+.stepper b { min-width: 28px; text-align: center; font-size: 19px; }
+.stepper small { font-size: 14px; color: var(--mute); margin-left: 2px; }
+
+.ingRow { display: flex; align-items: center; gap: 4px; }
+.ingRow > .ing { flex: 1; min-width: 0; }
+.haveIt {
+  flex: none; height: 32px; padding: 0 10px; border-radius: 16px; font-size: 13px; font-weight: 600; white-space: nowrap;
+  color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line);
+}
+.haveIt:active { background: var(--card); }
+.haveAdd {
+  width: 100%; min-height: 64px; padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 12px; text-align: left;
+  background: var(--ink); color: var(--on-ink);
+}
+.haveAdd:active { transform: scale(.99); }
+.haveAdd span { display: flex; flex-direction: column; }
+.haveAdd b { font-size: 18px; font-weight: 600; }
+.haveAdd small { font-size: 14px; opacity: .75; }
+.haveOr { margin: 18px 0 10px !important; font-size: 16px; }
+.haveSearch { width: 100%; height: 50px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--card); font: inherit; font-size: 17px; color: var(--ink); outline: none; }
+.haveList { list-style: none; margin: 12px 0 0; padding: 0; max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.haveRow { width: 100%; min-height: 52px; padding: 0 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card); text-align: left; font-size: 17px; }
+.haveRow:active { background: var(--paper-2); }
+.haveRow b { font-weight: 500; }
+.ingList, .shopList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.shopList { max-height: 420px; overflow-y: auto; }
+.ing {
+  width: 100%; min-height: 46px; padding: 6px 10px; border-radius: 12px; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 16px;
+}
+.ing:active:not(:disabled) { background: var(--card); }
+.ing:disabled { opacity: 1; }
+.box {
+  width: 24px; height: 24px; flex: none; border-radius: 7px; display: grid; place-items: center;
+  box-shadow: inset 0 0 0 2px var(--line); color: var(--on-ink);
+}
+.isOn .box { background: var(--ink); box-shadow: none; }
+.isListed .box { background: var(--accent-deep); box-shadow: none; }
+.ingText { flex: 1; min-width: 0; }
+.ingText b { font-weight: 600; }
+.ingText small { color: var(--mute); font-size: 14px; }
+.isListed .ingText { color: var(--mute); }
+.tag, .tagSoft { flex: none; font-style: normal; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+.tag { background: rgb(var(--accent-rgb) / .25); color: var(--accent-deep); }
+.tagSoft { background: var(--card); color: var(--mute); }
+.tagHave { flex: none; font-style: normal; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: var(--c-tint); color: var(--ink); }
+.addBtn { width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.steps ol { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.steps li { display: flex; gap: 14px; }
+.n { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--c-tint); font-weight: 700; }
+.steps p { margin: 4px 0 0; font-size: 17px; line-height: 1.45; }
+.notes { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--card); font-size: 15px; color: var(--ink-2); }
+
+.recipe :global(.sheet-actions) {
+  position: sticky; bottom: -32px; z-index: 2; margin: 0 -36px -32px; padding: 14px 36px 20px;
+  background: var(--paper); border-top: 1px solid var(--line);
+
+  :global(.phone) & { margin: 0 -18px -20px; padding: 12px 18px 16px; }
+}
+.planRow { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.planRow :global(.chip) { display: flex; align-items: center; gap: 6px; }
+.replaces { font-size: 14px; }
+.isOnBtn { background: var(--ink); color: var(--on-ink); }
+
+/* ---------------------------------------------------------------- cook mode */
+.cookSheet {
+  width: 1200px; height: 760px; max-height: 760px; overflow: hidden;
+
+  :global(.phone) & { height: calc(100% - 40px); overflow: auto; }
+}
+.cook {
+  height: 100%; display: grid; grid-template-columns: 320px 1fr;
+
+  :global(.phone) & { display: flex; flex-direction: column-reverse; height: auto; }
+}
+.cookSide { padding: 30px 24px; background: var(--card); overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.cookTitle { display: flex; align-items: center; gap: 10px; }
+.cookTitle span { font-size: 34px; }
+.cookTitle b { font-size: 24px; line-height: 1.1; }
+.cookSide ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 16px; }
+.cookSide li b { font-weight: 600; }
+.cookSide small { color: var(--mute); }
+.cookMain {
+  padding: 40px 48px 32px; display: flex; flex-direction: column; gap: 16px; min-height: 0;
+
+  :global(.phone) & { padding: 40px 18px 20px; }
+}
+.progress { display: flex; gap: 6px; padding-right: 60px; }
+.progress button { flex: 1; height: 8px; border-radius: 4px; background: var(--paper-2); }
+.progress .isPast { background: var(--c); opacity: .5; }
+.progress .isAt { background: var(--c); }
+.stepText {
+  flex: 1; min-height: 0; overflow-y: auto; margin: 0; font-size: 40px; line-height: 1.3; font-weight: 500;
+
+  :global(.phone) & { font-size: 26px; }
+}
+.timerRow { min-height: 64px; display: flex; align-items: center; }
+.timerStart {
+  height: 56px; padding: 0 22px; border-radius: 28px; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600;
+  background: var(--c-tint); color: var(--ink);
+}
+.timer {
+  height: 64px; padding: 0 22px; border-radius: 32px; display: flex; align-items: center; gap: 12px;
+  background: var(--c); color: var(--c-ink);
+}
+.timer b { font-size: 30px; }
+.timer small { font-size: 14px; opacity: .8; }
+.timer.isRinging { animation: ring .6s ease-in-out infinite alternate; }
+@keyframes ring { to { transform: scale(1.05); } }
+.cookNav { display: flex; justify-content: space-between; gap: 12px; }
+.cookNav :global(.btn) { height: 64px; padding: 0 30px; font-size: 19px; display: flex; align-items: center; gap: 8px; }

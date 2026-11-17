@@ -1,14 +1,52 @@
 {
-  "name": "Home HQ",
-  "short_name": "Home HQ",
+  "id": "/",
+  "name": "White Lotus HQ",
+  "short_name": "White Lotus",
+  "description": "The family dashboard: today, calendar, chores, shopping and photos.",
   "start_url": "/",
   "scope": "/",
-  "display": "fullscreen",
-  "orientation": "landscape",
-  "background_color": "#F2EEE6",
-  "theme_color": "#F2EEE6",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#FAFAFA",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
-  ]
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "photos",
+          "accept": [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/*"
+          ]
+        }
+      ],
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

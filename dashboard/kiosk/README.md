@@ -1,4 +1,4 @@
-# Home HQ kiosk navigation
+# White Lotus HQ kiosk navigation
 
 Hold two fingers still on the dashboard for 1.5 seconds to open the native controls. Keep the
 fingers at least an inch (about 2.5 cm) apart: on PF1007L frames the `gslX680` touchscreen reads
@@ -56,8 +56,19 @@ adb shell am start -n com.wesbos.homehq/.MainActivity --es url https://your-dash
 `scripts/set-kiosk-url.sh <url>` from the repository root does the same, and prints the saved
 URL when run without one.
 
+To build your address in as the default instead (so a new frame opens it without that step), set
+`KIOSK_URL` when building: `KIOSK_URL=https://your-dashboard/ bash kiosk/build.sh` (or
+`$env:KIOSK_URL` before `.\build.ps1`). It's kept out of the code, and a saved URL still wins.
+
 Every later launch, including after a reboot, opens the saved URL. Links that other apps open
 in the kiosk, such as a sign-in page, are shown but not saved.
+
+### Signing in
+
+The dashboard Worker asks each new device for the dashboard PIN once. On the frame, enter it on
+the first launch and name the device (it suggests "Frame"). The kiosk writes the sign-in cookie
+to disk as soon as the page loads, so the frame stays signed in through restarts and power cuts.
+To sign a device out, delete its row from the `devices` table in D1.
 
 ## A page bundled in the APK (no server)
 
@@ -72,7 +83,7 @@ adb shell am start -n com.wesbos.homehq/.MainActivity --es url 'http://127.0.0.1
 
 On Windows, set `$env:KIOSK_SITE` before `.\build.ps1`.
 
-Home HQ answers `http://127.0.0.1:8765/` from those files itself. Nothing listens on the port, no
+White Lotus HQ answers `http://127.0.0.1:8765/` from those files itself. Nothing listens on the port, no
 other machine is needed, and the page loads without Wi-Fi. Every other URL, including the page's
 own API calls, goes to the network as usual. ES modules work, which a `file://` page can't do, and
 `localStorage` belongs to the `http://127.0.0.1:8765` origin. A query string
@@ -102,7 +113,7 @@ frame booted into the previous Home app. The same delayed save lost a `pm disabl
 Pastigio FRAME156 (#139).
 
 Android 6 frames (PF1007L, BIUFRAME) don't have `cmd package set-home-activity`. After the first
-command, open the Home chooser instead, then tap **Home HQ** and **Always** on the frame. Keep
+command, open the Home chooser instead, then tap **White Lotus HQ** and **Always** on the frame. Keep
 another launcher installed so **Open launcher** has somewhere to go.
 
 ```sh
@@ -138,7 +149,7 @@ Home apps. Some vendor firmware blocks boot broadcasts or background launches en
 
 ## Returning from Android Settings or another app
 
-While MainActivity is paused, Home HQ pauses WebView lifecycle and page timers, plus native
+While MainActivity is paused, White Lotus HQ pauses WebView lifecycle and page timers, plus native
 retries and captive-portal checks. Timer pausing affects all WebViews in this app process;
 it does not stop every network request or servers supplying the dashboard. An existing portal
 probe may finish within its timeouts but cannot open a sign-in page while the kiosk is paused.
@@ -165,32 +176,32 @@ Android's own menus get smaller too. The setting survives a reboot.
 ## Frames without Home or Back buttons
 
 Some frame firmware omits Android's navigation bar. The two-finger gesture only
-works inside Home HQ, so it cannot bring you back from another app's settings.
+works inside White Lotus HQ, so it cannot bring you back from another app's settings.
 
-Enable **Home HQ navigation** in Android **Settings → Accessibility**. The
-optional service adds floating **Back** and **Dashboard** buttons outside Home HQ:
+Enable **White Lotus HQ navigation** in Android **Settings → Accessibility**. The
+optional service adds floating **Back** and **Dashboard** buttons outside White Lotus HQ:
 
 - **Back** performs Android's normal Back action.
-- **Dashboard** returns directly to Home HQ, keeping the current dashboard URL.
+- **Dashboard** returns directly to White Lotus HQ, keeping the current dashboard URL.
 - Drag the dots to move the buttons. Their position is saved.
 
-The buttons hide while Home HQ is active and return when you leave it. Android
+The buttons hide while White Lotus HQ is active and return when you leave it. Android
 keeps the service enabled across reboots. It requests no accessibility events or
-screen-content access and does not require root. Disable **Home HQ navigation**
+screen-content access and does not require root. Disable **White Lotus HQ navigation**
 in Accessibility settings to remove the buttons.
 
 On a PF1007L (`20260519` firmware), the vendor `BackgroundManagerService` dropped the
-service from the enabled list after every `adb install -r` or force stop of Home HQ, so the
-buttons silently disappeared. To have Home HQ put the service back each time it starts, grant
+service from the enabled list after every `adb install -r` or force stop of White Lotus HQ, so the
+buttons silently disappeared. To have White Lotus HQ put the service back each time it starts, grant
 it this permission once:
 
 ```sh
 adb shell pm grant com.wesbos.homehq android.permission.WRITE_SECURE_SETTINGS
 ```
 
-With the grant, Home HQ also rebinds the service if it is still listed but not running, which is
-what Android 6 leaves behind when Home HQ's process is killed. If the buttons keep disappearing
-whenever you leave Home HQ, the firmware may be killing every app you switch away from; see
+With the grant, White Lotus HQ also rebinds the service if it is still listed but not running, which is
+what Android 6 leaves behind when White Lotus HQ's process is killed. If the buttons keep disappearing
+whenever you leave White Lotus HQ, the firmware may be killing every app you switch away from; see
 [the Denver PFF-1015 notes](../../docs/denver-pff-1015.md#low-ram-mode-kills-every-app-you-leave).
 
 The grant survives updates. To turn the buttons off for good, revoke it first
@@ -198,12 +209,12 @@ The grant survives updates. To turn the buttons off for good, revoke it first
 
 January `20260113` and May `20260529` firmware were also observed keeping a navigation service in
 the selected list but resetting `accessibility_enabled` to `0` after boot. On `20260529` (#234)
-the buttons came back on every boot once Home HQ was the Home app (see [Start at boot](#start-at-boot)). With the same optional grant,
-Home HQ repairs either state when it starts, without rewriting an already selected list while the
+the buttons came back on every boot once White Lotus HQ was the Home app (see [Start at boot](#start-at-boot)). With the same optional grant,
+White Lotus HQ repairs either state when it starts, without rewriting an already selected list while the
 service is running. On a PF1508 (Android 15) turning the switch back on was not enough, so if the
-service still isn't running 5 seconds later, Home HQ takes it off the list and puts it back
+service still isn't running 5 seconds later, White Lotus HQ takes it off the list and puts it back
 ([allwinner-a333-pf1508.md](../../docs/allwinner-a333-pf1508.md#the-navigation-service-after-a-reboot)).
-This reset was measured with a separate navigation app; the Home HQ change has host regression
+This reset was measured with a separate navigation app; the White Lotus HQ change has host regression
 coverage but has not been installed on that unit. See the
 [January report](../../docs/allwinner-a33-pf1007l.md#9-january-unit-remote-management-and-background-services).
 
@@ -215,7 +226,7 @@ adb shell am start -n com.wesbos.homehq/.MainActivity
 ```
 
 This service supplies navigation controls only. To start the dashboard at boot,
-make Home HQ the default Home app (see [Start at boot](#start-at-boot)).
+make White Lotus HQ the default Home app (see [Start at boot](#start-at-boot)).
 
 To build your own dashboard for a PF1007L frame, see
 [building-for-the-frame.md](../../docs/building-for-the-frame.md): what WebView 106 supports,
@@ -223,7 +234,7 @@ what to avoid, and how to test on the frame.
 
 ## When the dashboard can't load
 
-If the dashboard fails to load, Home HQ covers WebView's error page with its own
+If the dashboard fails to load, White Lotus HQ covers WebView's error page with its own
 screen. The error page would print the full URL, including any token in it.
 
 - **No Wi-Fi:** "Connect to Wi-Fi?" with an **Open Wi-Fi settings** button.
@@ -243,12 +254,12 @@ screen. The error page would print the full URL, including any token in it.
   boot-time attempts fail, it waits 24 hours before trying again, and the frame stays in 1969
   (seen on an RK3126 Frameo frame, still 1969 four minutes after Wi-Fi joined). With the optional
   `WRITE_SECURE_SETTINGS` grant (see
-  [Frames without Home or Back buttons](#frames-without-home-or-back-buttons)), Home HQ then asks
+  [Frames without Home or Back buttons](#frames-without-home-or-back-buttons)), White Lotus HQ then asks
   Android for network time again, by turning automatic time off and on, at most once a minute
   while the date error lasts and Wi-Fi is connected. It leaves automatic time alone if it was
   turned off. By hand: `adb shell settings put global auto_time 0`, then `1`.
 
-Home HQ keeps retrying every 5 seconds, and retries at once when Wi-Fi connects or the clock
+White Lotus HQ keeps retrying every 5 seconds, and retries at once when Wi-Fi connects or the clock
 changes. The screen disappears once a load succeeds. Wi-Fi settings open only when tapped,
 because Wi-Fi is often still connecting for the first minute after boot.
 
@@ -299,9 +310,10 @@ adb shell am start -n com.wesbos.homehq/.MainActivity
 Seen on an Android 6 Runxion (WebView 107). Changing the zone in Android Settings has not been
 compared.
 
-The hosted demo sets its own clock to 3:18 PM each time it loads (`App.setTime(15, 18)` in
-`dashboard/js/app.js`), so it can show the wrong time on a frame whose clock is right. Press and
-hold the sidebar clock, then tap **Real time** in Demo controls.
+Older versions of the demo set their own clock to 3:18 PM on every load, so they could show the
+wrong time on a frame whose clock is right. The current dashboard uses the real time; the demo
+controls (press and hold the sidebar clock) can still jump to a preset time, and **Real time**
+switches back.
 
 ## Build and install
 

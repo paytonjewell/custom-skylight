@@ -22,6 +22,7 @@ function Run($exe, [string[]]$a) {
 }
 
 # Optional: $env:KIOSK_SITE = <dir> bundles a static site, served at http://127.0.0.1:8765/ (README).
+# Optional: $env:KIOSK_URL = 'https://your-dashboard/' is the address it opens until one is saved (README).
 $assets = @()
 if ($env:KIOSK_SITE) {
   if (-not (Test-Path (Join-Path $env:KIOSK_SITE 'index.html'))) { throw "KIOSK_SITE has no index.html: $env:KIOSK_SITE" }
@@ -36,7 +37,17 @@ Run "$bt\aapt2.exe" @('compile', '--dir', 'res', '-o', 'build\res.zip')
 Run "$bt\aapt2.exe" (@('link', '-o', 'build\base.apk', '-I', $jar, '--manifest', 'AndroidManifest.xml') + $assets + @('build\res.zip',
   '--java', 'build\gen', '--min-sdk-version', '23', '--target-sdk-version', '28', '--version-code', '3', '--version-name', '1.2'))
 
-$src = @(Get-ChildItem src -Recurse -Filter *.java | % FullName) + @('build\gen\com\wesbos\homehq\R.java')
+# The sources are compiled from a copy, with KIOSK_URL (if set) as the default address
+New-Item -ItemType Directory build\src | Out-Null
+Copy-Item src\com\wesbos\homehq\*.java build\src
+if ($env:KIOSK_URL) {
+  if ($env:KIOSK_URL -notmatch '^https?://[^"\\]+$') { throw "KIOSK_URL must start with http:// or https:// and have no quotes or backslashes" }
+  $main = 'build\src\MainActivity.java'
+  $code = (Get-Content -Raw $main) -replace '(static final String DEFAULT_URL = )"[^"]*"', ('$1"' + $env:KIOSK_URL.Replace('$', '$$') + '"')
+  Set-Content -NoNewline -Path $main -Value $code
+  Write-Output "Default address: $env:KIOSK_URL"
+}
+$src = @(Get-ChildItem build\src -Filter *.java | % FullName) + @('build\gen\com\wesbos\homehq\R.java')
 Run 'javac' (@('-nowarn', '-source', '8', '-target', '8', '-classpath', $jar, '-d', 'build\classes') + $src)
 
 $classes = Get-ChildItem build\classes -Recurse -Filter *.class | % FullName

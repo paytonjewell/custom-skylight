@@ -1,0 +1,24 @@
+/* Idle photo frame: slideshow with the clock, weather, next event and countdowns on top */
+.frame { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+.stage { position: absolute; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; }
+.scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(0deg, rgba(0, 0, 0, .75), rgba(0, 0, 0, 0)); pointer-events: none; }
+.info { position: absolute; left: 60px; right: 60px; bottom: 48px; display: flex; justify-content: space-between; align-items: flex-end; }
+.time { font-size: 200px; font-weight: 800; line-height: .8; letter-spacing: -.03em; }
+.date { font-family: var(--serif); font-size: 34px; font-weight: 500; margin-top: 18px; }
+.right { display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
+/* icon + temperature, with the condition centred underneath (as on Today) */
+.wx { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.wxNow { display: flex; align-items: center; gap: 12px; }
+.wx :global(.num) { font-size: 64px; font-weight: 600; line-height: .8; }
+.wx small { font-size: 20px; line-height: 1.2; text-align: center; }
+.next {
+  display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 20px; border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  font-size: 18px; font-weight: 500;
+}
+/* countdown chips along the bottom, sharing the width; the clock row moves up to make room */
+.cds { position: absolute; left: 60px; right: 60px; bottom: 36px; display: flex; gap: 10px; }
+.cds .cd { flex: 1 1 0; min-width: 0; }
+.frame.hasCds .info { bottom: 128px; }
+.frame.hasCds .scrim { height: 70%; }
+.next i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px #fff; }

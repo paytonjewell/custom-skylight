@@ -1,0 +1,98 @@
+/* Weather details sheet */
+.sheet { width: 940px; max-height: 760px; }
+.wx { padding-top: 30px; }
+
+/* ---------------------------------------------------------------- current conditions */
+.head { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+.icon { color: var(--ink-2); }
+.temp {
+  font-family: var(--serif);
+  font-size: 92px; font-weight: 700; line-height: .85; letter-spacing: -.02em;
+
+  :global(.phone) & { font-size: 60px; }
+}
+.meta { display: flex; flex-direction: column; gap: 4px; margin-left: 4px; }
+.meta b { font-size: 22px; font-weight: 600; }
+.meta span { font-size: 16px; color: var(--mute); }
+.say {
+  font-size: 19px; color: var(--ink-2); margin: 14px 0 0;
+
+  :global(.phone) & { font-size: 16px; }
+}
+.say b { font-weight: 600; color: var(--ink); }
+
+.sec { margin-top: 22px; }
+.sec > :global(.label) { margin-bottom: 10px; }
+
+/* ---------------------------------------------------------------- next 12 hours */
+.hours {
+  display: grid; grid-template-columns: repeat(12, 1fr); padding: 12px 4px; border-radius: var(--r);
+
+  :global(.phone) & { display: flex; gap: 6px; padding: 10px 8px; overflow-x: auto; overscroll-behavior-x: contain; }
+}
+.hr {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+
+  :global(.phone) & { flex: none; width: 46px; }
+}
+.hrLabel { font-size: 13px; color: var(--mute); }
+.hrIcon { height: 34px; display: grid; place-items: center; color: var(--mute); }
+.hr.isWet .hrIcon { color: var(--accent); }
+.hr b { font-size: 17px; font-weight: 600; }
+.hr small { height: 15px; font-size: 12px; font-weight: 500; color: var(--accent-deep); }
+
+/* ---------------------------------------------------------------- today + next days, plus detail tiles */
+.cols {
+  display: grid; grid-template-columns: 1fr 1.08fr; gap: 24px;
+
+  :global(.phone) & { grid-template-columns: 1fr; gap: 0; }
+}
+.cols > .sec { margin-top: 22px; }
+.days { display: flex; flex-direction: column; }
+.day {
+  display: grid; grid-template-columns: 96px 30px 40px 34px 1fr 34px; align-items: center; gap: 8px;
+  min-height: 56px; border-bottom: 1px solid var(--line);
+
+  :global(.phone) & { grid-template-columns: 86px 24px 34px 28px 1fr 28px; gap: 6px; }
+}
+.day:last-child { border-bottom: 0; }
+.dayName { font-size: 17px; font-weight: 600; }
+.dayIcon { color: var(--mute); display: grid; place-items: center; }
+.dayIcon.isWet { color: var(--accent); }
+.dayRain { font-size: 13px; font-weight: 500; color: var(--accent-deep); }
+.dayLo { font-size: 16px; color: var(--mute); text-align: right; }
+.dayHi { font-size: 16px; font-weight: 600; }
+.bar { position: relative; height: 6px; border-radius: 3px; background: var(--paper-2); }
+.bar i { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, var(--t3), var(--t0)); }
+
+.tiles { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: var(--r); min-width: 0; }
+.tileSub { font-size: 13px; color: var(--mute); margin-top: auto; }
+.stat { display: flex; align-items: baseline; gap: 4px; }
+.stat b {
+  font-family: var(--serif);
+  font-size: 40px; font-weight: 600; line-height: 1;
+}
+.stat small { font-size: 15px; color: var(--mute); }
+
+/* ---------------------------------------------------------------- sun arc */
+.arc { width: 100%; height: 52px; overflow: visible; }
+.arcTrack { fill: none; stroke: var(--line); stroke-width: 2; stroke-dasharray: 3 4; }
+.arcDone { fill: none; stroke: var(--t0); stroke-width: 2.5; stroke-linecap: round; }
+.arcHorizon { stroke: var(--line); stroke-width: 1.5; }
+.arcSun { fill: var(--t0); stroke: var(--card); stroke-width: 3; }
+.arcSun.isDown { fill: var(--mute); }
+.sunTimes { display: flex; justify-content: space-between; }
+.sunTimes span { display: flex; flex-direction: column; }
+.sunTimes span:last-child { text-align: right; }
+.sunTimes small { font-size: 12px; color: var(--mute); }
+.sunTimes b { font-size: 15px; font-weight: 600; }
+
+/* ---------------------------------------------------------------- moon */
+.moonRow { display: flex; align-items: center; gap: 12px; flex: 1; }
+.moon { width: 52px; height: 52px; flex: none; }
+.moonDark { fill: var(--paper-2); }
+.moonLit { fill: #EFE4C6; }
+.moonRow span { display: flex; flex-direction: column; min-width: 0; }
+.moonRow b { font-size: 16px; font-weight: 600; line-height: 1.2; }
+.moonRow small { font-size: 13px; color: var(--mute); }

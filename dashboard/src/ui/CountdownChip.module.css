@@ -1,0 +1,37 @@
+/* Countdown chip: an all-day event coming up ("Beach trip · 12 days"). `glass` is the compact
+   two-line version over photos (the idle photo frame). */
+.chip {
+  flex: none; display: flex; align-items: center; gap: 12px;
+  height: 64px; padding: 0 16px 0 8px; border-radius: 16px;
+  text-align: left;
+}
+.chip:active { transform: scale(.97); }
+.icon {
+  width: 48px; height: 48px; flex: none; border-radius: 12px;
+  display: grid; place-items: center; font-size: 24px;
+  background: var(--c-tint); color: var(--c);
+}
+.emoji { filter: var(--emoji-filter); line-height: 1; }
+.text { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 150px; }
+.text b { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.text small { font-size: 13px; color: var(--mute); white-space: nowrap; }
+.days { display: flex; align-items: baseline; gap: 4px; margin-left: auto; padding-left: 4px; white-space: nowrap; }
+.days b {
+  font-family: var(--serif);
+  font-size: 28px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums;
+}
+.days small { font-size: 13px; color: var(--mute); }
+
+/* over photos */
+.glass { background: rgba(20, 20, 22, .46); color: #fff; }
+.glass .icon { background: rgba(255, 255, 255, .14); color: #fff; }
+.glass { height: 60px; gap: 10px; padding: 0 12px 0 8px; }
+.glass .icon { width: 40px; height: 40px; font-size: 21px; border-radius: 10px; }
+.glass .text { flex: 1; max-width: none; }
+.glass .text b { font-size: 15px; }
+.glass .text small { color: rgba(255, 255, 255, .72); overflow: hidden; text-overflow: ellipsis; }
+.n {
+  font-style: normal; color: #fff;
+  font-family: var(--serif);
+  font-size: 17px; font-weight: 600;
+}

@@ -11,7 +11,7 @@
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
   <application
-      android:label="Home HQ"
+      android:label="White Lotus HQ"
       android:icon="@mipmap/ic_launcher"
       android:hardwareAccelerated="true"
       android:usesCleartextTraffic="true"

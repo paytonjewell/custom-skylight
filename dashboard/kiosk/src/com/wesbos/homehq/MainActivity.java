@@ -29,6 +29,7 @@ import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -37,6 +38,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.io.IOException;
@@ -48,7 +50,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Full-screen kiosk WebView for the Home HQ wall tablet.
+ * Full-screen kiosk WebView for the White Lotus HQ wall tablet.
  * - Immersive mode hides the status + navigation bars (true 1280x800).
  * - Controls: hold two fingers still on the screen for 1.5s for launcher/settings/Wi-Fi/reload.
  *   Optional single-tap Menu button: launch with --ez menu_button true (false removes it).
@@ -72,6 +74,7 @@ import java.util.Map;
  */
 public class MainActivity extends Activity {
   static final String TAG = "HomeHQ";
+  // The build replaces this with KIOSK_URL when it is set (build.sh), so your address stays out of the code
   static final String DEFAULT_URL = "https://home-dashboard.wesbos.workers.dev/";
   static final String PREFS = "kiosk";
   static final String PREF_URL = "url";
@@ -112,6 +115,17 @@ public class MainActivity extends Activity {
   // A retry is queued: keep the offline screen up until it runs, even if the failed load "finishes".
   private boolean retryPending;
   private boolean resumed;
+  // Lotus on the dark background from launch until the dashboard first draws. It covers the offline
+  // screen too, so a boot doesn't flash "Connect to Wi-Fi?" while Wi-Fi is still joining.
+  private FrameLayout splash;
+  static final long SPLASH_MAX_MS = 60000;
+  private final Runnable hideSplash = new Runnable() {
+    @Override
+    public void run() {
+      if (splash == null || splash.getVisibility() != View.VISIBLE) return;
+      splash.animate().alpha(0f).setDuration(300).withEndAction(() -> splash.setVisibility(View.GONE));
+    }
+  };
   private LinearLayout offline;
   private TextView offlineTitle, offlineText;
   private Button signIn;
@@ -171,7 +185,7 @@ public class MainActivity extends Activity {
       Log.i(TAG, "Opening kiosk controls");
       cancelPageTouches();
       new AlertDialog.Builder(MainActivity.this)
-          .setTitle("Home HQ")
+          .setTitle("White Lotus HQ")
           .setItems(new String[] {"Open launcher", "Android settings", "Wi-Fi settings", "Reload dashboard"},
               (dialog, which) -> {
                 if (which == 0) openLauncher();
@@ -223,9 +237,20 @@ public class MainActivity extends Activity {
 
       @Override
       public void onPageFinished(WebView view, String url) {
+        // The dashboard's sign-in cookie: WebView only writes cookies to disk every so often, so a
+        // power cut soon after entering the PIN would lose it. Save right away.
+        CookieManager.getInstance().flush();
         if (!pageFailed && !retryPending) {
-          offline.setVisibility(View.GONE);
-          handler.removeCallbacks(stall);
+          // WebView can report its own error page as finished just after a retry has started
+          // (seen at boot on the Skylight Calendar 2, when Wi-Fi joined right after the first
+          // failure), which would uncover that page. Only a real page counts.
+          view.evaluateJavascript("location.protocol", protocol -> {
+            if ("\"chrome-error:\"".equals(protocol) || pageFailed || retryPending) return;
+            offline.setVisibility(View.GONE);
+            handler.removeCallbacks(stall);
+            handler.removeCallbacks(hideSplash);
+            hideSplash.run();
+          });
         }
       }
 
@@ -305,6 +330,8 @@ public class MainActivity extends Activity {
     FrameLayout root = new FrameLayout(this);
     root.addView(column);
     root.addView(buildOffline());
+    root.addView(buildSplash());
+    handler.postDelayed(hideSplash, SPLASH_MAX_MS);
     menuButton = new Button(this);
     menuButton.setText("Menu");
     menuButton.setAllCaps(false);
@@ -354,6 +381,7 @@ public class MainActivity extends Activity {
   @Override
   protected void onPause() {
     resumed = false;
+    CookieManager.getInstance().flush();
     cancelExit();
     // pauseTimers affects every WebView in this app process. Native retries need pausing too.
     web.onPause();
@@ -476,6 +504,17 @@ public class MainActivity extends Activity {
 
   private int dp(float v) {
     return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics());
+  }
+
+  private View buildSplash() {
+    splash = new FrameLayout(this);
+    splash.setBackgroundColor(Color.rgb(17, 17, 17));
+    splash.setClickable(true); // keep taps off whatever is underneath
+    ImageView lotus = new ImageView(this);
+    lotus.setImageResource(R.drawable.lotus);
+    lotus.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    splash.addView(lotus, new FrameLayout.LayoutParams(dp(200), dp(200), Gravity.CENTER));
+    return splash;
   }
 
   private View buildOffline() {
@@ -615,6 +654,8 @@ public class MainActivity extends Activity {
    * portal redirect to its own page, as Android's sign-in app does.
    */
   private void openPortal() {
+    handler.removeCallbacks(hideSplash);
+    hideSplash.run(); // the sign-in page has to be visible
     portalMode = true;
     portalDismissed = false;
     portalFailed = false;

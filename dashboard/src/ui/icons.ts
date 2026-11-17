@@ -1,0 +1,70 @@
+// The icons the app uses, by the names it uses for them, drawn from Lucide (lucide.dev, ISC licence).
+// Render with <Icon name="home" />. To add one: find it on lucide.dev, import it here, give it a name.
+// Only the icons imported here end up in the bundle.
+import {
+  Asterisk, Bell, Calendar, ChefHat, Link, Heart, Search, Timer, Car, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Cloud, CloudFog, CloudLightning, CloudRain, CloudSun, Diff, Ellipsis, Flame, FoldVertical, House,
+  Image, Leaf, ListChecks, MapPin, Minus, Moon, Newspaper, Palette, PawPrint, Pencil, Pin, Plus, RefreshCw, Settings, Smile, ShoppingCart,
+  Snowflake, Sparkles, SquareCheckBig, Star, Sun, Trash2, UnfoldVertical, Undo2, User, X, Zap, type LucideIcon,
+} from 'lucide-react';
+
+export const ICONS = {
+  // people and themes
+  paw: PawPrint,
+  sparkle: Sparkles,
+  snow: Snowflake,
+  leaf: Leaf,
+  palette: Palette,
+  person: User,
+  asterisk: Asterisk,
+  // screens
+  home: House,
+  calendar: Calendar,
+  tasks: SquareCheckBig,
+  list: ListChecks,
+  news: Newspaper,
+  photo: Image,
+  // actions and controls
+  cart: ShoppingCart,
+  trash: Trash2,
+  edit: Pencil,
+  plus: Plus,
+  minus: Minus,
+  left: ChevronLeft,
+  right: ChevronRight,
+  x: X,
+  check: Check,
+  more: Ellipsis,
+  settings: Settings,
+  smile: Smile,
+  flame: Flame,
+  bell: Bell,
+  refresh: RefreshCw,
+  fold: FoldVertical,
+  amounts: Diff,
+  unfold: UnfoldVertical,
+  undo: Undo2,
+  star: Star,
+  bolt: Zap,
+  // places and time
+  place: MapPin,
+  tack: Pin,
+  car: Car,
+  clock: Clock,
+  // weather (names match WxCond in src/data/types.ts)
+  sun: Sun,
+  moon: Moon,
+  cloud: Cloud,
+  rain: CloudRain,
+  partly: CloudSun,
+  down: ChevronDown,
+  recipe: ChefHat,
+  link: Link,
+  heart: Heart,
+  search: Search,
+  timer: Timer,
+  up: ChevronUp,
+  fog: CloudFog,
+  storm: CloudLightning,
+} satisfies Record<string, LucideIcon>;
+
+export type IconName = keyof typeof ICONS;

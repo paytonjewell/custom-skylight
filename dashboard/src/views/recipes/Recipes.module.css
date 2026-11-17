@@ -1,0 +1,151 @@
+/* Recipes screen (Recipes.tsx): header with search; below it scrolls: this week's dinners, filters,
+   then the recipe cards (three across on the frame, one column on phones). */
+.page {
+  height: 100%; display: flex; flex-direction: column;
+
+  :global(.phone) & { height: auto; }
+}
+.scroll {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 18px; padding-bottom: 24px;
+
+  :global(.phone) & { overflow: visible; gap: 14px; }
+}
+
+.search {
+  width: 380px; height: 52px; padding: 0 8px 0 16px; border-radius: 26px; display: flex; align-items: center; gap: 10px;
+  background: var(--card); color: var(--mute);
+
+  :global(.phone) & { width: 100%; height: 46px; }
+}
+.search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: none; font: inherit; font-size: 17px; color: var(--ink); }
+.clear { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-2); }
+
+/* ---------------------------------------------------------------- this week's dinners */
+.week { display: flex; flex-direction: column; gap: 10px; }
+.weekHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.shopBtn { height: 46px; padding: 0 18px; font-size: 16px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.days {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px;
+
+  :global(.phone) & { display: flex; overflow-x: auto; overscroll-behavior-x: contain; margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); }
+}
+.day {
+  min-height: 118px; padding: 10px 12px; border-radius: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left;
+  background: var(--card); box-shadow: inset 0 0 0 1.5px transparent;
+
+  :global(.phone) & { flex: none; width: 112px; min-height: 108px; }
+}
+.day:active { transform: scale(.98); }
+.day.isToday { box-shadow: inset 0 0 0 2px var(--ink); }
+.day.isPlanned { background: var(--c-tint); }
+.dayName { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.dayEmoji { font-size: 30px; line-height: 1.1; filter: var(--emoji-filter); }
+.day b { font-size: 15px; font-weight: 600; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.plan { margin: auto 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: var(--mute); }
+
+/* ---------------------------------------------------------------- filters + cards */
+.filters {
+  /* Phone: one row that scrolls sideways */
+  :global(.phone) & { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); }
+}
+.filters :global(.chip) { display: flex; align-items: center; gap: 6px; flex: none; }
+.grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+
+  :global(.phone) & { grid-template-columns: 1fr; gap: 10px; }
+}
+.card { position: relative; border-radius: var(--r); background: var(--card); }
+.cardMain { width: 100%; padding: 14px; display: flex; gap: 14px; align-items: flex-start; text-align: left; border-radius: var(--r); }
+.cardMain:active { background: var(--paper-2); }
+.art {
+  width: 84px; height: 84px; flex: none; border-radius: 20px; display: grid; place-items: center; font-size: 46px;
+  background: var(--c-tint); filter: var(--emoji-filter);
+
+  :global(.phone) & { width: 64px; height: 64px; font-size: 34px; border-radius: 16px; }
+}
+.cardText { min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-right: 36px; }
+.cardText b { font-size: 22px; line-height: 1.15; }
+.cardText small { font-size: 14px; color: var(--ink-2); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tags i, .tags em {
+  font-style: normal; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: var(--paper); color: var(--ink-2);
+}
+.tags em.plannedTag { background: var(--ink); color: var(--on-ink); }
+.heart {
+  position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--mute);
+}
+.heart:active { background: var(--paper-2); }
+.heart.isFav { color: var(--alert); }
+.heart.isFav :global(svg) { fill: currentColor; }
+.empty { padding: 30px 0; font-size: 22px; }
+
+/* ---------------------------------------------------------------- pick a dinner */
+.pickGrid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+
+  :global(.phone) & { grid-template-columns: 1fr; }
+}
+.pick {
+  position: relative; min-height: 72px; padding: 10px 14px 10px 10px; border-radius: 16px; display: flex; align-items: center; gap: 12px; text-align: left;
+  background: var(--card);
+}
+.pick:active { background: var(--paper-2); }
+.pickEmoji { width: 52px; height: 52px; flex: none; border-radius: 14px; display: grid; place-items: center; font-size: 28px; background: var(--c-tint); }
+.pick span { display: flex; flex-direction: column; }
+.pick b { font-size: 17px; font-weight: 600; }
+.pick small { font-size: 13px; color: var(--mute); }
+.fav { position: absolute; top: 10px; right: 12px; color: var(--alert); fill: currentColor; }
+
+/* ---------------------------------------------------------------- from your kitchen */
+.need { align-self: flex-start; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.need.isReady { color: var(--accent-deep); }
+.kitchenHint {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--r); text-align: left;
+  background: rgb(var(--accent-rgb) / .14); color: var(--ink-2);
+}
+.hintEmoji { flex: none; width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-size: 30px; background: var(--paper); }
+.hintText { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.kitchenHint b { font-size: 17px; color: var(--ink); }
+.kitchenHint small { font-size: 14px; }
+.fromKitchen { display: flex; flex-direction: column; gap: 10px; }
+.closeRow {
+  display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 2px;
+  /* useEdgeFade (src/ui/hooks.ts) sets --fade-l / --fade-r only on edges with more to scroll to */
+  --fade-l: 0px; --fade-r: 0px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+
+  :global(.phone) & { margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); }
+}
+.closeCard {
+  flex: none; width: 260px; padding: 10px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;
+  background: var(--card);
+}
+.closeCard.isReady { background: rgb(var(--accent-rgb) / .18); }
+.closeMain { display: flex; align-items: center; gap: 10px; text-align: left; }
+.closeMain span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.closeMain b { font-size: 16px; font-weight: 600; }
+.closeMain small { font-size: 13px; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.closeEmoji { width: 46px; height: 46px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 26px; background: var(--c-tint); }
+.closeAdd {
+  height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 14px; font-weight: 600; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line);
+}
+.closeAdd:disabled { opacity: .55; }
+
+/* Phones: add a recipe (as the Calendar's + sits) */
+.fab {
+  position: fixed; right: 16px; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px); z-index: 20;
+  width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center;
+  background: var(--ink); color: var(--on-ink); box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+.fab:active { transform: scale(.92); }
+
+/* Dragging a recipe onto a day */
+.card.isLifted { opacity: .35; }
+.dragCard {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 10px; border-radius: 14px; background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--c);
+}
+.dragCard span { font-size: 22px; flex: none; }
+.dragCard b { min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

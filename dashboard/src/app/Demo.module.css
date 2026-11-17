@@ -1,0 +1,22 @@
+/* Demo drawer (press and hold the rail clock): time of day, modes and calendar data, for trying
+   the dashboard out. Remove or gate before real use. */
+.demo { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 90; pointer-events: none; }
+.demo.isOpen { pointer-events: auto; background: rgba(0, 0, 0, .2); }
+.panel {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 440px; padding: 28px;
+  background: #1F1E24; color: #fff; overflow: auto;
+  transform: translateX(100%);
+}
+.demo.isOpen .panel { transform: none; }
+.head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+.head h2 { font-size: 36px; line-height: 1.05; font-weight: 500; }
+.close { width: var(--tap); height: var(--tap); border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); }
+.sec { margin-bottom: 22px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.grid button {
+  min-height: var(--tap); border-radius: 12px; padding: 0 16px;
+  background: rgba(255, 255, 255, .1);
+  font-size: 17px; font-weight: 400;
+}
+.grid button:active, .grid button.isOn { background: #fff; color: #1F1E24; }
+.note { font-size: 15px; color: rgba(255, 255, 255, .6); }

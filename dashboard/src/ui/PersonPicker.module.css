@@ -1,0 +1,20 @@
+/* Row of people to pick from (add-event sheet; "big" for assigning a chore) */
+.picker {
+  display: flex; gap: 12px;
+
+  :global(.phone) & { flex-wrap: wrap; gap: 6px; }
+}
+.person {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 12px; border-radius: 16px; min-width: 104px;
+  font-size: 16px; font-weight: 400;
+
+  :global(.phone) & { flex: 1; min-width: 0; padding: 8px 4px; font-size: 13px; }
+}
+.person:active { transform: scale(.95); }
+.person.isOn { background: var(--c-tint); box-shadow: inset 0 0 0 2px var(--c); font-weight: 500; }
+.big { justify-content: space-between; }
+.big .person { font-size: 20px; padding: 14px 18px; }
+:global(.phone) .big .person { padding: 10px 4px; font-size: 15px; }
+/* !important: the avatar's size is set inline */
+:global(.phone) .big :global(.avatar) { width: 64px !important; height: 64px !important; font-size: 26px !important; }
