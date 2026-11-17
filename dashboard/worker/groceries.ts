@@ -2,7 +2,7 @@
 // there and are saved here in the background, one at a time. Every name added is remembered with its
 // aisle (grocery_names), so adding it again later puts it back in the same aisle. Purchased (checked
 // off) items are cleared automatically after a few days: hidden from then on, and deleted by the daily cron.
-import type { Grocery } from '../src/data/types';
+import type { GroceriesInfo, Grocery } from '../src/data/types';
 import { AISLES, OTHER, STORES } from '../src/data/grocery';
 import { bad, done, json, notFound, now, readJson } from './http';
 import { ID, readIds, reorder } from './validate';
@@ -67,7 +67,7 @@ export async function getGroceries(env: Env): Promise<Response> {
     ).bind(purchasedBefore()),
     env.DB.prepare('SELECT name, cat FROM grocery_names ORDER BY uses DESC, last_used DESC LIMIT 2000'),
   ]);
-  return json({
+  return json<GroceriesInfo>({
     items: (items.results as unknown as Row[]).map(toGrocery),
     known: (known.results as unknown as { name: string; cat: string }[]).map((k) => [k.name, k.cat]),
   });

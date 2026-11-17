@@ -3,7 +3,7 @@
 // time on the days it's due and not done yet, only to phones whose person the task notifies: John's
 // phone never gets Mary's reminders. "Done" on the notification ticks the task (public/sw.js).
 import type { Device } from './auth';
-import type { Task, TaskDone } from '../src/data/types';
+import type { PushInfo, Task, TaskDone } from '../src/data/types';
 import { doneByTask, dueItem } from '../src/data/tasks';
 import { describeRepeat, shiftDay } from '../src/lib/repeat';
 import { sendPush, vapid, type Subscription } from './webpush';
@@ -60,7 +60,7 @@ export async function getPush(env: Env, device: Device): Promise<Response> {
       Pick<SubRow, 'endpoint' | 'device_id' | 'person'>
     >(),
   ]);
-  return json({
+  return json<PushInfo>({
     key: v.publicKey,
     people: [...new Set(rows.results.map((r) => r.person))],
     mine: rows.results

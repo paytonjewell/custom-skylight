@@ -1,7 +1,10 @@
 // Small helpers every API handler shares, so requests are read and answered the same way everywhere.
 
-/** A JSON answer. Never cached: the data changes from every device. */
-export const json = (body: unknown, status = 200) => jsonText(JSON.stringify(body), status);
+/**
+ * A JSON answer. Never cached: the data changes from every device. Name the type the app reads
+ * (`json<TasksInfo>(…)`, src/data/types.ts) so the two can't drift apart.
+ */
+export const json = <T>(body: T, status = 200) => jsonText(JSON.stringify(body), status);
 /** The same, for JSON that's already text */
 export const jsonText = (text: string, status = 200) =>
   new Response(text, { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });

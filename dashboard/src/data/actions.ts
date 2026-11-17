@@ -1,7 +1,8 @@
 // Every change the UI makes to the data goes through here: the local copy changes at once, and the
 // *Sync.ts modules save it to the Worker + D1 API in the background.
 import { toast } from '../app/ui';
-import { api, DuplicateError, type CalendarChange, type EventChange } from './api';
+import { api, DuplicateError } from './api';
+import type { CalendarChange, EventChange } from './types';
 import { pendingDeletes, refreshPhotos, trackSave } from './photoSync';
 import { dropTitle, saveList, saveTitleSoon } from './listSync';
 import { saveGrocery } from './grocerySync';

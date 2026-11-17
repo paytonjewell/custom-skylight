@@ -1,7 +1,8 @@
 // Phone reminders, on this device: turn them on (allow notifications, subscribe with the server's
 // key, save which person this phone belongs to) or off, and send a test. The server sends the
 // reminders (worker/push.ts); the service worker shows them (public/sw.js).
-import { api, type PushInfo } from './api';
+import { api } from './api';
+import type { PushInfo } from './types';
 import { createStore, useStore } from '../lib/store';
 import { IS_KIOSK } from '../app/layout';
 import { go } from '../app/ui';

@@ -1,18 +1,25 @@
 // Calls to the Worker API (worker/index.ts). Same origin, so the device cookie rides along.
 import type {
-  Calendar,
+  CalendarChange,
+  CalendarInfo,
   Checklist,
+  EventChange,
   EventRecord,
-  GoogleAccount,
+  EventsInfo,
+  GroceriesInfo,
   Grocery,
+  ImportedRecipe,
   InventoryItem,
+  KitchenInfo,
   ListItem,
-  NewsStory,
+  NewsInfo,
   Person,
   Photo,
+  PushInfo,
   Recipe,
   Task,
   TaskDone,
+  TasksInfo,
   Verse,
   Weather,
 } from './types';
@@ -44,8 +51,7 @@ const send = (method: string, path: string, body?: unknown) =>
   );
 
 export const api = {
-  news: async (): Promise<{ topics: [string, string][]; updated: string; stories: NewsStory[] }> =>
-    (await call('/api/news')).json(),
+  news: async (): Promise<NewsInfo> => (await call('/api/news')).json(),
   // Kitchen: recipes, the dinner plan and what's on hand (worker/kitchen.ts)
   kitchen: async (): Promise<KitchenInfo> => (await call('/api/kitchen')).json(),
   addRecipe: (r: Recipe) => send('POST', '/api/recipes', r),
@@ -97,8 +103,7 @@ export const api = {
   deleteItem: (listId: string, id: string) => send('DELETE', `/api/lists/${listId}/items/${id}`),
   orderItems: (listId: string, ids: string[]) => send('PUT', `/api/lists/${listId}/items/order`, { ids }),
   // groceries (worker/groceries.ts)
-  groceries: async (): Promise<{ items: Grocery[]; known: [string, string][] }> =>
-    (await call('/api/groceries')).json(),
+  groceries: async (): Promise<GroceriesInfo> => (await call('/api/groceries')).json(),
   addGrocery: (g: Grocery, restore = false) => send('POST', '/api/groceries', restore ? { ...g, restore } : g),
   editGrocery: (id: string, p: Partial<Omit<Grocery, 'id'>> & { used?: boolean }) =>
     send('PATCH', `/api/groceries/${id}`, p),
@@ -106,7 +111,7 @@ export const api = {
   clearGroceries: (ids: string[]) => send('POST', '/api/groceries/clear', { ids }),
   orderGroceries: (ids: string[]) => send('PUT', '/api/groceries/order', { ids }),
   // tasks (worker/tasks.ts)
-  tasks: async (): Promise<{ tasks: Task[]; done: TaskDone[] }> => (await call('/api/tasks')).json(),
+  tasks: async (): Promise<TasksInfo> => (await call('/api/tasks')).json(),
   addTask: (t: Task, done?: TaskDone[]) => send('POST', '/api/tasks', done?.length ? { ...t, done } : t),
   editTask: (id: string, p: Partial<Omit<Task, 'id' | 'created'>>) => send('PATCH', `/api/tasks/${id}`, p),
   deleteTask: (id: string) => send('DELETE', `/api/tasks/${id}`),
@@ -123,7 +128,7 @@ export const api = {
   refreshCalendars: async (): Promise<CalendarInfo> => (await send('POST', '/api/calendars/refresh')).json(),
   editCalendar: (id: string, p: CalendarChange) => send('PATCH', `/api/calendars/${id}`, p),
   disconnectGoogle: (id: string) => send('DELETE', `/api/google/accounts/${id}`),
-  events: async (): Promise<EventRecord[]> => (await (await call('/api/events')).json()).events,
+  events: async (): Promise<EventRecord[]> => ((await (await call('/api/events')).json()) as EventsInfo).events,
   addEvent: (e: EventRecord) => send('POST', '/api/events', e),
   editEvent: (calendar: string, id: string, p: EventChange) =>
     send('PATCH', `/api/events/${calendar}/${encodeURIComponent(id)}`, p),
@@ -134,44 +139,3 @@ export const api = {
     return res.status === 204 ? null : res.json();
   },
 };
-
-/** POST /api/recipes/import */
-export interface ImportedRecipe {
-  title: string;
-  ingredients: string[];
-  steps: string[];
-  minutes: number | null;
-  servings: number | null;
-  tags: string[];
-  source: string;
-}
-
-/** GET /api/kitchen */
-export interface KitchenInfo {
-  recipes: Recipe[];
-  plan: Record<string, string>;
-  inventory: InventoryItem[];
-  names: [string, string][];
-  aliases: [string, string][];
-}
-
-/** GET /api/calendars */
-export interface CalendarInfo {
-  /** The server has Google's OAuth client set up */
-  configured: boolean;
-  accounts: GoogleAccount[];
-  calendars: Calendar[];
-}
-/** Changes to an event; times change together. `calendar` moves it. */
-export type EventChange = Partial<
-  Pick<EventRecord, 'title' | 'start' | 'end' | 'allDay' | 'location' | 'notes' | 'calendar' | 'people'>
->;
-/** Calendar settings (worker/google.ts editCalendar) */
-export type CalendarChange = Partial<Pick<Calendar, 'person' | 'byName' | 'color' | 'isDefault' | 'emoji' | 'shown'>>;
-
-/** GET /api/push: the key to subscribe with, people with reminders on, and this device's phones */
-export interface PushInfo {
-  key: string;
-  people: string[];
-  mine: { endpoint: string; person: string }[];
-}

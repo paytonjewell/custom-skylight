@@ -10,7 +10,7 @@
 //
 // Repeating events come as their single occurrences (singleEvents), so changing one changes just that
 // occurrence, as in Google Calendar's "This event".
-import type { Calendar, EventRecord, GoogleAccount } from '../src/data/types';
+import type { CalendarInfo, EventRecord } from '../src/data/types';
 import { isDay } from '../src/lib/repeat';
 import { bad, done, json, jsonText, notFound, readJson } from './http';
 import { ID, PERSON } from './validate';
@@ -480,9 +480,7 @@ export async function refreshCalendarLists(env: Env): Promise<void> {
 }
 
 // ------------------------------------------------------------ the app's API
-async function calendarsJson(
-  env: Env,
-): Promise<{ configured: boolean; accounts: GoogleAccount[]; calendars: Calendar[] }> {
+async function calendarsJson(env: Env): Promise<CalendarInfo> {
   const [accounts, cals] = await env.DB.batch([
     env.DB.prepare('SELECT id, email, error FROM google_accounts ORDER BY created_at'),
     env.DB.prepare(
@@ -587,6 +585,7 @@ export async function getEvents(env: Env, ctx: ExecutionContext): Promise<Respon
   );
   if (stale) ctx.waitUntil(syncCalendars(env, STALE_MS));
   // Each event is stored as the JSON the app gets, so it's passed along as is, without parsing
+  // (the result is an EventsInfo)
   return jsonText(`{"events":[${(events.results as { data: string }[]).map((r) => r.data).join(',')}]}`);
 }
 

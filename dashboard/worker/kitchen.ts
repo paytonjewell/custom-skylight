@@ -2,7 +2,7 @@
 // hand (D1: recipes, meal_plan, inventory, inventory_names). Shared by every screen; the app changes
 // its copy at once and saves here in the background (src/data/kitchenSync.ts).
 
-import type { InventoryItem, Ingredient, Recipe } from '../src/data/types';
+import type { Ingredient, InventoryItem, KitchenInfo, Recipe } from '../src/data/types';
 import { PLACES } from '../src/data/kitchen';
 import { isDay } from '../src/lib/repeat';
 import { bad, done, json, notFound, now, pathParts, readJson } from './http';
@@ -53,7 +53,7 @@ async function getKitchen(env: Env): Promise<Response> {
     env.DB.prepare('SELECT name, place FROM inventory_names'),
     env.DB.prepare('SELECT name, same_as FROM food_aliases'),
   ]);
-  return json({
+  return json<KitchenInfo>({
     recipes: (recipes.results as unknown as RecipeRow[]).map(toRecipe),
     plan: Object.fromEntries((plan.results as { day: string; recipe_id: string }[]).map((p) => [p.day, p.recipe_id])),
     inventory: inv.results as unknown as InventoryItem[],

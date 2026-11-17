@@ -338,3 +338,72 @@ export interface Data {
   /** [id, label] */
   newsTopics: [string, string][];
 }
+
+// ------------------------------------------------------------ API answers
+// What the Worker sends (worker/*.ts builds them with these types) and the app reads (src/data/api.ts)
+
+/** GET /api/news */
+export interface NewsInfo {
+  topics: [string, string][];
+  /** When the Worker last refreshed the feeds */
+  updated: string;
+  stories: NewsStory[];
+}
+
+/** GET /api/groceries: the list, and every name added before with its aisle */
+export interface GroceriesInfo {
+  items: Grocery[];
+  known: [string, string][];
+}
+
+/** GET /api/tasks */
+export interface TasksInfo {
+  tasks: Task[];
+  done: TaskDone[];
+}
+
+/** GET /api/events */
+export interface EventsInfo {
+  events: EventRecord[];
+}
+
+/** POST /api/recipes/import: what the app's form is filled with */
+export interface ImportedRecipe {
+  title: string;
+  ingredients: string[];
+  steps: string[];
+  minutes: number | null;
+  servings: number | null;
+  tags: string[];
+  source: string;
+}
+
+/** GET /api/kitchen */
+export interface KitchenInfo {
+  recipes: Recipe[];
+  plan: Record<string, string>;
+  inventory: InventoryItem[];
+  names: [string, string][];
+  aliases: [string, string][];
+}
+
+/** GET /api/calendars */
+export interface CalendarInfo {
+  /** The server has Google's OAuth client set up */
+  configured: boolean;
+  accounts: GoogleAccount[];
+  calendars: Calendar[];
+}
+/** Changes to an event; times change together. `calendar` moves it. */
+export type EventChange = Partial<
+  Pick<EventRecord, 'title' | 'start' | 'end' | 'allDay' | 'location' | 'notes' | 'calendar' | 'people'>
+>;
+/** Calendar settings (worker/google.ts editCalendar) */
+export type CalendarChange = Partial<Pick<Calendar, 'person' | 'byName' | 'color' | 'isDefault' | 'emoji' | 'shown'>>;
+
+/** GET /api/push: the key to subscribe with, people with reminders on, and this device's phones */
+export interface PushInfo {
+  key: string;
+  people: string[];
+  mine: { endpoint: string; person: string }[];
+}

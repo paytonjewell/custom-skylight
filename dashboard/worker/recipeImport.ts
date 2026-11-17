@@ -4,23 +4,13 @@
 //
 // The request says who it is (it doesn't pretend to be a browser). Sites that turn away apps get a
 // clear answer, and the app offers pasting the recipe's text instead.
+import type { ImportedRecipe } from '../src/data/types';
 import { json, readJson } from './http';
 import { NotPublic, fetchPublic, isPublicUrl } from './outbound';
 
 const UA = 'WhiteLotusHQ/1.0 (family dashboard; imports a recipe someone shared)';
 const MAX_BYTES = 4 * 1024 * 1024;
 const TIMEOUT_MS = 10_000;
-
-/** What the app's form is filled with */
-export interface ImportedRecipe {
-  title: string;
-  ingredients: string[];
-  steps: string[];
-  minutes: number | null;
-  servings: number | null;
-  tags: string[];
-  source: string;
-}
 
 type Json = unknown;
 

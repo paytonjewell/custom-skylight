@@ -1,6 +1,6 @@
 // Tasks API: tasks and when they were done (D1: tasks, task_done). Ids are made by the app, so
 // changes show at once there and are saved here in the background, one at a time.
-import type { Slot, Task, TaskDone } from '../src/data/types';
+import type { Slot, Task, TaskDone, TasksInfo } from '../src/data/types';
 import { isDay, parseRepeat } from '../src/lib/repeat';
 import { bad, done, json, notFound, now, readJson } from './http';
 import { ID, PERSON } from './validate';
@@ -64,7 +64,7 @@ const loaded = (tasks: D1Result, rows: D1Result) => ({
 });
 
 /** Tasks and their completions from about the last year */
-async function loadTasks(env: Env): Promise<{ tasks: Task[]; done: TaskDone[] }> {
+async function loadTasks(env: Env): Promise<TasksInfo> {
   const since = new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString().slice(0, 10);
   const [tasks, rows] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM tasks ORDER BY created_at'),
@@ -96,7 +96,7 @@ export async function loadReminders(env: Env, at = new Date()): Promise<{ tasks:
 
 /** GET /api/tasks: { tasks, done } */
 export async function getTasks(env: Env): Promise<Response> {
-  return json(await loadTasks(env));
+  return json<TasksInfo>(await loadTasks(env));
 }
 
 /** Task fields from the app, checked. `partial` allows any subset (for edits). */

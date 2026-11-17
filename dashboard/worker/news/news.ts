@@ -5,7 +5,7 @@
 // free plan's per-run CPU allowance. A check sends the feed's ETag / Last-Modified, so an unchanged feed
 // answers "304 Not Modified" without being downloaded or parsed. /api/news does the same as a
 // fallback when feeds are overdue (which is also how local dev, with no cron, stays current).
-import type { NewsStory } from '../../src/data/types';
+import type { NewsInfo, NewsStory } from '../../src/data/types';
 import { json } from '../http';
 import { sha256, hex } from '../hash';
 import { TOPICS, feedsFor, type Feed } from './feeds';
@@ -241,5 +241,5 @@ export async function getNews(env: Env, ctx: ExecutionContext): Promise<Response
   const last = await env.DB.prepare('SELECT MAX(checked_at) AS t FROM news_feeds WHERE error IS NULL').first<{
     t: number | null;
   }>();
-  return json({ topics: TOPICS, updated: new Date(last?.t ?? Date.now()).toISOString(), stories });
+  return json<NewsInfo>({ topics: TOPICS, updated: new Date(last?.t ?? Date.now()).toISOString(), stories });
 }
