@@ -94,7 +94,7 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
 
   // Headings and items as one sequence, so an item can be dragged under another aisle's heading.
   // When it's dropped, each item takes the aisle of the heading above it.
-  const { order, ghost, itemProps } = useHoldReorder({
+  const { order, ghost, ghostStyle, itemProps } = useHoldReorder({
     ids: groups.flatMap((gr) => [HEAD + gr.cat, ...gr.items.map((g) => g.id)]),
     onCommit: (ids) => {
       let cat = groups[0]?.cat ?? 'Other';
@@ -346,7 +346,7 @@ export function GroceryList({ onBack, kitchen }: { onBack?: () => void; kitchen?
 
       {/* the item being dragged, under the finger */}
       {ghost && byId.get(ghost.id) && (
-        <div className={css.ghost} style={{ left: ghost.x, top: ghost.y, width: ghost.w, height: ghost.h }}>
+        <div className={css.ghost} style={ghostStyle}>
           <Row
             g={byId.get(ghost.id)!}
             showStore={store === 'all'}

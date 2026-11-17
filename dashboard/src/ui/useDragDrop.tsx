@@ -15,10 +15,7 @@
 import { useEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useLatest } from './hooks';
-
-const MOVE_SLOP = 10; // px a finger may wander during the hold
-const EDGE = 90; // px from the top/bottom of what's showing where dragging scrolls the page
-const SCROLL_SPEED = 14; // px per frame at the very edge
+import { SCROLL_SPEED, edgeSpeed, useAfterDrag, watchHold } from './hold';
 
 /** What scrolls the picked-up thing: its nearest scrolling ancestor, else the page */
 function scrollerOf(el: HTMLElement): HTMLElement {
@@ -106,10 +103,10 @@ export function useDragDrop<T>({
 }) {
   const [drag, setDrag] = useState<Drag<T> | null>(null);
   const live = useRef<Live<T> | null>(null);
-  const pending = useRef<{ timer: number; x: number; y: number } | null>(null);
+  /** Stops watching the press under way (see watchHold) */
+  const stopHold = useRef<(() => void) | null>(null);
   const over = useRef<HTMLElement | null>(null);
-  /** A drag just ended: the click that follows isn't a tap */
-  const justDragged = useRef(false);
+  const afterDrag = useAfterDrag();
   const drop = useLatest(onDrop);
 
   const mark = (el: HTMLElement | null, y = 0) => {
@@ -125,110 +122,70 @@ export function useDragDrop<T>({
     return t ? { ...t, x: d.x, y: d.y, dx: d.dx, dy: d.dy, side: sideOf(t.el, d.y) } : null;
   };
 
-  useEffect(() => {
-    const move = (e: PointerEvent) => {
-      const p = pending.current;
-      if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > MOVE_SLOP) {
-        // Moved before the hold: it's a scroll or a swipe
-        clearTimeout(p.timer);
-        pending.current = null;
+  // Unmounted mid-drag: cancel it
+  useEffect(() => () => stopHold.current?.(), []);
+
+  /** Near the top or bottom of what's showing, scroll; what slides under the finger becomes the target */
+  const autoScroll = () => {
+    const cur = live.current;
+    if (!cur) return;
+    const { top, bottom } = visibleBox(cur.sc);
+    const v = edgeSpeed(cur.y, top, bottom);
+    if (v) {
+      const before = cur.sc.scrollTop;
+      cur.sc.scrollTop += v * SCROLL_SPEED;
+      if (cur.sc.scrollTop !== before) {
+        mark(targetAt(cur.x, cur.y)?.el ?? null, cur.y);
+        setDrag({ ...cur });
       }
-      const d = live.current;
-      if (!d) return;
-      d.x = e.clientX;
-      d.y = e.clientY;
-      setDrag({ ...d });
-      mark(targetAt(e.clientX, e.clientY)?.el ?? null, e.clientY);
-    };
-    const end = (e: PointerEvent) => {
-      if (pending.current) {
-        clearTimeout(pending.current.timer);
-        pending.current = null;
-      }
-      const d = live.current;
-      if (!d) return;
-      d.x = e.clientX;
-      d.y = e.clientY;
-      const at = e.type === 'pointerup' ? atOf(d) : null;
-      cancelAnimationFrame(d.raf);
-      live.current = null;
-      flagDragging(false);
-      setDrag(null);
-      mark(null);
-      justDragged.current = true;
-      setTimeout(() => {
-        justDragged.current = false;
-      }, 50);
-      if (at) drop.current(d.item, at.value, at);
-    };
-    // While dragging, a finger moving mustn't scroll the page
-    const noScroll = (ev: TouchEvent) => {
-      if (live.current && ev.cancelable) ev.preventDefault();
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', end);
-    window.addEventListener('pointercancel', end);
-    window.addEventListener('touchmove', noScroll, { passive: false });
-    return () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', end);
-      window.removeEventListener('pointercancel', end);
-      window.removeEventListener('touchmove', noScroll);
-    };
-  }, []);
+    }
+    cur.raf = requestAnimationFrame(autoScroll);
+  };
 
   /** Props for something that can be picked up */
   const bind = (item: T) => ({
     onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || stopHold.current) return;
       const el = e.currentTarget;
-      const x = e.clientX,
-        y = e.clientY;
-      pending.current = {
-        x,
-        y,
-        timer: window.setTimeout(() => {
-          pending.current = null;
+      const x0 = e.clientX,
+        y0 = e.clientY;
+      stopHold.current = watchHold(e, holdMs, {
+        lift: (x, y) => {
           const r = el.getBoundingClientRect();
-          navigator.vibrate?.(12);
-          const d: Live<T> = { item, x, y, dx: x - r.left, dy: y - r.top, w: r.width, sc: scrollerOf(el), raf: 0 };
+          const d: Live<T> = { item, x, y, dx: x0 - r.left, dy: y0 - r.top, w: r.width, sc: scrollerOf(el), raf: 0 };
           live.current = d;
           flagDragging(true);
           setDrag({ ...d });
-          // Near the top or bottom of what's showing, scroll (faster nearer the edge); what slides
-          // under the finger becomes the target
-          const step = () => {
-            const cur = live.current;
-            if (!cur) return;
-            const { top, bottom } = visibleBox(cur.sc);
-            const v =
-              cur.y < top + EDGE
-                ? -(top + EDGE - cur.y) / EDGE
-                : cur.y > bottom - EDGE
-                  ? (cur.y - (bottom - EDGE)) / EDGE
-                  : 0;
-            if (v) {
-              const before = cur.sc.scrollTop;
-              cur.sc.scrollTop += Math.max(-1, Math.min(1, v)) * SCROLL_SPEED;
-              if (cur.sc.scrollTop !== before) {
-                mark(targetAt(cur.x, cur.y)?.el ?? null, cur.y);
-                setDrag({ ...cur });
-              }
-            }
-            cur.raf = requestAnimationFrame(step);
-          };
-          d.raf = requestAnimationFrame(step);
-        }, holdMs),
-      };
+          d.raf = requestAnimationFrame(autoScroll);
+        },
+        move: (x, y) => {
+          const d = live.current;
+          if (!d) return;
+          d.x = x;
+          d.y = y;
+          setDrag({ ...d });
+          mark(targetAt(x, y)?.el ?? null, y);
+        },
+        end: (dropped, x, y) => {
+          const d = live.current;
+          if (!d) return;
+          d.x = x;
+          d.y = y;
+          const at = dropped ? atOf(d) : null;
+          cancelAnimationFrame(d.raf);
+          live.current = null;
+          flagDragging(false);
+          setDrag(null);
+          mark(null);
+          afterDrag.dragged();
+          if (at) drop.current(d.item, at.value, at);
+        },
+        settle: () => {
+          stopHold.current = null;
+        },
+      });
     },
-    // A hold mustn't bring up the phone's long-press menu; a drag's release isn't a tap
-    onContextMenu: (e: { preventDefault(): void }) => e.preventDefault(),
-    onClickCapture: (e: { preventDefault(): void; stopPropagation(): void }) => {
-      if (justDragged.current) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    },
+    ...afterDrag.props,
     style: { WebkitTouchCallout: 'none', userSelect: 'none' } as const,
   });
 

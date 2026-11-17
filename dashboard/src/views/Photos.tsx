@@ -40,7 +40,7 @@ function Grid({ onPreview }: { onPreview: () => void }) {
   const status = usePhotoStatus();
   const view = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
-  const { order, ghost, itemProps } = useHoldReorder({
+  const { order, ghost, ghostStyle, itemProps } = useHoldReorder({
     ids: photos.map((p) => p.id),
     onCommit: reorderPhotos,
     container: view,
@@ -91,15 +91,7 @@ function Grid({ onPreview }: { onPreview: () => void }) {
         </div>
       )}
       {ghost && (
-        <div
-          className={css.tile + ' ' + css.ghost}
-          style={{
-            left: ghost.x,
-            top: ghost.y,
-            width: ghost.w,
-            height: ghost.h,
-          }}
-        >
+        <div className={css.tile + ' ' + css.ghost} style={ghostStyle}>
           <Thumb id={ghost.id} />
         </div>
       )}

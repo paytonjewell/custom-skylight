@@ -9,6 +9,7 @@ import {
   type RefObject,
 } from 'react';
 import { useLatest } from './hooks';
+import { SCROLL_SPEED, edgeSpeed, useAfterDrag, watchHold } from './hold';
 
 /** The lifted item, positioned in `container`'s (unscaled) coordinates */
 export interface Ghost {
@@ -19,9 +20,6 @@ export interface Ghost {
   h: number;
 }
 
-const MOVE_SLOP = 10; // px a finger may wander during the hold
-const EDGE = 90; // px from the scroller's top/bottom edge where dragging auto-scrolls
-const SCROLL_SPEED = 14; // px per frame at the very edge
 const GLIDE = 'transform 220ms var(--ease-glide)';
 
 /**
@@ -92,9 +90,9 @@ export function useHoldReorder({
     sc: HTMLElement;
     max: number;
   } | null>(null);
-  const cleanup = useRef<(() => void) | null>(null);
-  /** A drag just ended: swallow the click that the browser fires after it */
-  const justDragged = useRef(false);
+  /** Stops watching the press under way (see watchHold) */
+  const stopHold = useRef<(() => void) | null>(null);
+  const afterDrag = useAfterDrag();
   /** Where items were on screen before the next render, so they can glide from there (FLIP) */
   const before = useRef(new Map<string, DOMRect>());
 
@@ -170,11 +168,10 @@ export function useHoldReorder({
     const d = drag.current;
     if (!d) return;
     const sc = d.sc;
+    // The edge zone scales with the stage, so measure in layout px
     const r = sc.getBoundingClientRect(),
-      edge = EDGE * scaleOf(sc);
-    const up = r.top + edge - d.cy,
-      down = d.cy - (r.bottom - edge);
-    const v = up > 0 ? -up / edge : down > 0 ? down / edge : 0;
+      s = scaleOf(sc);
+    const v = edgeSpeed(d.cy / s, r.top / s, r.bottom / s);
     const next = Math.max(0, Math.min(d.max, sc.scrollTop + v * SCROLL_SPEED));
     if (v && next !== sc.scrollTop) {
       sc.scrollTop = next;
@@ -184,16 +181,11 @@ export function useHoldReorder({
   };
 
   const end = (commit: boolean) => {
-    cleanup.current?.();
-    cleanup.current = null;
     const d = drag.current;
     drag.current = null;
     if (d) {
       cancelAnimationFrame(d.raf);
-      justDragged.current = true;
-      setTimeout(() => {
-        justDragged.current = false;
-      }, 0);
+      afterDrag.dragged();
       // The dropped item settles from under the finger into its slot
       const box = container.current;
       if (box && !reducedMotion()) {
@@ -209,78 +201,57 @@ export function useHoldReorder({
   };
 
   const start = (id: string, e: ReactPointerEvent) => {
-    if (e.button !== 0 || drag.current || cleanup.current) return;
-    const x0 = e.clientX,
-      y0 = e.clientY;
-    let cx = x0,
-      cy = y0;
-    const lift = () => {
-      const el = items.current.get(id),
-        box = container.current;
-      if (!el || !box) return end(false);
-      const b = el.getBoundingClientRect(),
-        r = box.getBoundingClientRect(),
-        s = scaleOf(box);
-      const sc = scrollingBox(scroller.current ?? box);
-      const ids = latest.current.ids;
-      drag.current = {
-        id,
-        order: ids,
-        gx: (x0 - b.left) / s,
-        gy: (y0 - b.top) / s,
-        cx,
-        cy,
-        w: b.width / s,
-        h: b.height / s,
-        raf: 0,
-        sc,
-        max: sc.scrollHeight - sc.clientHeight,
-      };
-      setOrder(ids);
-      setGhost({ id, x: (b.left - r.left) / s, y: (b.top - r.top) / s, w: b.width / s, h: b.height / s });
-      drag.current.raf = requestAnimationFrame(autoScroll);
-    };
-    const timer = window.setTimeout(lift, holdMs);
-
-    const move = (ev: PointerEvent) => {
-      cx = ev.clientX;
-      cy = ev.clientY;
-      const d = drag.current;
-      if (!d) {
-        // Moved before the hold finished: it's a scroll, not a drag
-        if (Math.hypot(cx - x0, cy - y0) > MOVE_SLOP) end(false);
-        return;
-      }
-      d.cx = cx;
-      d.cy = cy;
-      place();
-    };
-    const up = () => end(true);
-    const cancel = () => end(false);
-    // Once lifted, stop the finger from scrolling the grid (needs a non-passive listener)
-    const noScroll = (ev: TouchEvent) => {
-      if (drag.current && ev.cancelable) ev.preventDefault();
-    };
-
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    window.addEventListener('pointercancel', cancel);
-    window.addEventListener('touchmove', noScroll, { passive: false });
-    cleanup.current = () => {
-      clearTimeout(timer);
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      window.removeEventListener('pointercancel', cancel);
-      window.removeEventListener('touchmove', noScroll);
-    };
+    if (e.button !== 0 || stopHold.current) return;
+    stopHold.current = watchHold(e, holdMs, {
+      lift: (cx, cy) => {
+        const el = items.current.get(id),
+          box = container.current;
+        if (!el || !box) return stopHold.current?.();
+        const b = el.getBoundingClientRect(),
+          r = box.getBoundingClientRect(),
+          s = scaleOf(box);
+        const sc = scrollingBox(scroller.current ?? box);
+        const ids = latest.current.ids;
+        drag.current = {
+          id,
+          order: ids,
+          gx: (e.clientX - b.left) / s,
+          gy: (e.clientY - b.top) / s,
+          cx,
+          cy,
+          w: b.width / s,
+          h: b.height / s,
+          raf: 0,
+          sc,
+          max: sc.scrollHeight - sc.clientHeight,
+        };
+        setOrder(ids);
+        setGhost({ id, x: (b.left - r.left) / s, y: (b.top - r.top) / s, w: b.width / s, h: b.height / s });
+        drag.current.raf = requestAnimationFrame(autoScroll);
+      },
+      move: (cx, cy) => {
+        const d = drag.current;
+        if (!d) return;
+        d.cx = cx;
+        d.cy = cy;
+        place();
+      },
+      end: (drop) => end(drop),
+      settle: () => {
+        stopHold.current = null;
+      },
+    });
   };
 
-  useEffect(() => () => end(false), []);
+  // Unmounted mid-drag: drop it where it started
+  useEffect(() => () => stopHold.current?.(), []);
 
   return {
     /** Item order to render (live while dragging) */
     order: order ?? ids,
     ghost,
+    /** Where to draw the copy of the lifted item, in `container` (absolutely positioned) */
+    ghostStyle: ghost ? { left: ghost.x, top: ghost.y, width: ghost.w, height: ghost.h } : undefined,
     /** Spread on each item */
     itemProps: (id: string) => ({
       ref: (el: HTMLElement | null) => {
@@ -288,12 +259,7 @@ export function useHoldReorder({
         else items.current.delete(id);
       },
       onPointerDown: (e: ReactPointerEvent) => start(id, e),
-      onContextMenu: (e: { preventDefault(): void }) => e.preventDefault(),
-      onClickCapture: (e: { preventDefault(): void; stopPropagation(): void }) => {
-        if (!justDragged.current) return;
-        e.preventDefault();
-        e.stopPropagation();
-      },
+      ...afterDrag.props,
     }),
   };
 }

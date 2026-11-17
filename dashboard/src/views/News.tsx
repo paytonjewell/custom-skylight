@@ -117,10 +117,7 @@ export function News() {
         )}
       </PageHeader>
       {reorder.ghost && (
-        <div
-          className={css.tabGhost}
-          style={{ left: reorder.ghost.x, top: reorder.ghost.y, width: reorder.ghost.w, height: reorder.ghost.h }}
-        >
+        <div className={css.tabGhost} style={reorder.ghostStyle}>
           {topicName(reorder.ghost.id)}
         </div>
       )}

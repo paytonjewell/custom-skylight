@@ -52,7 +52,7 @@ function Grid({ lists }: { lists: Checklist[] }) {
   const view = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   // Only the user's lists are drag items: the grocery card can't move, and nothing can drop before it
-  const { order, ghost, itemProps } = useHoldReorder({
+  const { order, ghost, ghostStyle, itemProps } = useHoldReorder({
     ids: lists.map((l) => l.id),
     onCommit: reorderLists,
     container: view,
@@ -117,10 +117,7 @@ function Grid({ lists }: { lists: Checklist[] }) {
         })}
       </div>
       {ghost && dragged && (
-        <div
-          className={css.card + ' surface ' + css.ghost}
-          style={{ left: ghost.x, top: ghost.y, width: ghost.w, height: ghost.h }}
-        >
+        <div className={css.card + ' surface ' + css.ghost} style={ghostStyle}>
           <CardBody l={dragged} />
         </div>
       )}

@@ -51,7 +51,7 @@ export function ChecklistView({ list, onBack }: { list: Checklist; onBack: () =>
   const view = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  const { order, ghost, itemProps } = useHoldReorder({
+  const { order, ghost, ghostStyle, itemProps } = useHoldReorder({
     ids: list.items.map((i) => i.id),
     onCommit: (ids) => reorderListItems(list.id, ids),
     container: view,
@@ -208,15 +208,7 @@ export function ChecklistView({ list, onBack }: { list: Checklist; onBack: () =>
         )}
       </div>
       {ghost && byId.get(ghost.id) && (
-        <div
-          className={rowClass(byId.get(ghost.id)!) + ' ' + css.ghost}
-          style={{
-            left: ghost.x,
-            top: ghost.y,
-            width: ghost.w,
-            height: ghost.h,
-          }}
-        >
+        <div className={rowClass(byId.get(ghost.id)!) + ' ' + css.ghost} style={ghostStyle}>
           <div className={slideClass(byId.get(ghost.id)!)}>
             <RowBody i={byId.get(ghost.id)!} />
           </div>

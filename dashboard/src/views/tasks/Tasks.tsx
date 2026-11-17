@@ -257,10 +257,7 @@ export function Tasks() {
       )}
       {/* The column being moved, under the finger */}
       {reorder.ghost && !focus && mode === 'day' && (
-        <div
-          className={css.laneGhost}
-          style={{ left: reorder.ghost.x, top: reorder.ghost.y, width: reorder.ghost.w, height: reorder.ghost.h }}
-        >
+        <div className={css.laneGhost} style={reorder.ghostStyle}>
           <Lane
             data={data}
             who={reorder.ghost.id}
