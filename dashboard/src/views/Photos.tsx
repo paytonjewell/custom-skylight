@@ -1,6 +1,6 @@
 // Photos: a grid of every photo (tap to view or delete, hold and drag to reorder), with a preview of
 // the idle photo frame. Photos are added from a phone; the frame only views, reorders and deletes.
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Photo } from '../data/types';
 import { useData } from '../data/store';
 import { addPhotos, deletePhoto, reorderPhotos } from '../data/actions';
@@ -22,11 +22,9 @@ export function Photos({ active }: { active: boolean }) {
   const [previewing, setPreviewing] = useState(false);
   const idle = useUI((s) => s.mode !== 'day');
 
-  // Leaving the screen, or the real photo frame taking over, ends the preview,
-  // so coming back always starts at the grid
-  useEffect(() => {
-    if (!active || idle) setPreviewing(false);
-  }, [active, idle]);
+  // Leaving the screen, or the real photo frame taking over, ends the preview, so coming back always
+  // starts at the grid (set during render, React's pattern for state that follows props)
+  if (previewing && (!active || idle)) setPreviewing(false);
 
   return previewing ? (
     <Preview active={active} onExit={() => setPreviewing(false)} />

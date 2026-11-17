@@ -1,4 +1,5 @@
 // Calendar: Today-by-person lanes (default), 3-day, rolling week, month.
+import { tappable } from '../../ui/tappable';
 import { dayOf } from '../../lib/repeat';
 import { useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import type { CalEvent } from '../../data/types';
@@ -9,7 +10,7 @@ import { addDays, dayStart, DAY_MS, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow, useNow } from '../../lib/clock';
 import { Icon } from '../../ui/Icon';
-import { Dots, eventStyle, toneStyle } from '../../ui/people';
+import { Dots, toneStyle } from '../../ui/people';
 import { Segmented } from '../../ui/Segmented';
 import { EmptyNote } from '../../ui/EmptyNote';
 import { openEventSheet, openMoreSheet } from './EventSheet';
@@ -20,7 +21,7 @@ import { useLayout } from '../../app/layout';
 import { Pager, type PagerHandle } from '../../ui/Pager';
 import { go } from '../../app/ui';
 import { createStore, useStore } from '../../lib/store';
-import { EventDragProvider, useEventDrag } from './eventDrag';
+import { EventDragProvider, dragEvent, useEventDrag } from './eventDrag';
 import css from './Calendar.module.css';
 
 const PX = 72,
@@ -285,12 +286,10 @@ function EvBlock({
     (half ? ' ' + css.isHalf : '');
   const box = blockBox(e, day);
   const drag = useEventDrag();
-  const b = drag.bind(e);
   return (
     <button
-      {...b}
+      {...dragEvent(drag, data, e, { top: box.top, height: box.h, ...style })}
       className={cls + (drag.lifted(e) ? ' ' + css.isLifted : '')}
-      style={eventStyle(data, e, { top: box.top, height: box.h, ...style, ...b.style })}
       onClick={() => openEventSheet(e)}
     >
       {e.travel ? <span className={css.travel} style={{ height: (e.travel * PX) / 60 }} /> : null}
@@ -416,11 +415,10 @@ function DayView({ date, now, active, resetKey }: { date: Date; now: Date; activ
               return (
                 <button
                   key={e.id}
-                  {...drag.bind(e)}
+                  {...dragEvent(drag, data, e, { gridColumn: col })}
                   className={
                     css.ad + (e.start < s ? ' ' + css.adCont : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')
                   }
-                  style={eventStyle(data, e, { gridColumn: col, ...drag.bind(e).style })}
                   onClick={() => openEventSheet(e)}
                 >
                   {e.start < s && <Icon name="left" size={16} />}
@@ -511,11 +509,10 @@ function ThreeDay({ date, now, active, resetKey }: { date: Date; now: Date; acti
               return (
                 <button
                   key={e.id}
-                  {...drag.bind(e)}
+                  {...dragEvent(drag, data, e, { gridColumn: `${a + 1} / ${b + 1}` })}
                   className={
                     css.ad + (e.start < s0 ? ' ' + css.adCont : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')
                   }
-                  style={eventStyle(data, e, { gridColumn: `${a + 1} / ${b + 1}`, ...drag.bind(e).style })}
                   onClick={() => openEventSheet(e)}
                 >
                   {e.start < s0 && <Icon name="left" size={16} />}
@@ -564,7 +561,8 @@ function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: 
           <div
             key={i}
             className={css.wkCol + (sameDay(d, now) ? ' ' + css.isToday : '')}
-            onClick={() => openDay(d)}
+            {...tappable(() => openDay(d))}
+            aria-label={'Open ' + fmt.day(d) + ' ' + d.getDate()}
             data-drop={'d:' + dayOf(d)}
           >
             <div className={css.wkHead}>
@@ -574,9 +572,8 @@ function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: 
             {ad.map((e) => (
               <button
                 key={e.id}
-                {...drag.bind(e)}
+                {...dragEvent(drag, data, e)}
                 className={css.wkAd + (drag.lifted(e) ? ' ' + css.isLifted : '')}
-                style={eventStyle(data, e, drag.bind(e).style)}
                 onClick={stop(() => openEventSheet(e))}
               >
                 {evLabel(e)}
@@ -585,18 +582,21 @@ function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: 
             {list.slice(0, max).map((e) => (
               <button
                 key={e.id}
-                {...drag.bind(e)}
+                {...dragEvent(drag, data, e)}
                 className={
                   css.wkEv + (e.end <= now ? ' ' + css.isPast : '') + (drag.lifted(e) ? ' ' + css.isLifted : '')
                 }
-                style={eventStyle(data, e, drag.bind(e).style)}
                 onClick={stop(() => openEventSheet(e))}
               >
                 <span className={css.wkT}>{fmt.time(e.start, false)}</span>
                 <span className={css.wkN}>{evLabel(e)}</span>
               </button>
             ))}
-            {more > 0 && <button className={css.wkMore}>+{more} more</button>}
+            {more > 0 && (
+              <button className={css.wkMore} onClick={stop(() => openDay(d))}>
+                +{more} more
+              </button>
+            )}
             {!list.length && !ad.length && (
               <EmptyNote className={css.wkFree}>
                 <i>Free</i>

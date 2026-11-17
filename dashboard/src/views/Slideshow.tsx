@@ -47,15 +47,12 @@ export function Slideshow({ interval, active, ref }: Props) {
   const loaded = useRef(new Set<string>());
 
   const n = photos.length;
-  const at = curId ? photos.findIndex((p) => p.id === curId) : -1;
+  // The chosen photo; else (none chosen yet, or it was deleted) the first, once visible
+  const chosen = curId ? photos.findIndex((p) => p.id === curId) : -1;
+  const at = chosen >= 0 ? chosen : active && n ? 0 : -1;
   const cur = at >= 0 ? photos[at] : null;
   const prev = cur && n > 1 ? photos[(at - 1 + n) % n] : null;
   const next = cur && n > 1 ? photos[(at + 1) % n] : null;
-
-  // First photo once visible, or start over if the current photo was deleted
-  useEffect(() => {
-    if (active && n && at < 0) setCurId(photos[0].id);
-  }, [active, n, at, photos]);
 
   /** Move the strip to `x` local px (0 = current photo centred), optionally gliding */
   const setX = (x: number, ms = 0) => {

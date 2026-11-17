@@ -8,12 +8,12 @@
 // Drop targets (data-drop): "t:YYYY-MM-DD" an hour-grid column (its top is START o'clock),
 // "d:YYYY-MM-DD" a day, "a3:YYYY-MM-DD" the 3-day all-day row (the day comes from where across it).
 import { dayOf } from '../../lib/repeat';
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, type CSSProperties, type ReactNode } from 'react';
 import type { CalEvent, Data, EventRecord } from '../../data/types';
 import { useData } from '../../data/store';
 import { recordOf } from '../../data/calendar';
 import { editCalEvent } from '../../data/actions';
-import { evLabel } from '../../data/select';
+import { evLabel, type EventColorData } from '../../data/select';
 import { addDays, dayStart, sameDay } from '../../lib/dates';
 import { fmt } from '../../lib/fmt';
 import { now as clockNow } from '../../lib/clock';
@@ -92,6 +92,12 @@ const NONE: EventDrag = { bind: () => ({}), lifted: () => false };
 const Ctx = createContext<EventDrag>(NONE);
 /** For event blocks and chips (nothing outside the Calendar screen, e.g. the month on Today) */
 export const useEventDrag = () => useContext(Ctx);
+
+/** An event's drag props with its colours (and `extra` style) folded into the drag's own style */
+export function dragEvent(drag: EventDrag, data: EventColorData, e: CalEvent, extra?: CSSProperties) {
+  const b = drag.bind(e);
+  return { ...b, style: eventStyle(data, e, { ...extra, ...b.style }) };
+}
 
 /** The Calendar screen's dragging: wrap the views in it */
 export function EventDragProvider({
