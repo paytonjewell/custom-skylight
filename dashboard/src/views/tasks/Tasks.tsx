@@ -6,7 +6,7 @@
 // column (the order is saved on this device, and Today's rings follow it). The
 // settings (cog, saved on this device) pick which people and sections show, and all tasks, only those
 // to do, or only done ones (done ones sit at the bottom of their group).
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useHoldReorder } from '../../ui/useHoldReorder';
 import type { Data } from '../../data/types';
 import { useData } from '../../data/store';
@@ -57,10 +57,13 @@ export function Tasks() {
   /** Days from today being shown */
   const [offset, setOffset] = useState(0);
   // Leaving the screen goes back to today, so a check-off never lands on a day stepped to earlier
+  // (reset while rendering the change, rather than in an effect that would draw the old day first)
   const onScreen = useUI((s) => s.view) === 'tasks';
-  useEffect(() => {
+  const [wasOnScreen, setWasOnScreen] = useState(onScreen);
+  if (onScreen !== wasOnScreen) {
+    setWasOnScreen(onScreen);
     if (!onScreen) setOffset(0);
-  }, [onScreen]);
+  }
   const today = dayOf(now);
   const day = shiftDay(today, offset);
   const future = offset > 0;
