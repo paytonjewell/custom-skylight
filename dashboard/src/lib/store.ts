@@ -14,7 +14,7 @@ export function createStore<T>(initial: T): Store<T> {
     get: () => state,
     set(next) {
       state = typeof next === 'function' ? (next as (s: T) => T)(state) : next;
-      listeners.forEach((l) => l());
+      for (const l of listeners) l();
     },
     subscribe(listener) {
       listeners.add(listener);

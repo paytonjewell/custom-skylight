@@ -265,7 +265,7 @@ function EventForm({
       <div className="label">Day</div>
       <div className="chips">
         {dayChoices.map((d, i) => (
-          <Chip key={i} on={sameDay(d, day)} onClick={() => setDay(d)}>
+          <Chip key={dayOf(d)} on={sameDay(d, day)} onClick={() => setDay(d)}>
             {i < 2 ? fmt.rel(d, today) : fmt.dayShort(d) + ' ' + d.getDate()}
           </Chip>
         ))}

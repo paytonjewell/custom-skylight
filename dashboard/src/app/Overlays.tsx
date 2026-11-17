@@ -12,11 +12,21 @@ export function SheetHost() {
   const box = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   useDragToClose(box, scrim, sheet?.id);
+  const open = !!sheet;
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeSheet();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
   return (
     <div className={'sheet-layer' + (sheet ? ' is-open' : '')}>
       {sheet && (
         <>
-          <div className="sheet-scrim" ref={scrim} onClick={closeSheet} />
+          {/* A backdrop: the Close button and Escape do the same by keyboard */}
+          <div className="sheet-scrim" ref={scrim} aria-hidden="true" onClick={closeSheet} />
           <div key={sheet.id} ref={box} className={'sheet' + (sheet.cls ? ' ' + sheet.cls : '')}>
             <button className="sheet-x" aria-label="Close" onClick={closeSheet}>
               <Icon name="x" size={28} />
@@ -38,6 +48,7 @@ function useDragToClose(
   scrim: RefObject<HTMLDivElement | null>,
   id: number | undefined,
 ) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new sheet (id) gets its own listeners
   useEffect(() => {
     const el = box.current;
     if (!el || !isPhone()) return;
@@ -160,5 +171,6 @@ export function Ambient({ active }: { active: boolean }) {
 
 /** Sleep hours (sleep.ts): nothing on screen, backlight down. A tap wakes the dashboard. */
 export function Sleep() {
-  return <div className={css.sleep} onClick={() => setMode('day')} />;
+  // The whole (black) screen is the wake button
+  return <button className={css.sleep} aria-label="Wake the dashboard" onClick={() => setMode('day')} />;
 }

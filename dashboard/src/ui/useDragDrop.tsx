@@ -110,7 +110,7 @@ export function useDragDrop<T>({
   const drop = useLatest(onDrop);
 
   const mark = (el: HTMLElement | null, y = 0) => {
-    if (el && el.hasAttribute('data-drop-sides')) el.setAttribute('data-drop-side', sideOf(el, y));
+    if (el?.hasAttribute('data-drop-sides')) el.setAttribute('data-drop-side', sideOf(el, y));
     if (over.current === el) return;
     over.current?.removeAttribute('data-drop-over');
     over.current?.removeAttribute('data-drop-side');

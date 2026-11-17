@@ -1,6 +1,5 @@
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
-import {} from '../data/select';
 import { daysBetween } from '../lib/dates';
 import { fmt, pluralize } from '../lib/fmt';
 import { useNow } from '../lib/clock';

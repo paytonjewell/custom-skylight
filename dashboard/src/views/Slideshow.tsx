@@ -4,6 +4,7 @@
 // The timed advance glides on the same way, once the next photo has loaded.
 import {
   useEffect,
+  useEffectEvent,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -13,8 +14,7 @@ import {
   type RefObject,
 } from 'react';
 import type { Photo } from '../data/types';
-import { dataStore } from '../data/store';
-import { useStore } from '../lib/store';
+import { useData } from '../data/store';
 import { photoSrc } from '../data/select';
 import css from './Slideshow.module.css';
 
@@ -39,7 +39,7 @@ const GLIDE_MS = 320;
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function Slideshow({ interval, active, ref }: Props) {
-  const photos = useStore(dataStore, (d) => d.photos);
+  const photos = useData('photos').photos;
   const [curId, setCurId] = useState<string | null>(null);
   const track = useRef<HTMLDivElement>(null);
   /** A drag or glide is in progress: the timer waits, and a new drag can't start mid-glide */
@@ -62,10 +62,13 @@ export function Slideshow({ interval, active, ref }: Props) {
     el.style.transform = x ? `translate3d(${x}px, 0, 0)` : '';
   };
   // The strip is re-centred in the same frame the new photo becomes current, so nothing flickers
-  useLayoutEffect(() => {
+  const curKey = cur?.id;
+  const recentre = useEffectEvent(() => {
     setX(0);
     moving.current = null;
-  }, [curId]);
+  });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the current photo changes
+  useLayoutEffect(() => recentre(), [curKey]);
 
   /** Client px → the strip's own px (the frame's stage is CSS-scaled) */
   const local = (px: number) => {
@@ -113,14 +116,16 @@ export function Slideshow({ interval, active, ref }: Props) {
 
   // Advance every `interval` while visible, gliding like a swipe; any change of photo restarts the
   // timer. Waits for the next photo to have loaded, and for any swipe to finish.
+  const advance = useEffectEvent(() => {
+    if (moving.current || (next && !loaded.current.has(next.id))) return;
+    glide(1);
+  });
+  // A new current photo restarts the timer
   useEffect(() => {
-    if (!active || !curId || n < 2) return;
-    const t = setInterval(() => {
-      if (moving.current || (next && !loaded.current.has(next.id))) return;
-      glide(1);
-    }, interval);
+    if (!active || !curKey || n < 2) return;
+    const t = setInterval(advance, interval);
     return () => clearInterval(t);
-  }, [active, curId, interval, n, next]);
+  }, [active, curKey, interval, n]);
 
   const onLoad = (id: string) => loaded.current.add(id);
   // Keyed by photo id, so when a neighbour becomes current its (loaded) image is simply moved, not

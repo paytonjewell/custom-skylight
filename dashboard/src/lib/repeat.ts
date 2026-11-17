@@ -138,7 +138,7 @@ export function prevOccurrence(r: Repeat, to: string, lastDone?: string): string
 }
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
-export const isDay = (v: unknown): v is string => typeof v === 'string' && DAY_RE.test(v) && !isNaN(toMs(v));
+export const isDay = (v: unknown): v is string => typeof v === 'string' && DAY_RE.test(v) && !Number.isNaN(toMs(v));
 const int = (v: unknown, min: number, max: number): v is number =>
   typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max;
 const weekday = (v: unknown): v is Weekday => int(v, 0, 6);

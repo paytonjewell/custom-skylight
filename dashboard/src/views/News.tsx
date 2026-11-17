@@ -222,6 +222,7 @@ function ScanToRead({ url }: { url: string }) {
   return (
     <div className={css.qr}>
       {/* Generated locally from the article's URL: only rectangles, no outside markup */}
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: see above */}
       <span className={css.qrCode} dangerouslySetInnerHTML={{ __html: svg }} />
       <span className={css.qrText}>
         <b>Read the full story on your phone</b>

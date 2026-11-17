@@ -61,7 +61,9 @@ export function addToGroceries(names: string[]): () => void {
     else if (kind === 'more' && before) undo.push(() => setQty(item.id, before.qty));
     else if (kind === 'revived') undo.push(() => setGroceryDone(item.id, true));
   }
-  return () => undo.reverse().forEach((f) => f());
+  return () => {
+    for (const f of undo.reverse()) f();
+  };
 }
 
 // ------------------------------------------------------------ what's on hand

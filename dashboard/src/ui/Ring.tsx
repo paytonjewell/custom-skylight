@@ -5,7 +5,7 @@ export function Ring({ done, total, size }: { done: number; total: number; size:
     f = total ? done / total : 0,
     m = size / 2;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
       <circle cx={m} cy={m} r={r} className="ring-bg" />
       <circle
         cx={m}

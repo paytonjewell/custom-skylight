@@ -42,8 +42,6 @@
 }
 .title :global(.serif) { font-size: 32px; line-height: 1; white-space: nowrap; }
 :global(.phone) .title :global(.serif) { font-size: 22px; }
-.title :global(.label) {
-}
 :global(.phone) .title :global(.label) { font-size: 11px; letter-spacing: .1em; }
 /* Today (hidden, but still taking its space, when already on today) soaks up the free space, so
    the view switcher and + stay pinned to the right whatever the title's width */

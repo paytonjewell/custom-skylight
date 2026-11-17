@@ -140,9 +140,8 @@ function TabBar({ view }: { view: ViewName }) {
     setMenu(false);
     if (v !== view) return go(v);
     // Tapping the current tab again scrolls it back to the top
-    document
-      .querySelectorAll<HTMLElement>(`#view-${v}, #view-${v} [data-scroll-top]`)
-      .forEach((el) => el.scrollTo({ top: 0, behavior: 'smooth' }));
+    for (const el of document.querySelectorAll<HTMLElement>(`#view-${v}, #view-${v} [data-scroll-top]`))
+      el.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -171,8 +170,11 @@ function TabBar({ view }: { view: ViewName }) {
   return (
     <>
       {menu && (
+        // A backdrop: Escape closes the menu by keyboard (above)
+        // biome-ignore lint/a11y/noStaticElementInteractions: see above
+        // biome-ignore lint/a11y/useKeyWithClickEvents: see above
         <div className={css.menuLayer} onClick={() => setMenu(false)}>
-          <div className={css.menu} role="menu" onClick={(e) => e.stopPropagation()}>
+          <div className={css.menu} role="menu">
             {PHONE_MORE.map((v) => (
               <button
                 key={v}
@@ -293,7 +295,7 @@ function usePullToRefresh(enabled: boolean, indicator: RefObject<HTMLDivElement 
       views.removeEventListener('touchcancel', reset);
       ind.classList.remove(css.isReady, css.isLoading);
     };
-  }, [enabled]);
+  }, [enabled, indicator]);
 }
 
 /**
@@ -310,7 +312,7 @@ function useStageFit(ref: RefObject<HTMLDivElement | null>, phone: boolean) {
     }
     const STAGE_H = 800,
       STAGE_MIN_W = 1280;
-    const fit = () => {
+    const fitStage = () => {
       const el = ref.current;
       if (!el) return;
       // The visible area, not innerWidth/innerHeight: those follow the layout viewport, which grows
@@ -323,9 +325,9 @@ function useStageFit(ref: RefObject<HTMLDivElement | null>, phone: boolean) {
       const s = Math.min(vw / w, vh / STAGE_H);
       el.style.transform = Math.abs(s - 1) < 0.01 ? '' : `scale(${s})`;
     };
-    fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
+    fitStage();
+    window.addEventListener('resize', fitStage);
+    return () => window.removeEventListener('resize', fitStage);
   }, [ref, phone]);
 }
 

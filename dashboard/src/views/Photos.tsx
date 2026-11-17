@@ -1,5 +1,6 @@
 // Photos: a grid of every photo (tap to view or delete, hold and drag to reorder), with a preview of
 // the idle photo frame. Photos are added from a phone; the frame only views, reorders and deletes.
+import { tappable } from '../ui/tappable';
 import { useRef, useState } from 'react';
 import type { Photo } from '../data/types';
 import { useData } from '../data/store';
@@ -80,7 +81,10 @@ function Grid({ onPreview }: { onPreview: () => void }) {
                 key={id}
                 className={css.tile + (ghost?.id === id ? ' ' + css.isLifted : '')}
                 {...itemProps(id)}
-                onClick={() => openPhotoSheet(p)}
+                role="button"
+                tabIndex={0}
+                aria-label="Open photo"
+                {...tappable(() => openPhotoSheet(p))}
               >
                 <Thumb id={id} />
               </div>

@@ -37,7 +37,17 @@
         // There are no <form>s in the app, so a button's default type never submits anything
         "useButtonType": "off",
         // Sheets focus their first field on purpose: they open in answer to a tap
-        "noAutofocus": "off"
+        "noAutofocus": "off",
+        // Rows and day cells hold buttons of their own, so they can't be <button>s: they use
+        // role="button" with keyboard handling (src/ui/tappable.ts)
+        "useSemanticElements": "off"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": {
+          "level": "error",
+          // useLatest (src/ui/hooks.ts) returns a ref, which never needs to be a dependency
+          "options": { "hooks": [{ "name": "useLatest", "stableResult": true }] }
+        }
       },
       "complexity": {
         // !important is used deliberately, mostly to beat sizes and columns that code sets inline

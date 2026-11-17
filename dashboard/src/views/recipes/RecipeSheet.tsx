@@ -155,6 +155,8 @@ function RecipeSheet({ id, day }: { id: string; day?: string }) {
           <div className="label">Steps</div>
           <ol>
             {r.steps.map((s, i) => (
+              // Steps are numbered by place (and two can have the same text)
+              // biome-ignore lint/suspicious/noArrayIndexKey: see above
               <li key={i}>
                 <span className={css.n + ' num'}>{i + 1}</span>
                 <p>{s}</p>
@@ -485,6 +487,8 @@ function Cook({ id, servings }: { id: string; servings: number }) {
         <div className={css.progress}>
           {r.steps.map((_, i) => (
             <button
+              // One dot per step, by place
+              // biome-ignore lint/suspicious/noArrayIndexKey: see above
               key={i}
               className={i === step ? css.isAt : i < step ? css.isPast : ''}
               aria-label={'Step ' + (i + 1)}

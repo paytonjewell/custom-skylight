@@ -79,10 +79,11 @@ function layout(evs: CalEvent[]): Placed[] {
       cols[i] = +e.end;
       placed.push({ e, col: i });
     }
-    if (cols.length <= 2) placed.forEach((p) => out.push({ e: p.e, col: p.col, cols: cols.length }));
-    else {
+    if (cols.length <= 2) {
+      for (const p of placed) out.push({ e: p.e, col: p.col, cols: cols.length });
+    } else {
       const extra = placed.filter((p) => p.col > 0).map((p) => p.e);
-      placed.filter((p) => p.col === 0).forEach((p) => out.push({ e: p.e, col: 0, cols: 2 }));
+      for (const p of placed) if (p.col === 0) out.push({ e: p.e, col: 0, cols: 2 });
       out.push({
         more: extra,
         col: 1,
@@ -221,7 +222,7 @@ export function Calendar({ active }: { active: boolean }) {
 }
 
 function Title({ mode, date: d, now }: { mode: CalView; date: Date; now: Date }) {
-  let t, k;
+  let t: ReactNode, k: string;
   if (mode === 'day') {
     k = fmt.month(d) + ' ' + d.getFullYear() + ' · ' + (sameDay(d, now) ? 'Today' : fmt.rel(d, now));
     t = (
@@ -371,6 +372,7 @@ function NowLine({ days, now, indexed }: { days: Date[]; now: Date; indexed?: bo
 /** Scrollable hour grid; scrolls to just above "now" when the day/mode changes or the screen opens */
 function GridScroll({ resetKey, active, children }: { resetKey: string; active: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scrolls again when the day or mode (resetKey) changes
   useLayoutEffect(() => {
     if (active && ref.current) ref.current.scrollTop = Math.max(0, y(clockNow()) - 170);
   }, [resetKey, active]);
@@ -561,6 +563,8 @@ function WeekView({ date, now, openDay }: { date: Date; now: Date; openDay: (d: 
           <div
             key={i}
             className={css.wkCol + (sameDay(d, now) ? ' ' + css.isToday : '')}
+            role="button"
+            tabIndex={0}
             {...tappable(() => openDay(d))}
             aria-label={'Open ' + fmt.day(d) + ' ' + d.getDate()}
             data-drop={'d:' + dayOf(d)}

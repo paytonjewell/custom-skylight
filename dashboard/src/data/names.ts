@@ -167,13 +167,13 @@ const DESCRIPTORS = new Set([
   'bag',
 ]);
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Built once: core() runs for every ingredient against every item when the kitchen screens draw
 const RULES: [RegExp, string][] = [
-  ...SAME.map(([from, to]): [RegExp, string] => [new RegExp(` ${escape(from)} `, 'g'), ` ${to} `]),
-  ...CHEESES.map((c): [RegExp, string] => [new RegExp(` ${escape(c)} cheese `), ` ${c} `]),
-  ...SPICES.map((sp): [RegExp, string] => [new RegExp(` ground ${escape(sp)} `), ` ${sp} `]),
+  ...SAME.map(([from, to]): [RegExp, string] => [new RegExp(` ${escapeRe(from)} `, 'g'), ` ${to} `]),
+  ...CHEESES.map((c): [RegExp, string] => [new RegExp(` ${escapeRe(c)} cheese `), ` ${c} `]),
+  ...SPICES.map((sp): [RegExp, string] => [new RegExp(` ground ${escapeRe(sp)} `), ` ${sp} `]),
 ];
 const cores = new Map<string, string>();
 

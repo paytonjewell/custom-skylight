@@ -2,6 +2,7 @@
 // a small menu (remembered on each device). The arrows, or a swipe, step through days, weeks or
 // five-week blocks; a couple of minutes after someone leaves it elsewhere, it goes back to today.
 // Tapping a day opens it on the Calendar screen; tapping an event opens the event.
+import { tappable } from '../ui/tappable';
 import { useEffect, useRef, useState } from 'react';
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
@@ -90,7 +91,8 @@ export function HomeCalendar({ now }: { now: Date }) {
           </button>
           {menu && (
             <>
-              <div className={css.scrim} onClick={() => setMenu(false)} />
+              {/* A backdrop: choosing from the menu closes it by keyboard */}
+              <div className={css.scrim} aria-hidden="true" onClick={() => setMenu(false)} />
               <div className={css.menu} role="menu">
                 {VIEWS.map(([v, label]) => (
                   <button
@@ -168,8 +170,8 @@ function Week({ start, now, next }: { start: Date; now: Date; next: () => void }
             className={css.cell + (today ? ' ' + css.isToday : '')}
             role="button"
             tabIndex={0}
+            {...tappable(() => openCalendarAt(d))}
             aria-label={'Open ' + fmt.day(d)}
-            onClick={() => openCalendarAt(d)}
           >
             <div className={css.dayHead}>
               <span className={css.dayName}>
@@ -212,7 +214,7 @@ function Schedule({ date, now }: { date: Date; now: Date }) {
   const list = dayEvents(events, date);
   if (!list.length) {
     return (
-      <div className={css.open} onClick={() => openCalendarAt(date)}>
+      <div className={css.open} role="button" tabIndex={0} {...tappable(() => openCalendarAt(date))}>
         <EmptyNote className={css.empty}>
           <i>Nothing</i> on the calendar
         </EmptyNote>
@@ -220,6 +222,8 @@ function Schedule({ date, now }: { date: Date; now: Date }) {
     );
   }
   return (
+    // A tap between events opens the day; each event is a button, so nothing is lost by keyboard
+    // biome-ignore lint/a11y/useKeyWithClickEvents: see above
     <ul
       className={css.schedule}
       onClick={(e) => {

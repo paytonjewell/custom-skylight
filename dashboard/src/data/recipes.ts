@@ -238,7 +238,7 @@ function readQty(s: string): { qty: number | null; rest: string } {
   const m = s.match(
     /^(\d+(?:\.\d+)?)?\s*([¼½¾⅓⅔⅛⅜⅝⅞])?(?:\s*(\d+)\/(\d+)|\/(\d+))?(?:\s*(?:-|–|to)\s*[\d½¼¾⅓⅔/ ]+)?\s*/,
   );
-  if (!m || !m[0].trim()) return { qty: null, rest: s };
+  if (!m?.[0].trim()) return { qty: null, rest: s };
   let n = 0;
   if (m[5] && m[1])
     n = Number(m[1]) / Number(m[5]); // "1/2"

@@ -1,4 +1,5 @@
 // Today: the glanceable overview. Never scrolls.
+import { tappable } from '../ui/tappable';
 import { useRef, useState } from 'react';
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
@@ -41,7 +42,13 @@ export function Home({ active }: { active: boolean }) {
             <Icon name="palette" size={24} />
           </button>
         )}
-        <div className={css.clock} onClick={() => go('calendar')}>
+        <div
+          className={css.clock}
+          role="button"
+          tabIndex={0}
+          {...tappable(() => go('calendar'))}
+          aria-label="Open the calendar"
+        >
           <div className={css.time + ' num display-num'}>
             {fmt.time(now, false)}
             <span className={css.ampm}>{fmt.ampm(now)}</span>
@@ -49,7 +56,13 @@ export function Home({ active }: { active: boolean }) {
         </div>
         <div className={css.mid}>
           <Countdowns list={countdowns(events, now)} active={active} />
-          <div className={css.date} onClick={() => go('calendar')}>
+          <div
+            className={css.date}
+            role="button"
+            tabIndex={0}
+            {...tappable(() => go('calendar'))}
+            aria-label="Open the calendar"
+          >
             <b>
               {fmt.day(now)}
               <span className={css.dateComma}>,</span>
@@ -300,6 +313,8 @@ function VerseText({ text }: { text: string }) {
     <>
       “
       {text.split('LORD').map((part, i) => (
+        // Pieces of one fixed text, always in the same order
+        // biome-ignore lint/suspicious/noArrayIndexKey: see above
         <span key={i}>
           {i > 0 && <span className={css.sc}>Lord</span>}
           {part}

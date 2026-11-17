@@ -17,7 +17,7 @@ setInterval(() => {
   const k = minuteKey();
   if (k !== key) {
     key = k;
-    listeners.forEach((l) => l());
+    for (const l of listeners) l();
   }
 }, 1000);
 

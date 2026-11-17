@@ -5,6 +5,7 @@
 // Press-and-hold dragging (useHoldReorder's itemProps, or useDragDrop's bind) goes in `rowProps`: a
 // quick sideways move still swipes, and pressing an action never lifts the row. While open, a tap on
 // the row just closes it. `data-open="start"|"end"` is on the row while it's swiped, for styling.
+import { tappable } from './tappable';
 import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { REVEAL, useSwipeReveal, type SwipeSide } from './useSwipeReveal';
 import { Icon } from './Icon';
@@ -68,11 +69,13 @@ export function SwipeRow({
       className={css.row + (className ? ' ' + className : '')}
       style={{ ...rowProps?.style, ...style }}
       data-open={side}
-      onClick={() => {
+      role="button"
+      tabIndex={0}
+      {...tappable(() => {
         if (swipe.consumeSwipe()) return;
         if (open) return onOpenChange(null);
         onTap?.();
-      }}
+      })}
     >
       {start.map((a, i) => (
         <ActionButton key={a.label} a={a} at="start" i={i} shown={open === 'start'} onOpenChange={onOpenChange} />

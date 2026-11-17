@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 
 /**
  * A ref that always holds the latest `value`. For handlers attached once (window listeners that live
@@ -29,7 +29,9 @@ export function usePendingAction(delay: number) {
 
   useEffect(() => {
     const all = timers.current;
-    return () => all.forEach((t) => clearTimeout(t));
+    return () => {
+      for (const t of all.values()) clearTimeout(t);
+    };
   }, []);
 
   return {
@@ -63,6 +65,7 @@ export function usePendingAction(delay: number) {
  * width, e.g. a count).
  */
 export function useEdgeFade(ref: RefObject<HTMLElement | null>, key: string | number) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for the content's width
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -81,12 +84,15 @@ export function useEdgeFade(ref: RefObject<HTMLElement | null>, key: string | nu
   }, [ref, key]);
 }
 
-/** Nudge static content a few px every minute so nothing sits still for hours (image retention) */
+/**
+ * Nudge static content a few px every minute so nothing sits still for hours (image retention). The
+ * offset follows from the minute, so it's the same on every render within it.
+ */
 export function usePixelShift(active: boolean, now: Date): CSSProperties | undefined {
-  return useMemo(() => {
-    if (!active) return undefined;
-    const x = Math.round(Math.random() * 8 - 4),
-      y = Math.round(Math.random() * 8 - 4);
-    return { transform: `translate(${x}px, ${y}px)` };
-  }, [active, now]);
+  if (!active) return undefined;
+  const m = now.getHours() * 60 + now.getMinutes();
+  // Two different steps through -4…4, so x and y don't move in lockstep
+  const x = ((m * 3) % 9) - 4,
+    y = ((m * 5) % 9) - 4;
+  return { transform: `translate(${x}px, ${y}px)` };
 }

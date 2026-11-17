@@ -92,16 +92,11 @@ export function Inventory() {
       >
         <div className={css.addBar}>
           {sugg.length > 0 && (
-            <ul className={css.sugg} role="listbox" aria-label="Suggestions">
+            <ul className={css.sugg} aria-label="Suggestions">
               {sugg.map((x) => (
                 // (pressing doesn't take focus from the field, so the keyboard stays up for the next one)
                 <li key={x.name}>
-                  <button
-                    role="option"
-                    aria-selected={false}
-                    onPointerDown={(e) => e.preventDefault()}
-                    onClick={() => add(x.name)}
-                  >
+                  <button onPointerDown={(e) => e.preventDefault()} onClick={() => add(x.name)}>
                     <b>{x.name}</b>
                     <span>{x.have ? `In kitchen · ×${x.have}` : `${PLACE_EMOJI[x.place]} ${x.place}`}</span>
                   </button>
@@ -185,10 +180,10 @@ function suggestions(
       names.push(n.trim());
     }
   };
-  data.inventory.forEach((i) => push(i.name));
-  data.inventoryNames.forEach(([n]) => push(n));
-  knownGroceries(data).forEach(([n]) => push(n));
-  data.recipes.forEach((r) => r.ingredients.forEach((i) => push(i.name)));
+  for (const i of data.inventory) push(i.name);
+  for (const [n] of data.inventoryNames) push(n);
+  for (const [n] of knownGroceries(data)) push(n);
+  for (const r of data.recipes) for (const i of r.ingredients) push(i.name);
   const starts = names.filter((n) => n.toLowerCase().startsWith(q));
   const inside = names.filter((n) => !n.toLowerCase().startsWith(q) && n.toLowerCase().includes(q));
   return [...starts, ...inside]

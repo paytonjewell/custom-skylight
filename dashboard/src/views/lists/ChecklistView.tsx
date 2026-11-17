@@ -391,7 +391,9 @@ function withReminders(tasks: Task[], what: 'list' | 'item', run: (undoTasks: ()
           onClick={() => {
             closeSheet();
             const gone = tasks.map((t) => deleteTask(t.id));
-            run(() => gone.forEach((g) => g && restoreTask(g.task, g.done)));
+            run(() => {
+              for (const g of gone) if (g) restoreTask(g.task, g.done);
+            });
           }}
         >
           Delete {n === 1 ? 'reminder' : 'reminders'}

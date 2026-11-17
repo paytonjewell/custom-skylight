@@ -86,7 +86,10 @@ export function useSwipeReveal({
         if (s.horizontal === null) {
           if (Math.hypot(mx, my) < DECIDE) return;
           s.horizontal = Math.abs(mx) > Math.abs(my);
-          if (!s.horizontal) return void (g.current = null); // a scroll
+          if (!s.horizontal) {
+            g.current = null; // a scroll
+            return;
+          }
           e.currentTarget.setPointerCapture(e.pointerId);
           swiped.current = true;
         }

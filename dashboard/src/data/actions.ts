@@ -218,7 +218,10 @@ export async function addPhotos(
   const todo: [File, string | null][] = [];
   files.forEach((f, i) => {
     const h = hashes[i];
-    if (h && known.has(h)) return void skipped++;
+    if (h && known.has(h)) {
+      skipped++;
+      return;
+    }
     if (h) known.add(h); // the same photo picked twice in one go
     todo.push([f, h]);
   });

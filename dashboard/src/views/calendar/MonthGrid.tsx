@@ -48,7 +48,8 @@ function placeWeek(events: CalEvent[], start: Date): Placed[] {
   return items.map((it) => {
     let lane = 0;
     for (; ; lane++) {
-      const row = (used[lane] ??= []);
+      used[lane] ??= [];
+      const row = used[lane];
       let free = true;
       for (let c = it.a; c < it.b; c++) if (row[c]) free = false;
       if (free) {
@@ -83,6 +84,7 @@ export function MonthGrid({
   // How many lanes fit in a week's row
   const ref = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState(3);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: measures again when the weeks shown change
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -116,6 +118,8 @@ export function MonthGrid({
             (c) => placed.filter((p) => p.lane >= shown && p.a <= c && c < p.b).length,
           );
           return (
+            // The grid's rows, by place (the month's first row, second…)
+            // biome-ignore lint/suspicious/noArrayIndexKey: see above
             <div key={w} className={css.week}>
               {/* The days, filling the row (tap one to open it), with the date and weather on top */}
               <div className={css.days}>
@@ -147,7 +151,7 @@ export function MonthGrid({
                 className={css.lanes}
                 style={
                   {
-                    gridTemplateRows: `${HEAD}px repeat(${Math.max(1, need > fit ? fit : need)}, ${lane}px)`,
+                    gridTemplateRows: `${HEAD}px repeat(${Math.max(1, Math.min(need, fit))}, ${lane}px)`,
                   } as CSSProperties
                 }
               >
@@ -179,6 +183,8 @@ export function MonthGrid({
                   hidden.map((n, c) =>
                     n ? (
                       <button
+                        // A cell's place in the row is its identity
+                        // biome-ignore lint/suspicious/noArrayIndexKey: see above
                         key={'more' + c}
                         className={css.more}
                         style={{ gridColumn: c + 1, gridRow: shown + 2 }}
