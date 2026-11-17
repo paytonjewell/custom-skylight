@@ -9,19 +9,26 @@
     "frame:shot": "node scripts/frame-shot.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
     "test": "node --import ./test/resolve.mjs --test 'test/*.test.ts'",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
+    "knip": "knip",
+    "check": "npm run typecheck && npm run lint && npm test && npm run knip",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "cf-typegen": "wrangler types worker/worker-configuration.d.ts",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && npm run db:migrate:remote && wrangler deploy"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.8",
     "@cloudflare/vite-plugin": "^1.69.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "knip": "6.45.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",
     "wrangler": "^4.162.0"

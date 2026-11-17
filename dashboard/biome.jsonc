@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "**",
+      "!worker/worker-configuration.d.ts",
+      "!kiosk",
+      "!dist",
+      "!**/*.svg"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "single", "jsxQuoteStyle": "double", "trailingCommas": "all", "arrowParentheses": "always" }
+  },
+  "css": {
+    "parser": { "cssModules": true },
+    "formatter": { "enabled": false }
+  },
+  "assist": { "actions": { "source": { "organizeImports": "off" } } },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "style": {
+        // String concatenation reads fine for short class lists and labels
+        "useTemplate": "off",
+        // Used where a lookup is known to succeed (a Map filled just above, an id from the same list)
+        "noNonNullAssertion": "off",
+        // CSS modules nest phone and theme overrides, which this rule misreads as specificity mistakes
+        "noDescendingSpecificity": "off"
+      },
+      "a11y": {
+        // There are no <form>s in the app, so a button's default type never submits anything
+        "useButtonType": "off",
+        // Sheets focus their first field on purpose: they open in answer to a tap
+        "noAutofocus": "off"
+      },
+      "complexity": {
+        // !important is used deliberately, mostly to beat sizes and columns that code sets inline
+        "noImportantStyles": "off"
+      }
+    }
+  }
+}

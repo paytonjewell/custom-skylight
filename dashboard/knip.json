@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["public/sw.js", "test/*.test.ts", "scripts/*.mjs"],
+  "project": ["src/**/*.{ts,tsx}", "worker/**/*.ts", "test/**/*.{ts,mjs}", "scripts/**/*.mjs"],
+  "ignoreUnresolved": ["./worker-configuration.d.ts"]
+}

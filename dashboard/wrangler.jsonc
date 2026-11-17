@@ -3,6 +3,9 @@
   "name": "home-dashboard",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-09-30",
+  // Keeps Worker logs (including the cron's console.error) in the Cloudflare dashboard, so a failed
+  // reminder or feed refresh can be found later without having had `wrangler tail` running.
+  "observability": { "enabled": true },
   "assets": {
     "binding": "ASSETS",
     // Every request goes through the Worker first, so nothing (not even the app's JS) is served

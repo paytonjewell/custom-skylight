@@ -7,10 +7,11 @@ screen on a Skylight Calendar 2 through the kiosk app in `kiosk/`, and as a phon
 ## Commands
 
 - `npm run dev`: usually **already running** on :5173. Check before starting another.
-- `npm run typecheck`, `npm test`: run both before committing.
-- `npm run deploy`: builds and deploys. It does **not** apply migrations: run
-  `npm run db:migrate:remote` first whenever `migrations/` has a new file
-  (and `npx wrangler d1 migrations apply DB --local` for the dev server).
+- `npm run check` before committing: typecheck, Biome (lint + format), tests and knip (unused
+  code). `npm run lint:fix` formats and applies safe lint fixes. CI (`.github/workflows/dashboard.yml`)
+  runs the same checks on every push.
+- `npm run deploy`: builds, applies new migrations to the remote database, then deploys. For the dev
+  server, apply them with `npm run db:migrate:local`.
 - `npm run frame` / `npm run frame:shot -- out.png '#tasks' --js "<code>"`: see below.
 
 ## The frame is Chrome 124

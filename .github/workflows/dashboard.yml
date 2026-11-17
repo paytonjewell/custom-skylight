@@ -1,0 +1,31 @@
+name: Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths: ['dashboard/**', '.github/workflows/dashboard.yml']
+  pull_request:
+    paths: ['dashboard/**', '.github/workflows/dashboard.yml']
+
+defaults:
+  run:
+    working-directory: dashboard
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx biome ci
+      - run: npm test
+      - run: npm run knip
+      # Proves every migration applies cleanly to an empty database
+      - run: npx wrangler d1 migrations apply DB --local
+      - run: npx vite build
