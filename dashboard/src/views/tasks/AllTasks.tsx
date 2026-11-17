@@ -7,6 +7,7 @@ import { deleteTask, restoreTask } from '../../data/actions';
 import { doneByTask, nextDue, type NextDue } from '../../data/tasks';
 import { person, laneName } from '../../data/select';
 import { dayDiff, describeRepeat } from '../../lib/repeat';
+import { asDate } from '../../lib/days';
 import { toast } from '../../app/ui';
 import { Avatar, toneStyle } from '../../ui/people';
 import { Icon } from '../../ui/Icon';
@@ -109,7 +110,7 @@ export function AllTasks({
 export function whenText(n: NextDue, today: string): string {
   if (n.done) return 'Done';
   if (!n.day) return 'Whenever';
-  const d = new Date(n.day + 'T12:00:00');
+  const d = asDate(n.day);
   const days = dayDiff(today, n.day);
   const label =
     days === 0

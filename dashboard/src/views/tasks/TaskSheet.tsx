@@ -10,6 +10,7 @@ import { addTask, deleteTask, editTask, restoreTask, type TaskFields } from '../
 import { SLOTS } from '../../data/tasks';
 import { dayOf, describeRepeat, shiftDay, weekdayOf, type Repeat, type Unit, type Weekday } from '../../lib/repeat';
 import { now as clockNow } from '../../lib/clock';
+import { fmtDateShort } from '../../lib/days';
 import { peopleWithPhones, usePush } from '../../data/push';
 import { closeSheet, dismissSheet, go, openSheet, toast } from '../../app/ui';
 import { openList } from '../lists/Lists';
@@ -343,7 +344,7 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
               min={today}
               onChange={(v) => setDue(v || null)}
             >
-              {due && due !== today && due !== tomorrow ? fmtDay(due) : 'Pick a day'}
+              {due && due !== today && due !== tomorrow ? fmtDateShort(due) : 'Pick a day'}
             </DateChip>
           </div>
         </div>
@@ -517,10 +518,4 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
       </div>
     </div>
   );
-}
-
-/** 'YYYY-MM-DD' → "Fri, Nov 20" */
-function fmtDay(day: string): string {
-  const d = new Date(day + 'T12:00:00');
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }

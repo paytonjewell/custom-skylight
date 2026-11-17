@@ -12,17 +12,11 @@ import { closeSheet, go, openSheet } from '../../app/ui';
 import { Avatar, toneStyle } from '../../ui/people';
 import { Icon } from '../../ui/Icon';
 import { openTaskSheet } from './TaskSheet';
-import {
-  PersonList,
-  SHEET_LIST,
-  ShowSettings,
-  dayName,
-  fmtDate,
-  split,
-  useShowSettings,
-  useTaskDragging,
-  useTaskRows,
-} from './Tasks';
+import { dayName, fmtDate } from '../../lib/days';
+import { PersonList, SHEET_LIST } from './PersonList';
+import { split, useShowSettings } from './settings';
+import { ShowSettings } from './TaskSettingsSheet';
+import { useTaskDragging, useTaskRows } from './useTaskRows';
 import css from './PersonTasksSheet.module.css';
 
 /** `who`: a person id, or 'any' for tasks anyone can do */

@@ -1,0 +1,7 @@
+/* Tasks settings (the cog): people, sections, what shows, and reminders on this phone */
+.sheetLabel { margin: 22px 0 10px; }
+
+/* Reminders on this phone */
+.remind { display: flex; flex-direction: column; gap: 12px; }
+.remindNote { margin: 0; font-size: 16px; color: var(--ink-2); }
+.remindError { margin: 0; font-size: 15px; color: var(--alert); }
