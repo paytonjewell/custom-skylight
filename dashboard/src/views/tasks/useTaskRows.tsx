@@ -2,9 +2,8 @@
 // check off (Undo in the toast), swipe right to edit, left to delete or move to tomorrow, and hold to
 // drag it into order, into another part of the day, or onto someone else's column.
 import { useEffect, useState, type ReactNode } from 'react';
-import type { Slot } from '../../data/types';
 import { dataStore, useData } from '../../data/store';
-import { deleteTask, editTask, restoreTask, setTaskDone, type TaskFields } from '../../data/actions';
+import { deleteTask, editTask, moveTaskTo, restoreTask, setTaskDone } from '../../data/actions';
 import { useDragDrop, type DragProps } from '../../ui/useDragDrop';
 import { SLOTS, doneByTask, dueOn, type DueItem } from '../../data/tasks';
 import { habitStats } from '../../data/habits';
@@ -125,42 +124,26 @@ export function useTaskRows(
   const moveTask = (x: DueItem, target: string, side: 'before' | 'after') => {
     const t = x.task;
     const [who, group, rowId] = target.split('|');
-    const change: Partial<TaskFields> = {};
-    if (who !== t.who) change.who = who;
-    // A habit stays a habit and a task a task: a drop on the other kind's group just changes whose it is
-    const fits = group && (group === 'habits') === t.habit;
-    if (fits && !t.habit && group !== t.slot) change.slot = group as Slot;
-    // Its place among what's showing in that group now (others there keep their order)
-    const edits = new Map<string, Partial<TaskFields>>();
-    if (fits) {
-      const showingThere = split(
-        dueOn(data.tasks, data.taskDone, day, today).filter((y) => y.task.who === who),
-        sections,
-        show,
-      );
-      const list = (t.habit ? showingThere.shownHabits : showingThere.shownTasks.filter((y) => y.task.slot === group))
-        .map((y) => y.task)
-        .filter((y) => y.id !== t.id);
-      let at = rowId ? list.findIndex((y) => y.id === rowId) : list.length;
-      if (at < 0) at = list.length;
-      else if (rowId && side === 'after') at++;
-      list.splice(at, 0, t);
-      list.forEach((y, i) => {
-        if (y.position !== i + 1) edits.set(y.id, { position: i + 1 });
-      });
-    }
-    if (Object.keys(change).length) edits.set(t.id, { ...edits.get(t.id), ...change });
-    if (!edits.size) return;
-    // Undo puts back what each one had
-    const before = [...edits.keys()].map((id) => {
-      const y = data.tasks.find((z) => z.id === id)!;
-      const was: Partial<TaskFields> = {};
-      for (const k of Object.keys(edits.get(id)!) as (keyof TaskFields)[])
-        (was as Record<string, unknown>)[k] = y[k] ?? null;
-      return [id, was] as const;
-    });
-    for (const [id, p] of edits) editTask(id, p);
-    const undo = () => before.forEach(([id, p]) => editTask(id, p));
+    // What's showing in that group now: the task takes its place among them (they keep their order)
+    const there = group
+      ? split(
+          dueOn(data.tasks, data.taskDone, day, today).filter((y) => y.task.who === who),
+          sections,
+          show,
+        )
+      : null;
+    const shown = !there
+      ? []
+      : group === 'habits'
+        ? there.shownHabits
+        : there.shownTasks.filter((y) => y.task.slot === group);
+    const moved = moveTaskTo(
+      t,
+      { who, group, rowId, side },
+      shown.map((y) => y.task),
+    );
+    if (!moved) return;
+    const { change, undo } = moved;
     if (change.who)
       toast(
         <>

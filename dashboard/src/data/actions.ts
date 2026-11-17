@@ -7,6 +7,7 @@ import { pendingDeletes, refreshPhotos, trackSave } from './photoSync';
 import { dropTitle, saveList, saveTitleSoon } from './listSync';
 import { saveGrocery } from './grocerySync';
 import { saveTask } from './taskSync';
+import { taskMoveEdits, type MoveEdit, type TaskDrop } from './taskMove';
 import { dayOf } from '../lib/repeat';
 import { now as clockNow } from '../lib/clock';
 import { STORES } from './grocery';
@@ -93,6 +94,30 @@ export function addTask(f: TaskFields): Task {
 export function editTask(id: string, p: Partial<TaskFields>): void {
   set((d) => ({ ...d, tasks: patch<Task>(d.tasks, id, p) }));
   saveTask(() => api.editTask(id, p));
+}
+/**
+ * Move a dragged task: to someone else, another part of the day, or a new place in its group
+ * (`shown`: what's showing in the group it was dropped on, in order). Returns what changed on the
+ * task itself (who or slot, for the toast) and an Undo that puts back what each moved task had,
+ * or null when the drop changed nothing.
+ */
+export function moveTaskTo(t: Task, drop: TaskDrop, shown: Task[]): { change: MoveEdit; undo: () => void } | null {
+  const edits = taskMoveEdits(t, drop, shown);
+  if (!edits.size) return null;
+  const tasks = dataStore.get().tasks;
+  const before = [...edits].map(([id, p]) => {
+    const y = tasks.find((z) => z.id === id)!;
+    const was: MoveEdit = {};
+    for (const k of Object.keys(p) as (keyof MoveEdit)[]) (was as Record<string, unknown>)[k] = y[k] ?? null;
+    return [id, was] as const;
+  });
+  for (const [id, p] of edits) editTask(id, p);
+  return {
+    change: { who: edits.get(t.id)?.who, slot: edits.get(t.id)?.slot },
+    undo: () => {
+      for (const [id, p] of before) editTask(id, p);
+    },
+  };
 }
 /** Delete a task and its history; returns both, so Undo can bring them back */
 export function deleteTask(id: string): { task: Task; done: TaskDone[] } | null {
