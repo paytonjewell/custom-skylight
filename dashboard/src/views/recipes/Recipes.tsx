@@ -276,7 +276,7 @@ function PickDinner({ day }: { day: string }) {
             }}
           >
             <span className={css.pickEmoji}>{r.emoji}</span>
-            <span>
+            <span className={css.pickText}>
               <b>{r.title}</b>
               <small>
                 {r.minutes} min{r.made ? ' · made ' + madeAgo(r.made, today) : ''}
