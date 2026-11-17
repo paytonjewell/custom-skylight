@@ -28,7 +28,12 @@ body {
      Low values give the sturdy, soft-serifed cut; "auto" would pick hairline serifs at our large sizes. */
   font-optical-sizing: none; font-variation-settings: 'opsz' var(--serif-opsz);
 }
-button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit;
+  /* Chrome 124 (the frame's WebView) gives buttons align-items: flex-start; newer Chrome doesn't.
+     Without this, a flex <button> on the frame doesn't stretch its contents, so truncated text
+     spills out (event titles, theme previews). */
+  align-items: normal;
+}
 input { font: inherit; color: inherit; -webkit-user-select: text; user-select: text; }
 img { display: block; }
 h1, h2, h3, p { margin: 0; font-weight: inherit; }

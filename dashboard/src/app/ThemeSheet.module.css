@@ -5,9 +5,7 @@
   :global(.phone) & { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
 .card {
-  /* Stretch spelled out: Chrome 124 (the frame's WebView) lays a flex <button> out with flex-start,
-     so the preview sized itself to its dots and spilled out of the card */
-  display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 10px 14px; min-width: 0;
+  display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 14px; min-width: 0;
   border-radius: 18px; background: var(--card); text-align: left;
   box-shadow: inset 0 0 0 1px var(--line);
 }
