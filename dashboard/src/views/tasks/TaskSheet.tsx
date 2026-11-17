@@ -20,7 +20,8 @@ import { Icon } from '../../ui/Icon';
 import { RepeatPicker } from './RepeatPicker';
 import { toControls, toRepeat } from './repeatControls';
 import css from './TaskSheet.module.css';
-import { phonePeople, taskPeople } from '../../data/select';
+import { phonePeople } from '../../data/select';
+import { taskPickerPeople } from './settings';
 
 /** A reminder's time when it's first turned on, by part of the day */
 const REMIND_AT: Record<Slot, string> = { morning: '08:00', afternoon: '13:00', evening: '18:00', anytime: '09:00' };
@@ -177,10 +178,9 @@ function TaskSheet({ task, defaults }: { task?: Task; defaults?: Partial<TaskFie
 
       <div className="label">Who</div>
       <PersonPicker
-        people={taskPeople(data.people).filter((p) => p.calendar !== false)}
+        {...taskPickerPeople(data)}
         everyone={data.family}
         everyoneLabel="Anyone"
-        after={taskPeople(data.people).filter((p) => p.calendar === false)}
         selected={[who === 'any' ? 'family' : who]}
         onPick={(id) => setWho(id === 'family' ? 'any' : id)}
       />

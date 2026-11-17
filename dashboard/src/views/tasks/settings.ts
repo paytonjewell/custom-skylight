@@ -1,8 +1,8 @@
 // What the Tasks screen shows, saved on this device: which people and sections, all tasks or only
 // those to do or done, and the columns' order. A person's sheet on Today shares the same settings.
-import type { Data, Slot } from '../../data/types';
+import type { Data, Person, Slot } from '../../data/types';
 import { SLOTS, type DueItem } from '../../data/tasks';
-import { taskLanes } from '../../data/select';
+import { taskLanes, taskPeople } from '../../data/select';
 import { createStore, store, stored, useStore } from '../../lib/store';
 
 /** A column per person (FAMILY, worker/home.ts), then Anyone, then tasks-only profiles */
@@ -78,6 +78,15 @@ export function useShowSettings(): { sections: string[] | null; show: DoneView; 
   const sections = useStore(sectionFilter.store, (s) => s);
   const show = useStore(doneView, (s) => s);
   return { sections, show, filtered: !!sections || show !== 'all' };
+}
+
+/**
+ * Who a task can be for, as PersonPicker takes them: people on the calendar, then (after Anyone)
+ * the tasks-only profiles
+ */
+export function taskPickerPeople(d: Pick<Data, 'people'>): { people: Person[]; after: Person[] } {
+  const all = taskPeople(d.people);
+  return { people: all.filter((p) => p.calendar !== false), after: all.filter((p) => p.calendar === false) };
 }
 
 /** A person's tasks for a day, split for showing: counts use them all, rows skip hidden done ones */

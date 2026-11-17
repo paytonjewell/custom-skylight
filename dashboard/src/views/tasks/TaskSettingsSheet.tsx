@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Chip } from '../../ui/Chip';
 import { pushSupported, testPush, turnOffPush, turnOnPush, usePush } from '../../data/push';
-import { person, phonePeople, taskPeople, type PeopleData } from '../../data/select';
+import { person, phonePeople, type PeopleData } from '../../data/select';
 import { useStore } from '../../lib/store';
 import { closeSheet, toast } from '../../app/ui';
 import { Icon } from '../../ui/Icon';
@@ -18,6 +18,7 @@ import {
   sectionFilter,
   setDoneView,
   showing,
+  taskPickerPeople,
   toggleIn,
 } from './settings';
 import css from './TaskSettingsSheet.module.css';
@@ -32,10 +33,9 @@ export function SettingsSheet({ data }: { data: PeopleData }) {
       <SheetHeader kicker="Tasks" title="Settings" />
       <div className={'label ' + css.sheetLabel}>People</div>
       <PersonPicker
-        people={taskPeople(data.people).filter((p) => p.calendar !== false)}
+        {...taskPickerPeople(data)}
         everyone={data.family}
         everyoneLabel="Anyone"
-        after={taskPeople(data.people).filter((p) => p.calendar === false)}
         selected={onPeople.map((id) => (id === 'any' ? 'family' : id))}
         onPick={(id) => toggleIn(peopleFilter, people, lanesOf(data), id === 'family' ? 'any' : id)}
       />
