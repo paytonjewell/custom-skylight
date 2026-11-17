@@ -1,0 +1,3 @@
+# Formatting-only commits, skipped by `git blame` (git config blame.ignoreRevsFile .git-blame-ignore-revs)
+# Format the dashboard with Biome
+180e9c39f10187eec1476dc37b22ac4a88e7882a
