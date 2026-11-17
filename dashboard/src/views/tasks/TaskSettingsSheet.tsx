@@ -103,8 +103,11 @@ export function ShowSettings({ labelClass = css.sheetLabel }: { labelClass?: str
 /** Turn phone reminders on or off on this device, and say whose phone it is */
 function PhoneReminders({ data }: { data: PeopleData }) {
   const on = usePush((s) => s.person);
-  const [who, setWho] = useState<string | null>(on);
+  /** Who's ticked when reminders are off (who to turn them on for), or while a change is being saved */
+  const [picked, setPicked] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // While on, the ticked person is the push state's, so it follows changes made elsewhere
+  const who = on && !(busy && picked) ? on : picked;
   const [error, setError] = useState('');
   const humans = phonePeople(data.people);
   if (!pushSupported) {
@@ -112,22 +115,24 @@ function PhoneReminders({ data }: { data: PeopleData }) {
       <p className={css.remindNote}>Reminders go to phones. Open White Lotus HQ on your phone and turn them on here.</p>
     );
   }
-  const run = (f: () => Promise<void>, done?: string) => {
+  /** `ticked`: who shows as ticked meanwhile (and afterwards, if that turns reminders off) */
+  const run = (f: () => Promise<void>, done: string, ticked = on) => {
+    setPicked(ticked);
     setBusy(true);
     setError('');
     f()
       .then(
         () => {
-          if (done) toast(done, { icon: 'bell' });
+          toast(done, { icon: 'bell' });
         },
         (e: Error) => setError(e.message || 'Something went wrong'),
       )
       .finally(() => setBusy(false));
   };
   const pick = (id: string) => {
-    setWho(id);
     // Already on: switching person just saves it
-    if (on && id !== on) run(() => turnOnPush(id), `Reminders here are now for ${person(data, id).name}`);
+    if (!on) setPicked(id);
+    else if (id !== on) run(() => turnOnPush(id), `Reminders here are now for ${person(data, id).name}`, id);
   };
   return (
     <div className={css.remind}>
@@ -155,7 +160,7 @@ function PhoneReminders({ data }: { data: PeopleData }) {
           <button
             className="chip is-on"
             disabled={busy || !who}
-            onClick={() => run(() => turnOnPush(who!), 'Reminders on')}
+            onClick={() => run(() => turnOnPush(who!), 'Reminders on', who)}
           >
             <Icon name="bell" size={18} /> Turn on reminders
           </button>
