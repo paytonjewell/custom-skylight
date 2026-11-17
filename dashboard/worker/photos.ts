@@ -52,10 +52,11 @@ export async function knownPhotos(req: Request, env: Env): Promise<Response> {
   if (!Array.isArray(hashes) || hashes.length > 500 || !hashes.every((h) => typeof h === 'string' && HASH.test(h)))
     return bad('Expected { hashes: [...] }');
   if (!hashes.length) return json({ known: [] });
+  // One JSON parameter rather than one per hash: D1 allows at most 100 bound parameters per query
   const { results } = await env.DB.prepare(
-    `SELECT source_hash FROM photos WHERE source_hash IN (${hashes.map(() => '?').join(',')})`,
+    'SELECT source_hash FROM photos WHERE source_hash IN (SELECT value FROM json_each(?))',
   )
-    .bind(...hashes)
+    .bind(JSON.stringify(hashes))
     .all<{ source_hash: string }>();
   return json({ known: results.map((r) => r.source_hash) });
 }

@@ -181,11 +181,12 @@ export async function refreshNews(env: Env, max = PER_RUN): Promise<{ checked: n
   let stored = 0;
   for (const { feed, state } of due) stored += await refreshFeed(env, feed, state, now);
 
-  const urls = feedsFor(env).map((f) => f.url);
-  const marks = urls.map(() => '?').join(',');
+  // The list goes in as one JSON parameter: D1 allows at most 100 bound parameters per query, and
+  // LOCAL_NEWS can make the list any length
+  const urls = JSON.stringify(feedsFor(env).map((f) => f.url));
   await env.DB.batch([
-    env.DB.prepare(`DELETE FROM news WHERE feed NOT IN (${marks})`).bind(...urls),
-    env.DB.prepare(`DELETE FROM news_feeds WHERE url NOT IN (${marks})`).bind(...urls),
+    env.DB.prepare('DELETE FROM news WHERE feed NOT IN (SELECT value FROM json_each(?))').bind(urls),
+    env.DB.prepare('DELETE FROM news_feeds WHERE url NOT IN (SELECT value FROM json_each(?))').bind(urls),
   ]);
   return { checked: due.length, stored };
 }
