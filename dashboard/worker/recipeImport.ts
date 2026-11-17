@@ -4,7 +4,7 @@
 //
 // The request says who it is (it doesn't pretend to be a browser). Sites that turn away apps get a
 // clear answer, and the app offers pasting the recipe's text instead.
-import { json } from './photos';
+import { json, readJson } from './http';
 
 const UA = 'WhiteLotusHQ/1.0 (family dashboard; imports a recipe someone shared)';
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -200,7 +200,7 @@ async function readCapped(res: Response): Promise<string> {
 
 /** POST /api/recipes/import ({ url }) → the recipe's parts, or why it couldn't be read */
 export async function importRecipe(req: Request): Promise<Response> {
-  const b = await req.json<{ url?: unknown }>().catch(() => null);
+  const b = await readJson<{ url?: unknown }>(req);
   let url: URL;
   try {
     url = new URL(typeof b?.url === 'string' ? b.url.trim() : '');

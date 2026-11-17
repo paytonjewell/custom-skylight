@@ -4,8 +4,8 @@
 // off) items are cleared automatically after a few days.
 import type { Grocery } from '../src/data/types';
 import { AISLES, OTHER, STORES } from '../src/data/grocery';
-import { LIST_ID } from './lists';
-import { json } from './photos';
+import { bad, done, json, notFound, now, readJson } from './http';
+import { ID, readIds, reorder } from './validate';
 
 const MAX_NAME = 100;
 const MAX_NOTE = 200;
@@ -15,10 +15,6 @@ const PURCHASED_DAYS = 3; // purchased items are cleared after this long
 const CATS = new Set([...AISLES, OTHER]);
 const STORE_IDS = new Set(STORES.map((s) => s.id));
 
-const bad = (error: string, status = 400) => json({ error }, status);
-const done = () => new Response(null, { status: 204 });
-const body = <T>(req: Request) => req.json<T>().catch(() => null);
-const now = () => new Date().toISOString();
 const isQty = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= MAX_QTY;
 const isName = (v: unknown): v is string => typeof v === 'string' && !!v.trim() && v.length <= MAX_NAME;
 const isNote = (v: unknown): v is string => typeof v === 'string' && v.length <= MAX_NOTE;
@@ -72,7 +68,7 @@ export async function getGroceries(env: Env): Promise<Response> {
 /** An item from the app, checked */
 function item(v: unknown): Grocery | null {
   const g = v as Partial<Grocery> | null;
-  if (!g || typeof g.id !== 'string' || !LIST_ID.test(g.id) || !isName(g.name) || !CATS.has(g.cat ?? '')) return null;
+  if (!g || typeof g.id !== 'string' || !ID.test(g.id) || !isName(g.name) || !CATS.has(g.cat ?? '')) return null;
   if (!isQty(g.qty) || !STORE_IDS.has(g.store ?? '') || (g.note !== undefined && !isNote(g.note))) return null;
   return {
     id: g.id,
@@ -90,7 +86,7 @@ function item(v: unknown): Grocery | null {
  * bring an item back with Undo (`restore: true` doesn't count it as another use).
  */
 export async function addGrocery(req: Request, env: Env): Promise<Response> {
-  const b = await body<Record<string, unknown>>(req);
+  const b = await readJson<Record<string, unknown>>(req);
   const g = item(b);
   if (!g) return bad('Expected { id, name, cat, qty, store }');
   try {
@@ -109,7 +105,7 @@ export async function addGrocery(req: Request, env: Env): Promise<Response> {
 
 /** PATCH /api/groceries/:id ({ qty?, done?, cat?, name?, note?, store?, used? }). A new aisle is remembered for the name. */
 export async function editGrocery(req: Request, env: Env, id: string): Promise<Response> {
-  const b = await body<Partial<Grocery> & { used?: unknown }>(req);
+  const b = await readJson<Partial<Grocery> & { used?: unknown }>(req);
   if (!b) return bad('Expected a change');
   if (
     (b.qty !== undefined && !isQty(b.qty)) ||
@@ -123,7 +119,7 @@ export async function editGrocery(req: Request, env: Env, id: string): Promise<R
   const cur = await env.DB.prepare('SELECT name, cat FROM groceries WHERE id = ?')
     .bind(id)
     .first<{ name: string; cat: string }>();
-  if (!cur) return bad('No such item', 404);
+  if (!cur) return notFound('No such item');
   const name = b.name?.trim() ?? cur.name,
     cat = b.cat ?? cur.cat;
   await env.DB.batch([
@@ -156,20 +152,12 @@ export async function editGrocery(req: Request, env: Env, id: string): Promise<R
 /** DELETE /api/groceries/:id (its name and aisle stay remembered) */
 export async function deleteGrocery(env: Env, id: string): Promise<Response> {
   const { meta } = await env.DB.prepare('DELETE FROM groceries WHERE id = ?').bind(id).run();
-  return meta.changes ? done() : bad('No such item', 404);
-}
-
-/** Parse { ids: [...] } */
-async function idsFrom(req: Request): Promise<string[] | null> {
-  const ids = (await body<{ ids?: unknown }>(req))?.ids;
-  return Array.isArray(ids) && ids.length <= MAX_ITEMS && ids.every((x) => typeof x === 'string' && LIST_ID.test(x))
-    ? ids
-    : null;
+  return meta.changes ? done() : notFound('No such item');
 }
 
 /** POST /api/groceries/clear ({ ids }): remove checked-off items in one go */
 export async function clearGroceries(req: Request, env: Env): Promise<Response> {
-  const ids = await idsFrom(req);
+  const ids = await readIds(req, MAX_ITEMS);
   if (!ids) return bad('Expected { ids: [...] }');
   if (ids.length) {
     const stmt = env.DB.prepare('DELETE FROM groceries WHERE id = ?');
@@ -180,11 +168,8 @@ export async function clearGroceries(req: Request, env: Env): Promise<Response> 
 
 /** PUT /api/groceries/order ({ ids }: every item, in order) */
 export async function orderGroceries(req: Request, env: Env): Promise<Response> {
-  const ids = await idsFrom(req);
+  const ids = await readIds(req, MAX_ITEMS);
   if (!ids) return bad('Expected { ids: [...] }');
-  if (ids.length) {
-    const stmt = env.DB.prepare('UPDATE groceries SET position = ? WHERE id = ?');
-    await env.DB.batch(ids.map((id, n) => stmt.bind(n, id)));
-  }
+  await reorder(env, 'groceries', ids);
   return done();
 }

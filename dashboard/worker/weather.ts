@@ -3,7 +3,7 @@
 // every 15 minutes (by the cron, or when the app asks and it's older), the verse once a day.
 import type { Verse, Weather, WxCond } from '../src/data/types';
 import { home, type Home } from './home';
-import { json } from './photos';
+import { json } from './http';
 
 const VERSION = 'NLT';
 const WEATHER_MS = 15 * 60 * 1000;

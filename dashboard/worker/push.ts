@@ -7,10 +7,10 @@ import type { Task, TaskDone } from '../src/data/types';
 import { doneByTask, dueItem } from '../src/data/tasks';
 import { describeRepeat, shiftDay } from '../src/lib/repeat';
 import { sendPush, vapid, type Subscription } from './webpush';
-import { json } from './photos';
+import { bad, done, json, notFound, readJson } from './http';
+import { PERSON, validTz } from './validate';
 import { loadTasks } from './tasks';
 
-const PERSON = /^[a-z0-9_-]{1,32}$/;
 /** A reminder goes out if its time was within this many minutes (the cron runs every minute; this
  * covers a few missed runs) */
 const WINDOW_MIN = 15;
@@ -20,19 +20,6 @@ interface SubRow extends Subscription {
   device_id: string;
   person: string;
   tz: string;
-}
-
-const bad = (error: string, status = 400) => json({ error }, status);
-const body = <T>(req: Request) => req.json<T>().catch(() => null);
-
-function validTz(tz: unknown): tz is string {
-  if (typeof tz !== 'string' || tz.length > 64) return false;
-  try {
-    new Intl.DateTimeFormat('en', { timeZone: tz });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /** The app's address, for the VAPID "sub" claim (push services want a way to reach the sender) */
@@ -60,7 +47,7 @@ export async function getPush(env: Env, device: Device): Promise<Response> {
 
 /** PUT /api/push ({ endpoint, keys: { p256dh, auth }, person, tz }): turn reminders on for this phone */
 export async function savePush(req: Request, env: Env, device: Device): Promise<Response> {
-  const b = await body<{
+  const b = await readJson<{
     endpoint?: unknown;
     keys?: { p256dh?: unknown; auth?: unknown };
     person?: unknown;
@@ -91,19 +78,19 @@ export async function savePush(req: Request, env: Env, device: Device): Promise<
 
 /** DELETE /api/push ({ endpoint }): turn reminders off for this phone */
 export async function deletePush(req: Request, env: Env, device: Device): Promise<Response> {
-  const b = await body<{ endpoint?: unknown }>(req);
+  const b = await readJson<{ endpoint?: unknown }>(req);
   if (typeof b?.endpoint !== 'string') return bad('Bad endpoint');
   await env.DB.prepare('DELETE FROM push_subs WHERE endpoint = ? AND device_id = ?').bind(b.endpoint, device.id).run();
-  return new Response(null, { status: 204 });
+  return done();
 }
 
 /** POST /api/push/test ({ endpoint }): a test notification to this phone */
 export async function testPush(req: Request, env: Env, device: Device): Promise<Response> {
-  const b = await body<{ endpoint?: unknown }>(req);
+  const b = await readJson<{ endpoint?: unknown }>(req);
   const sub = await env.DB.prepare('SELECT * FROM push_subs WHERE endpoint = ? AND device_id = ?')
     .bind(b?.endpoint ?? '', device.id)
     .first<SubRow>();
-  if (!sub) return bad('Reminders are off on this phone', 404);
+  if (!sub) return notFound('Reminders are off on this phone');
   const status = await sendPush(
     env,
     sub,

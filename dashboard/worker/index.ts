@@ -6,7 +6,6 @@ import { privacyPage } from './privacy-page';
 import { getNews, refreshNews } from './news/news';
 import { addGrocery, clearGroceries, deleteGrocery, editGrocery, getGroceries, orderGroceries } from './groceries';
 import {
-  LIST_ID,
   addItem,
   addList,
   deleteItem,
@@ -38,7 +37,9 @@ import { getVerse, getWeather, refreshWeather } from './weather';
 import { getFamily } from './home';
 import { kitchenRoute } from './kitchen';
 import { isDay } from '../src/lib/repeat';
-import { ID, addPhoto, deletePhoto, json, knownPhotos, listPhotos, reorderPhotos, servePhoto } from './photos';
+import { addPhoto, deletePhoto, knownPhotos, listPhotos, reorderPhotos, servePhoto } from './photos';
+import { json, pathParts } from './http';
+import { UUID, isId } from './validate';
 
 // The service worker script is public too: it holds no data, and the browser checks it for updates
 // on its own schedule.
@@ -155,14 +156,16 @@ async function route(
   }
   if (path === '/api/photos/order' && m === 'PUT') return reorderPhotos(req, env);
   if (path === '/api/photos/known' && m === 'POST') return knownPhotos(req, env);
-  const one = path.match(/^\/api\/photos\/([^/]+)$/);
-  if (one && ID.test(one[1]) && m === 'DELETE') return deletePhoto(env, one[1]);
-  const media = path.match(/^\/media\/([^/]+)\/(full|thumb)$/);
-  if (media && ID.test(media[1]) && (m === 'GET' || m === 'HEAD'))
-    return servePhoto(req, env, media[1], media[2] as 'full' | 'thumb');
+  const [photo] = pathParts(path, '/api/photos/*', (p) => UUID.test(p)) ?? [];
+  if (photo && m === 'DELETE') return deletePhoto(env, photo);
+  const [id, size] = pathParts(path, '/media/*/*', (p, i) => (i ? p === 'full' || p === 'thumb' : UUID.test(p))) ?? [];
+  if (id && (m === 'GET' || m === 'HEAD')) return servePhoto(req, env, id, size as 'full' | 'thumb');
   if (path === '/api/signout' && m === 'POST') return signOut(req, env, device);
   return null;
 }
+
+// Google's ids are checked where they're used (worker/google.ts)
+const any = () => true;
 
 /** /api/lists… (worker/lists.ts) */
 async function listRoute(req: Request, env: Env, path: string, m: string): Promise<Response | null> {
@@ -171,19 +174,16 @@ async function listRoute(req: Request, env: Env, path: string, m: string): Promi
     if (m === 'POST') return addList(req, env);
   }
   if (path === '/api/lists/order' && m === 'PUT') return orderLists(req, env);
-  const [, id, rest] = path.match(/^\/api\/lists\/([^/]+)(\/.*)?$/) ?? [];
-  if (!id || !LIST_ID.test(id)) return null;
-  if (!rest) {
-    if (m === 'PATCH') return editList(req, env, id);
-    if (m === 'DELETE') return deleteList(env, id);
-  }
-  if (rest === '/items' && m === 'POST') return addItem(req, env, id);
-  if (rest === '/items/order' && m === 'PUT') return orderItems(req, env, id);
-  const item = rest?.match(/^\/items\/([^/]+)$/)?.[1];
-  if (item && LIST_ID.test(item)) {
-    if (m === 'PATCH') return editItem(req, env, id, item);
-    if (m === 'DELETE') return deleteItem(env, id, item);
-  }
+  const [list] = pathParts(path, '/api/lists/*', isId) ?? [];
+  if (list && m === 'PATCH') return editList(req, env, list);
+  if (list && m === 'DELETE') return deleteList(env, list);
+  const [to] = pathParts(path, '/api/lists/*/items', isId) ?? [];
+  if (to && m === 'POST') return addItem(req, env, to);
+  const [ordered] = pathParts(path, '/api/lists/*/items/order', isId) ?? [];
+  if (ordered && m === 'PUT') return orderItems(req, env, ordered);
+  const [listId, item] = pathParts(path, '/api/lists/*/items/*', isId) ?? [];
+  if (item && m === 'PATCH') return editItem(req, env, listId, item);
+  if (item && m === 'DELETE') return deleteItem(env, listId, item);
   return null;
 }
 
@@ -193,16 +193,12 @@ async function taskRoute(req: Request, env: Env, path: string, m: string): Promi
     if (m === 'GET') return getTasks(env);
     if (m === 'POST') return addTask(req, env);
   }
-  const [, id, day] = path.match(/^\/api\/tasks\/([^/]+)(?:\/done\/([^/]+))?$/) ?? [];
-  if (!id || !LIST_ID.test(id)) return null;
-  if (day === undefined) {
-    if (m === 'PATCH') return editTask(req, env, id);
-    if (m === 'DELETE') return deleteTask(env, id);
-    return null;
-  }
-  if (!isDay(day)) return null;
-  if (m === 'PUT') return markDone(req, env, id, day);
-  if (m === 'DELETE') return unmarkDone(env, id, day);
+  const [task] = pathParts(path, '/api/tasks/*', isId) ?? [];
+  if (task && m === 'PATCH') return editTask(req, env, task);
+  if (task && m === 'DELETE') return deleteTask(env, task);
+  const [id, day] = pathParts(path, '/api/tasks/*/done/*', (p, i) => (i ? isDay(p) : isId(p))) ?? [];
+  if (day && m === 'PUT') return markDone(req, env, id, day);
+  if (day && m === 'DELETE') return unmarkDone(env, id, day);
   return null;
 }
 
@@ -216,23 +212,21 @@ async function calendarRoute(
 ): Promise<Response | null> {
   if (path === '/api/google/connect' && m === 'GET') return connect(req, env);
   if (path === '/api/google/callback' && m === 'GET') return callback(req, env);
-  const account = path.match(/^\/api\/google\/accounts\/([^/]+)$/)?.[1];
+  const [account] = pathParts(path, '/api/google/accounts/*', any) ?? [];
   if (account && m === 'DELETE') return disconnect(env, account);
   if (path === '/api/calendars' && m === 'GET') return getCalendars(env);
   if (path === '/api/calendars/refresh' && m === 'POST') return refreshCalendars(env);
-  const cal = path.match(/^\/api\/calendars\/([^/]+)$/)?.[1];
+  const [cal] = pathParts(path, '/api/calendars/*', any) ?? [];
   if (cal && m === 'PATCH') return editCalendar(req, env, cal);
   if (path === '/api/events') {
     if (m === 'GET') return getEvents(env, ctx);
     if (m === 'POST') return addEvent(req, env);
   }
-  const [, evCal, gid] = path.match(/^\/api\/events\/([^/]+)\/([^/]+)$/) ?? [];
-  if (evCal && gid) {
-    if (m === 'PATCH') return editEvent(req, env, evCal, gid);
-    if (m === 'DELETE') return deleteEvent(env, evCal, gid);
-  }
-  const [, rCal, rGid] = path.match(/^\/api\/events\/([^/]+)\/([^/]+)\/restore$/) ?? [];
-  if (rCal && rGid && m === 'POST') return restoreEvent(req, env, rCal, rGid);
+  const [evCal, gid] = pathParts(path, '/api/events/*/*', any) ?? [];
+  if (gid && m === 'PATCH') return editEvent(req, env, evCal, gid);
+  if (gid && m === 'DELETE') return deleteEvent(env, evCal, gid);
+  const [rCal, rGid] = pathParts(path, '/api/events/*/*/restore', any) ?? [];
+  if (rGid && m === 'POST') return restoreEvent(req, env, rCal, rGid);
   return null;
 }
 
@@ -244,10 +238,8 @@ async function groceryRoute(req: Request, env: Env, path: string, m: string): Pr
   }
   if (path === '/api/groceries/order' && m === 'PUT') return orderGroceries(req, env);
   if (path === '/api/groceries/clear' && m === 'POST') return clearGroceries(req, env);
-  const id = path.match(/^\/api\/groceries\/([^/]+)$/)?.[1];
-  if (id && LIST_ID.test(id)) {
-    if (m === 'PATCH') return editGrocery(req, env, id);
-    if (m === 'DELETE') return deleteGrocery(env, id);
-  }
+  const [id] = pathParts(path, '/api/groceries/*', isId) ?? [];
+  if (id && m === 'PATCH') return editGrocery(req, env, id);
+  if (id && m === 'DELETE') return deleteGrocery(env, id);
   return null;
 }

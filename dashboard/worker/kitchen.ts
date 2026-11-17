@@ -5,17 +5,11 @@
 import type { InventoryItem, Ingredient, Recipe } from '../src/data/types';
 import { PLACES } from '../src/data/kitchen';
 import { isDay } from '../src/lib/repeat';
-import { LIST_ID } from './lists';
-import { json } from './photos';
+import { bad, done, json, notFound, now, pathParts, readJson } from './http';
+import { ID, isId, str } from './validate';
 import { importRecipe } from './recipeImport';
 
 const RECIPE_ID = /^[a-z0-9-]{3,40}$/;
-
-const bad = (error: string, status = 400) => json({ error }, status);
-const done = () => new Response(null, { status: 204 });
-const body = <T>(req: Request) => req.json<T>().catch(() => null);
-const str = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max;
-const now = () => new Date().toISOString();
 
 interface RecipeRow {
   id: string;
@@ -118,7 +112,7 @@ function recipeFields(v: unknown): Omit<Recipe, 'favorite' | 'made'> | null {
 
 /** POST /api/recipes: a new recipe, last in the list */
 async function addRecipe(req: Request, env: Env): Promise<Response> {
-  const r = recipeFields(await body(req));
+  const r = recipeFields(await readJson(req));
   if (!r) return bad('Expected a recipe');
   await env.DB.prepare(
     `INSERT OR IGNORE INTO recipes (id, title, emoji, tone, tags, minutes, servings, ingredients, steps, notes, source, favorite, position, created_at)
@@ -144,7 +138,7 @@ async function addRecipe(req: Request, env: Env): Promise<Response> {
 
 /** PATCH /api/recipes/:id ({ favorite?, made? }) */
 async function editRecipe(req: Request, env: Env, id: string): Promise<Response> {
-  const b = await body<{ favorite?: unknown; made?: unknown }>(req);
+  const b = await readJson<{ favorite?: unknown; made?: unknown }>(req);
   if (!b || (b.favorite === undefined && b.made === undefined)) return bad('Expected { favorite?, made? }');
   if (b.favorite !== undefined && typeof b.favorite !== 'boolean') return bad('Bad favorite');
   if (b.made !== undefined && b.made !== null && !(typeof b.made === 'string' && isDay(b.made))) return bad('Bad made');
@@ -161,15 +155,15 @@ async function editRecipe(req: Request, env: Env, id: string): Promise<Response>
   const { meta } = await env.DB.prepare(`UPDATE recipes SET ${sets.join(', ')} WHERE id = ?`)
     .bind(...vals, id)
     .run();
-  return meta.changes ? done() : bad('No such recipe', 404);
+  return meta.changes ? done() : notFound('No such recipe');
 }
 
 /** PUT /api/plan/:day ({ recipe }) and DELETE /api/plan/:day */
 async function setPlan(req: Request, env: Env, day: string): Promise<Response> {
-  const b = await body<{ recipe?: unknown }>(req);
+  const b = await readJson<{ recipe?: unknown }>(req);
   if (!b || typeof b.recipe !== 'string' || !RECIPE_ID.test(b.recipe)) return bad('Expected { recipe }');
   const r = await env.DB.prepare('SELECT 1 FROM recipes WHERE id = ?').bind(b.recipe).first();
-  if (!r) return bad('No such recipe', 404);
+  if (!r) return notFound('No such recipe');
   await env.DB.prepare(
     'INSERT INTO meal_plan (day, recipe_id) VALUES (?, ?) ON CONFLICT(day) DO UPDATE SET recipe_id = excluded.recipe_id',
   )
@@ -179,7 +173,7 @@ async function setPlan(req: Request, env: Env, day: string): Promise<Response> {
 }
 async function clearPlan(env: Env, day: string): Promise<Response> {
   const { meta } = await env.DB.prepare('DELETE FROM meal_plan WHERE day = ?').bind(day).run();
-  return meta.changes ? done() : bad('Nothing planned that day', 404);
+  return meta.changes ? done() : notFound('Nothing planned that day');
 }
 
 // ------------------------------------------------------------ what's on hand
@@ -191,8 +185,8 @@ const remember = (env: Env, name: string, place: string) =>
 
 /** POST /api/inventory ({ id, name, place, qty?, note? }) */
 async function addInventory(req: Request, env: Env): Promise<Response> {
-  const b = await body<Partial<InventoryItem>>(req);
-  if (!b || typeof b.id !== 'string' || !LIST_ID.test(b.id) || !str(b.name, 200) || !b.name.trim() || !isPlace(b.place))
+  const b = await readJson<Partial<InventoryItem>>(req);
+  if (!b || typeof b.id !== 'string' || !ID.test(b.id) || !str(b.name, 200) || !b.name.trim() || !isPlace(b.place))
     return bad('Expected { id, name, place }');
   const qty = typeof b.qty === 'number' && Number.isInteger(b.qty) && b.qty >= 1 && b.qty <= 999 ? b.qty : 1;
   const note = str(b.note, 300) ? b.note : '';
@@ -208,7 +202,7 @@ async function addInventory(req: Request, env: Env): Promise<Response> {
 
 /** PATCH /api/inventory/:id ({ name?, place?, qty?, note? }) */
 async function editInventory(req: Request, env: Env, id: string): Promise<Response> {
-  const b = await body<Partial<InventoryItem>>(req);
+  const b = await readJson<Partial<InventoryItem>>(req);
   if (!b) return bad('Expected changes');
   const sets: string[] = [],
     vals: unknown[] = [];
@@ -244,20 +238,20 @@ async function editInventory(req: Request, env: Env, id: string): Promise<Respon
     if (row) stmts.push(remember(env, b.name?.trim() ?? row.name, (b.place as string | undefined) ?? row.place));
   }
   const [changed] = await env.DB.batch(stmts);
-  return changed.meta.changes ? done() : bad('No such item', 404);
+  return changed.meta.changes ? done() : notFound('No such item');
 }
 
 /** DELETE /api/inventory/:id */
 async function deleteInventory(env: Env, id: string): Promise<Response> {
   const { meta } = await env.DB.prepare('DELETE FROM inventory WHERE id = ?').bind(id).run();
-  return meta.changes ? done() : bad('No such item', 404);
+  return meta.changes ? done() : notFound('No such item');
 }
 
 // ------------------------------------------------------------ taught matches
 const ALIAS = /^[a-z0-9 ]{1,120}$/;
 /** PUT /api/aliases ({ name, sameAs }): a recipe's name (its core) counts as an on-hand item's */
 async function teach(req: Request, env: Env): Promise<Response> {
-  const b = await body<{ name?: unknown; sameAs?: unknown }>(req);
+  const b = await readJson<{ name?: unknown; sameAs?: unknown }>(req);
   if (!b || typeof b.name !== 'string' || !ALIAS.test(b.name) || typeof b.sameAs !== 'string' || !ALIAS.test(b.sameAs))
     return bad('Expected { name, sameAs }');
   if (b.name === b.sameAs) return done();
@@ -270,7 +264,7 @@ async function teach(req: Request, env: Env): Promise<Response> {
 }
 /** DELETE /api/aliases ({ name }) */
 async function unteach(req: Request, env: Env): Promise<Response> {
-  const b = await body<{ name?: unknown }>(req);
+  const b = await readJson<{ name?: unknown }>(req);
   if (!b || typeof b.name !== 'string' || !ALIAS.test(b.name)) return bad('Expected { name }');
   await env.DB.prepare('DELETE FROM food_aliases WHERE name = ?').bind(b.name).run();
   return done();
@@ -281,22 +275,18 @@ export async function kitchenRoute(req: Request, env: Env, path: string, m: stri
   if (path === '/api/kitchen' && m === 'GET') return getKitchen(env);
   if (path === '/api/recipes' && m === 'POST') return addRecipe(req, env);
   if (path === '/api/recipes/import' && m === 'POST') return importRecipe(req);
-  const recipe = path.match(/^\/api\/recipes\/([^/]+)$/)?.[1];
-  if (recipe && RECIPE_ID.test(recipe) && m === 'PATCH') return editRecipe(req, env, recipe);
-  const day = path.match(/^\/api\/plan\/([^/]+)$/)?.[1];
-  if (day && isDay(day)) {
-    if (m === 'PUT') return setPlan(req, env, day);
-    if (m === 'DELETE') return clearPlan(env, day);
-  }
+  const [recipe] = pathParts(path, '/api/recipes/*', (p) => RECIPE_ID.test(p)) ?? [];
+  if (recipe && m === 'PATCH') return editRecipe(req, env, recipe);
+  const [day] = pathParts(path, '/api/plan/*', isDay) ?? [];
+  if (day && m === 'PUT') return setPlan(req, env, day);
+  if (day && m === 'DELETE') return clearPlan(env, day);
   if (path === '/api/inventory' && m === 'POST') return addInventory(req, env);
   if (path === '/api/aliases') {
     if (m === 'PUT') return teach(req, env);
     if (m === 'DELETE') return unteach(req, env);
   }
-  const item = path.match(/^\/api\/inventory\/([^/]+)$/)?.[1];
-  if (item && LIST_ID.test(item)) {
-    if (m === 'PATCH') return editInventory(req, env, item);
-    if (m === 'DELETE') return deleteInventory(env, item);
-  }
+  const [item] = pathParts(path, '/api/inventory/*', isId) ?? [];
+  if (item && m === 'PATCH') return editInventory(req, env, item);
+  if (item && m === 'DELETE') return deleteInventory(env, item);
   return null;
 }

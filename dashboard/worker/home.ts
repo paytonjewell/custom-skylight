@@ -4,7 +4,8 @@
 // weather, sample people and no local news.
 import type { Person } from '../src/data/types';
 import type { Feed } from './news/feeds';
-import { json } from './photos';
+import { json } from './http';
+import { validTz } from './validate';
 
 export interface Home {
   /** Shown with the weather */
@@ -21,16 +22,6 @@ export function home(env: Env): Home | null {
     lon = Number(env.HOME_LON);
   if (!env.HOME_LAT || !env.HOME_LON || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   return { name: env.HOME_PLACE || '', lat, lon, tz: validTz(env.HOME_TZ) ? env.HOME_TZ : 'UTC' };
-}
-
-function validTz(tz: string | undefined): tz is string {
-  if (!tz) return false;
-  try {
-    new Intl.DateTimeFormat('en', { timeZone: tz });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /** Who the dashboard shows when FAMILY isn't set */

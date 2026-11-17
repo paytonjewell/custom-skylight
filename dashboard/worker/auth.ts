@@ -1,5 +1,6 @@
 // PIN sign-in. A correct PIN registers the device and gives it a long-lived cookie holding a random
 // token; only the token's SHA-256 is stored (devices table). Delete a device's row to sign it out.
+import { sha256, sha256Hex } from './hash';
 import { signInPage } from './signin-page';
 
 const COOKIE = 'hq_device';
@@ -21,12 +22,6 @@ export interface Device {
 const CACHE_MS = 60 * 1000;
 const cache = new Map<string, { device: Device; lastSeen: number; until: number }>();
 
-const enc = new TextEncoder();
-async function sha256(s: string): Promise<ArrayBuffer> {
-  return crypto.subtle.digest('SHA-256', enc.encode(s));
-}
-const hex = (b: ArrayBuffer) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
-
 function readCookie(req: Request): string | null {
   const m = (req.headers.get('Cookie') ?? '').match(new RegExp(`(?:^|;\\s*)${COOKIE}=([A-Za-z0-9_-]{20,})`));
   return m ? m[1] : null;
@@ -42,7 +37,7 @@ function cookieHeader(req: Request, token: string, maxAge = MAX_AGE): string {
 export async function authenticate(req: Request, env: Env): Promise<{ device: Device; setCookie?: string } | null> {
   const token = readCookie(req);
   if (!token) return null;
-  const hash = hex(await sha256(token));
+  const hash = await sha256Hex(token);
   const now = Date.now();
 
   let hit = cache.get(hash);
@@ -110,7 +105,7 @@ export async function signIn(req: Request, env: Env): Promise<Response> {
     .replace(/=+$/, '');
   const at = new Date(now).toISOString();
   await env.DB.prepare('INSERT INTO devices (id, name, token_hash, created_at, last_seen) VALUES (?, ?, ?, ?, ?)')
-    .bind(crypto.randomUUID(), name, hex(await sha256(token)), at, at)
+    .bind(crypto.randomUUID(), name, await sha256Hex(token), at, at)
     .run();
   return new Response(null, { status: 303, headers: { Location: '/', 'Set-Cookie': cookieHeader(req, token) } });
 }

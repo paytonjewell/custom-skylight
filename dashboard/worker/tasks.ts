@@ -2,8 +2,8 @@
 // changes show at once there and are saved here in the background, one at a time.
 import type { Slot, Task, TaskDone } from '../src/data/types';
 import { isDay, parseRepeat } from '../src/lib/repeat';
-import { LIST_ID } from './lists';
-import { json } from './photos';
+import { bad, done, json, notFound, now, readJson } from './http';
+import { ID, PERSON } from './validate';
 
 const MAX_TITLE = 200;
 const MAX_EMOJI = 16;
@@ -11,13 +11,7 @@ const MAX_DONE = 5000;
 /** How far back completions are sent to the app (habit heatmaps show a year) */
 const HISTORY_DAYS = 400;
 const SLOTS: Slot[] = ['morning', 'afternoon', 'evening', 'anytime'];
-const PERSON = /^[a-z0-9_-]{1,32}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-const bad = (error: string, status = 400) => json({ error }, status);
-const done = () => new Response(null, { status: 204 });
-const body = <T>(req: Request) => req.json<T>().catch(() => null);
-const now = () => new Date().toISOString();
 
 interface TaskRow {
   id: string;
@@ -129,7 +123,7 @@ function fields(v: unknown, partial: boolean): Partial<Task> | null {
   }
   for (const k of ['listId', 'listItemId'] as const) {
     if (!has(k)) continue;
-    if (b[k] !== null && !(typeof b[k] === 'string' && LIST_ID.test(b[k]))) return null;
+    if (b[k] !== null && !(typeof b[k] === 'string' && ID.test(b[k]))) return null;
     out[k] = b[k] as string | null;
   }
   if (has('position')) {
@@ -165,9 +159,9 @@ const insertDone = (env: Env, id: string, d: Pick<TaskDone, 'day' | 'at' | 'by'>
  * a deleted task is brought back with Undo.
  */
 export async function addTask(req: Request, env: Env): Promise<Response> {
-  const b = await body<Record<string, unknown>>(req);
+  const b = await readJson<Record<string, unknown>>(req);
   const f = fields(b, false);
-  if (!b || !f || typeof b.id !== 'string' || !LIST_ID.test(b.id)) return bad('Expected a task');
+  if (!b || !f || typeof b.id !== 'string' || !ID.test(b.id)) return bad('Expected a task');
   const raw = b.done ?? [];
   if (!Array.isArray(raw) || raw.length > MAX_DONE) return bad('Bad done');
   const rows = raw.map(doneRow);
@@ -225,7 +219,7 @@ const COLUMNS: Record<string, [string, (v: never) => unknown]> = {
 
 /** PATCH /api/tasks/:id (any task fields) */
 export async function editTask(req: Request, env: Env, id: string): Promise<Response> {
-  const f = fields(await body(req), true);
+  const f = fields(await readJson(req), true);
   const keys = f ? Object.keys(f) : [];
   if (!f || !keys.length) return bad('Expected task fields');
   const sets = keys.map((k) => COLUMNS[k][0] + ' = ?').join(', ');
@@ -233,7 +227,7 @@ export async function editTask(req: Request, env: Env, id: string): Promise<Resp
   const { meta } = await env.DB.prepare(`UPDATE tasks SET ${sets}, updated_at = ? WHERE id = ?`)
     .bind(...values, now(), id)
     .run();
-  return meta.changes ? done() : bad('No such task', 404);
+  return meta.changes ? done() : notFound('No such task');
 }
 
 /** DELETE /api/tasks/:id (and its history) */
@@ -242,15 +236,15 @@ export async function deleteTask(env: Env, id: string): Promise<Response> {
     env.DB.prepare('DELETE FROM task_done WHERE task_id = ?').bind(id),
     env.DB.prepare('DELETE FROM tasks WHERE id = ?').bind(id),
   ]);
-  return gone.meta.changes ? done() : bad('No such task', 404);
+  return gone.meta.changes ? done() : notFound('No such task');
 }
 
 /** PUT /api/tasks/:id/done/:day ({ at, by? }): mark done for that due day */
 export async function markDone(req: Request, env: Env, id: string, day: string): Promise<Response> {
-  const b = await body<Record<string, unknown>>(req);
+  const b = await readJson<Record<string, unknown>>(req);
   const d = doneRow({ ...b, day });
   if (!d) return bad('Expected { at, by? }');
-  if (!(await env.DB.prepare('SELECT 1 FROM tasks WHERE id = ?').bind(id).first())) return bad('No such task', 404);
+  if (!(await env.DB.prepare('SELECT 1 FROM tasks WHERE id = ?').bind(id).first())) return notFound('No such task');
   await insertDone(env, id, d).run();
   return done();
 }

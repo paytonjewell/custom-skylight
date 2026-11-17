@@ -6,7 +6,8 @@
 // answers "304 Not Modified" without being downloaded or parsed. /api/news does the same as a
 // fallback when feeds are overdue (which is also how local dev, with no cron, stays current).
 import type { NewsStory } from '../../src/data/types';
-import { json } from '../photos';
+import { json } from '../http';
+import { sha256, hex } from '../hash';
 import { TOPICS, feedsFor, type Feed } from './feeds';
 import { parseFeed, slim, type ParsedStory } from './parse';
 
@@ -19,7 +20,6 @@ const KEEP_DAYS = 5; // default age limit (Feed.days)
 const LIMIT = 15; // default stories taken from a feed (Feed.limit)
 const UA = 'WhiteLotusHQ/1.0 (family dashboard; RSS reader)';
 
-const enc = new TextEncoder();
 async function idFor(link: string): Promise<string> {
   // The same article from two feeds (or with tracking parameters) gets the same id
   let key = link;
@@ -31,11 +31,7 @@ async function idFor(link: string): Promise<string> {
   } catch {
     // not a URL; use as is
   }
-  const d = await crypto.subtle.digest('SHA-256', enc.encode(key));
-  return [...new Uint8Array(d)]
-    .slice(0, 16)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return hex((await sha256(key)).slice(0, 16));
 }
 
 interface FeedState {

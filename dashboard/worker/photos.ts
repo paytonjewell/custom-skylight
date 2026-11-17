@@ -3,11 +3,12 @@
 // decode a full-size camera original.
 import type { Photo } from '../src/data/types';
 import type { Device } from './auth';
+import { bad, done, json, notFound, readJson } from './http';
+import { UUID, readIds, reorder } from './validate';
 
 const MAX_FULL = 12 * 1024 * 1024;
 const MAX_THUMB = 2 * 1024 * 1024;
 const TYPES = new Set(['image/jpeg', 'image/webp', 'image/png']);
-export const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const HASH = /^[0-9a-f]{64}$/;
 
 interface Row {
@@ -30,12 +31,6 @@ const toPhoto = (r: Row): Photo => ({
 });
 
 const key = (id: string, size: 'full' | 'thumb') => `photos/${id}/${size}.jpg`;
-export const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
-const bad = (error: string, status = 400) => json({ error }, status);
 
 /** GET /api/photos */
 export async function listPhotos(env: Env): Promise<Response> {
@@ -47,8 +42,7 @@ export async function listPhotos(env: Env): Promise<Response> {
 
 /** POST /api/photos/known ({ hashes: [...] }): which of these original-file fingerprints are already added */
 export async function knownPhotos(req: Request, env: Env): Promise<Response> {
-  const body = await req.json<{ hashes?: unknown }>().catch(() => null);
-  const hashes = body?.hashes;
+  const hashes = (await readJson<{ hashes?: unknown }>(req))?.hashes;
   if (!Array.isArray(hashes) || hashes.length > 500 || !hashes.every((h) => typeof h === 'string' && HASH.test(h)))
     return bad('Expected { hashes: [...] }');
   if (!hashes.length) return json({ known: [] });
@@ -107,20 +101,15 @@ export async function addPhoto(req: Request, env: Env, device: Device): Promise<
 export async function deletePhoto(env: Env, id: string): Promise<Response> {
   const { meta } = await env.DB.prepare('DELETE FROM photos WHERE id = ?').bind(id).run();
   await env.PHOTOS.delete([key(id, 'full'), key(id, 'thumb')]);
-  return meta.changes ? new Response(null, { status: 204 }) : bad('No such photo', 404);
+  return meta.changes ? done() : notFound('No such photo');
 }
 
 /** PUT /api/photos/order ({ ids: [...] } in display order) */
 export async function reorderPhotos(req: Request, env: Env): Promise<Response> {
-  const body = await req.json<{ ids?: unknown }>().catch(() => null);
-  const ids = body?.ids;
-  if (!Array.isArray(ids) || ids.length > 10000 || !ids.every((x) => typeof x === 'string' && ID.test(x)))
-    return bad('Expected { ids: [...] }');
-  if (ids.length) {
-    const stmt = env.DB.prepare('UPDATE photos SET position = ? WHERE id = ?');
-    await env.DB.batch(ids.map((id, i) => stmt.bind(i, id)));
-  }
-  return new Response(null, { status: 204 });
+  const ids = await readIds(req, 10000, UUID);
+  if (!ids) return bad('Expected { ids: [...] }');
+  await reorder(env, 'photos', ids);
+  return done();
 }
 
 /** GET /media/:id/(full|thumb) — private and immutable (an id's image never changes) */

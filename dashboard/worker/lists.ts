@@ -1,20 +1,13 @@
 // Lists API: the lists made on the Lists screen and their items (D1: lists, list_items). Ids are made
 // by the app, so changes show at once there and are saved here in the background, one at a time.
 import type { Checklist, ListItem } from '../src/data/types';
-import { json } from './photos';
+import { bad, done, json, notFound, now, readJson } from './http';
+import { ID, readIds, reorder, str } from './validate';
 
-/** Ids the app makes (src/data/store.ts newId) */
-export const LIST_ID = /^[a-z0-9]{8,32}$/;
 const MAX_TITLE = 200;
 const MAX_TEXT = 500;
 const MAX_EMOJI = 16;
 const MAX_ITEMS = 2000;
-
-const bad = (error: string, status = 400) => json({ error }, status);
-const done = () => new Response(null, { status: 204 });
-const body = <T>(req: Request) => req.json<T>().catch(() => null);
-const str = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max;
-const now = () => new Date().toISOString();
 
 interface ItemRow {
   id: string;
@@ -45,7 +38,7 @@ export async function getLists(env: Env): Promise<Response> {
 /** An item from the app, checked */
 function item(v: unknown): ListItem | null {
   const i = v as Partial<ListItem> | null;
-  if (!i || typeof i.id !== 'string' || !LIST_ID.test(i.id) || !str(i.text, MAX_TEXT) || !i.text.trim()) return null;
+  if (!i || typeof i.id !== 'string' || !ID.test(i.id) || !str(i.text, MAX_TEXT) || !i.text.trim()) return null;
   return { id: i.id, text: i.text.trim(), done: i.done === true, ...(i.heading === true ? { heading: true } : {}) };
 }
 
@@ -54,8 +47,8 @@ function item(v: unknown): ListItem | null {
  * with it when a deleted list is brought back with Undo.
  */
 export async function addList(req: Request, env: Env): Promise<Response> {
-  const b = await body<{ id?: unknown; title?: unknown; emoji?: unknown; items?: unknown }>(req);
-  if (!b || typeof b.id !== 'string' || !LIST_ID.test(b.id) || !str(b.title, MAX_TITLE) || !str(b.emoji, MAX_EMOJI))
+  const b = await readJson<{ id?: unknown; title?: unknown; emoji?: unknown; items?: unknown }>(req);
+  if (!b || typeof b.id !== 'string' || !ID.test(b.id) || !str(b.title, MAX_TITLE) || !str(b.emoji, MAX_EMOJI))
     return bad('Expected { id, title, emoji }');
   const raw = b.items ?? [];
   if (!Array.isArray(raw) || raw.length > MAX_ITEMS) return bad('Bad items');
@@ -82,7 +75,7 @@ export async function addList(req: Request, env: Env): Promise<Response> {
 
 /** PATCH /api/lists/:id ({ title?, emoji? }) */
 export async function editList(req: Request, env: Env, id: string): Promise<Response> {
-  const b = await body<{ title?: unknown; emoji?: unknown }>(req);
+  const b = await readJson<{ title?: unknown; emoji?: unknown }>(req);
   if (!b || (b.title !== undefined && !str(b.title, MAX_TITLE)) || (b.emoji !== undefined && !str(b.emoji, MAX_EMOJI)))
     return bad('Expected { title?, emoji? }');
   const { meta } = await env.DB.prepare(
@@ -90,7 +83,7 @@ export async function editList(req: Request, env: Env, id: string): Promise<Resp
   )
     .bind(b.title ?? null, b.emoji ?? null, now(), id)
     .run();
-  return meta.changes ? done() : bad('No such list', 404);
+  return meta.changes ? done() : notFound('No such list');
 }
 
 /** DELETE /api/lists/:id (and its items) */
@@ -99,33 +92,22 @@ export async function deleteList(env: Env, id: string): Promise<Response> {
     env.DB.prepare('DELETE FROM list_items WHERE list_id = ?').bind(id),
     env.DB.prepare('DELETE FROM lists WHERE id = ?').bind(id),
   ]);
-  return gone.meta.changes ? done() : bad('No such list', 404);
-}
-
-/** Parse { ids: [...] } (display order) */
-async function idsFrom(req: Request): Promise<string[] | null> {
-  const ids = (await body<{ ids?: unknown }>(req))?.ids;
-  return Array.isArray(ids) && ids.length <= MAX_ITEMS && ids.every((x) => typeof x === 'string' && LIST_ID.test(x))
-    ? ids
-    : null;
+  return gone.meta.changes ? done() : notFound('No such list');
 }
 
 /** PUT /api/lists/order ({ ids }) */
 export async function orderLists(req: Request, env: Env): Promise<Response> {
-  const ids = await idsFrom(req);
+  const ids = await readIds(req, MAX_ITEMS);
   if (!ids) return bad('Expected { ids: [...] }');
-  if (ids.length) {
-    const stmt = env.DB.prepare('UPDATE lists SET position = ? WHERE id = ?');
-    await env.DB.batch(ids.map((id, n) => stmt.bind(n, id)));
-  }
+  await reorder(env, 'lists', ids);
   return done();
 }
 
 /** POST /api/lists/:id/items ({ id, text, heading?, done? }): added at the end */
 export async function addItem(req: Request, env: Env, listId: string): Promise<Response> {
-  const i = item(await body(req));
+  const i = item(await readJson(req));
   if (!i) return bad('Expected { id, text }');
-  if (!(await env.DB.prepare('SELECT 1 FROM lists WHERE id = ?').bind(listId).first())) return bad('No such list', 404);
+  if (!(await env.DB.prepare('SELECT 1 FROM lists WHERE id = ?').bind(listId).first())) return notFound('No such list');
   try {
     await env.DB.prepare(
       'INSERT INTO list_items (id, list_id, text, done, heading, position) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position), 0) + 1 FROM list_items WHERE list_id = ?))',
@@ -141,7 +123,7 @@ export async function addItem(req: Request, env: Env, listId: string): Promise<R
 
 /** PATCH /api/lists/:id/items/:item ({ text?, done? }) */
 export async function editItem(req: Request, env: Env, listId: string, id: string): Promise<Response> {
-  const b = await body<{ text?: unknown; done?: unknown }>(req);
+  const b = await readJson<{ text?: unknown; done?: unknown }>(req);
   const text = b?.text;
   if (
     !b ||
@@ -159,22 +141,19 @@ export async function editItem(req: Request, env: Env, listId: string, id: strin
       listId,
     )
     .run();
-  return meta.changes ? done() : bad('No such item', 404);
+  return meta.changes ? done() : notFound('No such item');
 }
 
 /** DELETE /api/lists/:id/items/:item */
 export async function deleteItem(env: Env, listId: string, id: string): Promise<Response> {
   const { meta } = await env.DB.prepare('DELETE FROM list_items WHERE id = ? AND list_id = ?').bind(id, listId).run();
-  return meta.changes ? done() : bad('No such item', 404);
+  return meta.changes ? done() : notFound('No such item');
 }
 
 /** PUT /api/lists/:id/items/order ({ ids }) */
 export async function orderItems(req: Request, env: Env, listId: string): Promise<Response> {
-  const ids = await idsFrom(req);
+  const ids = await readIds(req, MAX_ITEMS);
   if (!ids) return bad('Expected { ids: [...] }');
-  if (ids.length) {
-    const stmt = env.DB.prepare('UPDATE list_items SET position = ? WHERE id = ? AND list_id = ?');
-    await env.DB.batch(ids.map((id, n) => stmt.bind(n, id, listId)));
-  }
+  await reorder(env, 'list_items', ids, { column: 'list_id', value: listId });
   return done();
 }

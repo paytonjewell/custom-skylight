@@ -12,7 +12,8 @@
 // occurrence, as in Google Calendar's "This event".
 import type { Calendar, EventRecord, GoogleAccount } from '../src/data/types';
 import { isDay } from '../src/lib/repeat';
-import { json } from './photos';
+import { bad, done, json, notFound, readJson } from './http';
+import { ID, PERSON } from './validate';
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -29,13 +30,11 @@ const BACK_DAYS = 90;
 const AHEAD_DAYS = 400;
 /** Loading events refreshes calendars whose copy is older than this */
 const STALE_MS = 3 * 60 * 1000;
-/** Our ids for calendars (and Google accounts' ids are digits) */
-const OUR_ID = /^[a-z0-9]{8,32}$/;
+/** Google accounts' ids are digits (calendars have ids of our own: ID) */
 const ACCOUNT_ID = /^[0-9]{1,64}$/;
 /** Google event ids: ours are base32hex (a–v, 0–9); an occurrence of a repeating event adds _<time> */
 const GID = /^[A-Za-z0-9_]{5,1024}$/;
 const NEW_GID = /^[a-v0-9]{5,1024}$/;
-const PERSON = /^[a-z0-9_-]{1,32}$/;
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 /** The private extended property holding the people chosen on the dashboard ("jacob,john", "family") */
 const WHO = 'hqWho';
@@ -75,8 +74,6 @@ interface CalendarRow {
   synced_at: string | null;
 }
 
-const bad = (error: string, status = 400) => json({ error }, status);
-const body = <T>(req: Request) => req.json<T>().catch(() => null);
 const configured = (env: Env) => !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 const redirectUri = (req: Request) => new URL('/api/google/callback', req.url).toString();
 const randomId = () => Array.from(crypto.getRandomValues(new Uint8Array(20)), (b) => (b % 36).toString(36)).join('');
@@ -182,7 +179,7 @@ export async function disconnect(env: Env, id: string): Promise<Response> {
   const a = await env.DB.prepare('SELECT refresh_token FROM google_accounts WHERE id = ?')
     .bind(id)
     .first<{ refresh_token: string }>();
-  if (!a) return bad('No such account', 404);
+  if (!a) return notFound('No such account');
   await env.DB.batch([
     env.DB.prepare('DELETE FROM calendars WHERE account_id = ?').bind(id),
     env.DB.prepare('DELETE FROM google_accounts WHERE id = ?').bind(id),
@@ -191,7 +188,7 @@ export async function disconnect(env: Env, id: string): Promise<Response> {
   await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(a.refresh_token)}`, {
     method: 'POST',
   }).catch(() => {});
-  return new Response(null, { status: 204 });
+  return done();
 }
 
 // ------------------------------------------------------------ Google API
@@ -496,8 +493,8 @@ export async function refreshCalendars(env: Env): Promise<Response> {
  * here; `emoji`: shown on its events that have none of their own ('' for none).
  */
 export async function editCalendar(req: Request, env: Env, id: string): Promise<Response> {
-  if (!OUR_ID.test(id)) return bad('Bad calendar');
-  const b = await body<{
+  if (!ID.test(id)) return bad('Bad calendar');
+  const b = await readJson<{
     person?: unknown;
     byName?: unknown;
     color?: unknown;
@@ -513,7 +510,7 @@ export async function editCalendar(req: Request, env: Env, id: string): Promise<
   for (const k of ['byName', 'isDefault', 'shown'] as const)
     if (b[k] !== undefined && typeof b[k] !== 'boolean') return bad('Bad ' + k);
   const c = await env.DB.prepare('SELECT * FROM calendars WHERE id = ?').bind(id).first<CalendarRow>();
-  if (!c) return bad('No such calendar', 404);
+  if (!c) return notFound('No such calendar');
   const flag = (v: unknown, was: number) => (v === undefined ? was : v ? 1 : 0);
   const stmts = [
     env.DB.prepare(
@@ -536,7 +533,7 @@ export async function editCalendar(req: Request, env: Env, id: string): Promise<
     const a = await env.DB.prepare('SELECT * FROM google_accounts WHERE id = ?').bind(c.account_id).first<AccountRow>();
     if (a && !a.error) await syncCalendar(env, c, a).catch((e) => console.warn('Calendar sync failed', c.name, e));
   }
-  return new Response(null, { status: 204 });
+  return done();
 }
 
 /** GET /api/events: events from shown calendars; a copy that's a few minutes old is refreshed after */
@@ -619,7 +616,7 @@ function toGoogle(f: Partial<EventRecord>, clear: boolean): Record<string, unkno
 
 /** A calendar (shown, with its account) by our id */
 async function calendarFor(env: Env, id: string): Promise<{ c: CalendarRow; a: AccountRow } | null> {
-  if (!OUR_ID.test(id)) return null;
+  if (!ID.test(id)) return null;
   const c = await env.DB.prepare('SELECT * FROM calendars WHERE id = ?').bind(id).first<CalendarRow>();
   const a =
     c && (await env.DB.prepare('SELECT * FROM google_accounts WHERE id = ?').bind(c.account_id).first<AccountRow>());
@@ -643,7 +640,7 @@ const failed = (e: unknown) =>
 
 /** POST /api/events ({ id, calendar, title, start, end, allDay, location?, notes? }) */
 export async function addEvent(req: Request, env: Env): Promise<Response> {
-  const b = await body<Record<string, unknown>>(req);
+  const b = await readJson<Record<string, unknown>>(req);
   const f = eventFields(b, false);
   if (!b || !f || typeof b.id !== 'string' || !NEW_GID.test(b.id) || typeof b.calendar !== 'string')
     return bad('Expected an event');
@@ -667,7 +664,7 @@ export async function addEvent(req: Request, env: Env): Promise<Response> {
 /** PATCH /api/events/:calendar/:id (any event fields, and `calendar` to move it to another) */
 export async function editEvent(req: Request, env: Env, calId: string, gid: string): Promise<Response> {
   if (!GID.test(gid)) return bad('Bad event');
-  const b = await body<Record<string, unknown>>(req);
+  const b = await readJson<Record<string, unknown>>(req);
   const f = eventFields(b, true);
   if (!b || !f) return bad('Expected event fields');
   let at = await calendarFor(env, calId);
@@ -692,7 +689,7 @@ export async function editEvent(req: Request, env: Env, calId: string, gid: stri
     });
     const rec = toRecord(e, at.c.id);
     await editCopy(env, at.c.id, (list) => [...list.filter((x) => x.id !== gid), ...(rec ? [rec] : [])]);
-    return rec ? json(rec) : new Response(null, { status: 204 });
+    return rec ? json(rec) : done();
   } catch (e) {
     return failed(e) ?? Promise.reject(e);
   }
@@ -710,7 +707,7 @@ export async function deleteEvent(env: Env, calId: string, gid: string): Promise
     if (!(e instanceof GoogleError && (e.status === 404 || e.status === 410))) return failed(e) ?? Promise.reject(e);
   }
   await editCopy(env, at.c.id, (list) => list.filter((x) => x.id !== gid));
-  return new Response(null, { status: 204 });
+  return done();
 }
 
 /**
@@ -720,7 +717,7 @@ export async function deleteEvent(env: Env, calId: string, gid: string): Promise
  */
 export async function restoreEvent(req: Request, env: Env, calId: string, gid: string): Promise<Response> {
   if (!GID.test(gid)) return bad('Bad event');
-  const b = await body<Record<string, unknown>>(req);
+  const b = await readJson<Record<string, unknown>>(req);
   const f = eventFields(b, false);
   if (!b || !f) return bad('Expected an event');
   const at = await calendarFor(env, calId);
@@ -747,5 +744,5 @@ export async function restoreEvent(req: Request, env: Env, calId: string, gid: s
     ...list.filter((x) => x.id !== gid && x.id !== rec?.id),
     ...(rec ? [rec] : []),
   ]);
-  return rec ? json(rec) : new Response(null, { status: 204 });
+  return rec ? json(rec) : done();
 }
