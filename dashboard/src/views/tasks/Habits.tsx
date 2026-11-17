@@ -4,7 +4,7 @@ import type { Data, Task, TaskDone } from '../../data/types';
 import { setTaskDone } from '../../data/actions';
 import { doneByTask, dueItem } from '../../data/tasks';
 import { habitStats, type Cell } from '../../data/habits';
-import { person } from '../../data/select';
+import { person, laneName } from '../../data/select';
 import { describeRepeat, shiftDay, weekdayOf } from '../../lib/repeat';
 import { useLayout } from '../../app/layout';
 import { Avatar, toneStyle } from '../../ui/people';
@@ -82,7 +82,7 @@ function HabitCard({
           <b>{t.title}</b>
           <small>
             <Avatar p={p} size={20} />
-            {t.who === 'any' ? 'Anyone' : p.name} · {t.repeat ? describeRepeat(t.repeat) : ''}
+            {laneName(data, t.who)} · {t.repeat ? describeRepeat(t.repeat) : ''}
           </small>
         </div>
         {now && (

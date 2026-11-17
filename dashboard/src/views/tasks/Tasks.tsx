@@ -18,13 +18,13 @@ import { useTaskStatus } from '../../data/taskSync';
 import { pushSupported, testPush, turnOffPush, turnOnPush, usePush } from '../../data/push';
 import { SLOTS, doneByTask, doneLate, dueOn, type DueItem } from '../../data/tasks';
 import { habitStats } from '../../data/habits';
-import { person, phonePeople, taskLanes, taskPeople, type PeopleData } from '../../data/select';
+import { person, phonePeople, taskLanes, taskPeople, type PeopleData, laneName } from '../../data/select';
 import { dayDiff, dayOf, describeRepeat, shiftDay } from '../../lib/repeat';
 import { createStore, store, stored, useStore } from '../../lib/store';
 import { useNow } from '../../lib/clock';
 import { closeSheet, openSheet, toast, useUI } from '../../app/ui';
 import { Icon } from '../../ui/Icon';
-import { Ring } from '../../ui/Ring';
+import { Ring, ringLabel } from '../../ui/Ring';
 import { Avatar, toneStyle } from '../../ui/people';
 import { PageHeader, SheetHeader } from '../../ui/headers';
 import { PersonPicker } from '../../ui/PersonPicker';
@@ -150,7 +150,7 @@ export function Tasks() {
           ? 'Loading tasks…'
           : status === 'error'
             ? 'Couldn’t load your tasks'
-            : `${focus ? (focus === 'any' ? 'Anyone' : person(data, focus).name) + ' · ' : ''}${fmtDate(day)} · ${counted.length ? (future ? `${counted.length} due` : left ? `${left} left` : 'all done') : 'nothing due'}`;
+            : `${focus ? laneName(data, focus) + ' · ' : ''}${fmtDate(day)} · ${counted.length ? (future ? `${counted.length} due` : left ? `${left} left` : 'all done') : 'nothing due'}`;
 
   return (
     <div className={css.tasks} ref={root}>
@@ -276,7 +276,6 @@ export function Tasks() {
 }
 
 /** A column's name, for "Moved … to Ace" */
-const laneName = (d: PeopleData, who: string) => (who === 'any' ? 'Anyone' : person(d, who).name);
 
 /**
  * Rows' actions, for the Tasks screen and a person's sheet on Today: tap to check off (habits too),
@@ -519,7 +518,7 @@ function Lane({
   lifted?: boolean;
 }) {
   const p = person(data, who);
-  const { tasks, done, all } = split(items, sections, show);
+  const { tasks, done } = split(items, sections, show);
   return (
     <section
       ref={move?.ref}
@@ -534,19 +533,18 @@ function Lane({
         onPointerDown={move?.onPointerDown}
         onContextMenu={move?.onContextMenu}
         onClickCapture={move?.onClickCapture}
-        aria-label={`Open ${who === 'any' ? 'Anyone' : p.name}’s tasks (hold to move the column)`}
+        aria-label={`Open ${laneName(data, who)}’s tasks (hold to move the column)`}
       >
         <Avatar p={p} size={42} />
         <div>
-          <b>{who === 'any' ? 'Anyone' : p.name}</b>
+          <b>{laneName(data, who)}</b>
           <span className={css.sub}>{tasks.length ? `${done} of ${tasks.length}` : 'Nothing'}</span>
         </div>
         <div className={css.ring}>
           <Ring done={done} total={tasks.length || 1} size={46} />
-          {(() => {
-            const label = all ? '✓' : tasks.length ? done + '/' + tasks.length : '–';
-            return <span className={'num' + (label.length > 3 ? ' ' + css.long : '')}>{label}</span>;
-          })()}
+          <span className={'num' + (ringLabel(done, tasks.length).length > 3 ? ' ' + css.long : '')}>
+            {ringLabel(done, tasks.length)}
+          </span>
         </div>
       </button>
       <PersonList

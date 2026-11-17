@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { Data, Task } from '../../data/types';
 import { deleteTask, restoreTask } from '../../data/actions';
 import { doneByTask, nextDue, type NextDue } from '../../data/tasks';
-import { person } from '../../data/select';
+import { person, laneName } from '../../data/select';
 import { dayDiff, describeRepeat } from '../../lib/repeat';
 import { toast } from '../../app/ui';
 import { Avatar, toneStyle } from '../../ui/people';
@@ -57,7 +57,7 @@ export function AllTasks({
           <section key={who} className={css.group} style={toneStyle(p)}>
             <header className={css.head}>
               <Avatar p={p} size={36} />
-              <b>{who === 'any' ? 'Anyone' : p.name}</b>
+              <b>{laneName(data, who)}</b>
               <span>
                 {list.length} {list.length === 1 ? 'task' : 'tasks'}
               </span>

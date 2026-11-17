@@ -15,6 +15,8 @@ export function person(d: PeopleData, id: string): Person {
   if (id === 'family' || id === 'any') return d.family;
   return d.people.find((p) => p.id === id) ?? d.family;
 }
+/** A task column's name: a person's, or "Anyone" for tasks anyone can do */
+export const laneName = (d: PeopleData, who: string): string => (who === 'any' ? 'Anyone' : person(d, who).name);
 /** People on the calendar (event people, columns, "everyone"): not tasks-only profiles */
 export const calendarPeople = (people: Person[]): Person[] => people.filter((p) => p.calendar !== false);
 /** People with tasks (columns, rings, the task picker): not calendar-only profiles */

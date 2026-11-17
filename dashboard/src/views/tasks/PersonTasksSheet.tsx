@@ -5,7 +5,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { dueOn } from '../../data/tasks';
 import { useData } from '../../data/store';
-import { person } from '../../data/select';
+import { person, laneName } from '../../data/select';
 import { dayOf, shiftDay } from '../../lib/repeat';
 import { useNow } from '../../lib/clock';
 import { closeSheet, go, openSheet } from '../../app/ui';
@@ -58,7 +58,7 @@ function PersonTasks({ who }: { who: string }) {
   const items = dueOn(data.tasks, data.taskDone, day, today).filter((x) => x.task.who === who);
   const { tasks, done } = split(items, sections, show);
   const p = person(data, who);
-  const name = who === 'any' ? 'Anyone' : p.name;
+  const name = laneName(data, who);
   const left = tasks.length - done;
   const summary = !tasks.length
     ? 'Nothing due'

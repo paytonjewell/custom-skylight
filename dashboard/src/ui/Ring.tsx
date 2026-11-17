@@ -18,3 +18,7 @@ export function Ring({ done, total, size }: { done: number; total: number; size:
     </svg>
   );
 }
+
+/** What's written in a progress ring: ✓ when all are done, "2/5" on the way, – when there's nothing */
+export const ringLabel = (done: number, total: number): string =>
+  total > 0 && done === total ? '✓' : total ? `${done}/${total}` : '–';

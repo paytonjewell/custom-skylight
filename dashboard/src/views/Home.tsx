@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import type { CalEvent } from '../data/types';
 import { useData } from '../data/store';
 import { useEvents } from '../data/hooks';
-import { countdowns, person, verseOfDay, weatherNow } from '../data/select';
+import { countdowns, person, verseOfDay, weatherNow, laneName } from '../data/select';
 import { useTaskLanes } from './tasks/Tasks';
 import { dayOf } from '../lib/repeat';
 import { dueToday } from '../data/tasks';
@@ -17,7 +17,7 @@ import { GROCERY, openList } from './lists/Lists';
 import { useLayout } from '../app/layout';
 import { openThemeSheet } from '../app/ThemeSheet';
 import { Icon } from '../ui/Icon';
-import { Ring } from '../ui/Ring';
+import { Ring, ringLabel } from '../ui/Ring';
 import { CountdownChip } from '../ui/CountdownChip';
 import { toneStyle } from '../ui/people';
 import { useEdgeFade } from '../ui/hooks';
@@ -148,8 +148,8 @@ function TasksCard({ now }: { now: Date }) {
               onClick={() => openPersonTasks(id)}
             >
               <Ring done={done} total={list.length || 1} size={64} />
-              <b className="num">{all ? '✓' : list.length ? done + '/' + list.length : '–'}</b>
-              <span>{id === 'any' ? 'Anyone' : person(data, id).name}</span>
+              <b className="num">{ringLabel(done, list.length)}</b>
+              <span>{laneName(data, id)}</span>
             </button>
           );
         })}
