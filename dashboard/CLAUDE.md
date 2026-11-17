@@ -46,6 +46,11 @@ hide layout bugs the frame has (e.g. Chrome 124 gives `<button>` `align-items: f
 
 - Styles: CSS modules beside each component; theme tokens in `css/tokens.css`. Phone styles sit
   inside each rule under `:global(.phone) &`.
+- Type sizes come from the scale in `css/tokens.css` (`--fs-2xs` … `--fs-5xl`); each token has a
+  frame and a phone value, so a rule rarely needs its own phone size. No px font sizes, except
+  display numbers (clock, temperatures) and emoji sized to their tile. Radii: `--r` for cards,
+  `--r-sm` for what sits inside one, 999px (or half the height) for pills. Add + buttons with
+  `ui/Fab.tsx`.
 - Comments explain why, in plain sentences; keep the style of the file you're in.
 - Data: read it with `useData('tasks', 'taskDone')`, naming only the keys the component uses; helpers it's
   passed to take `Pick<Data, …>`. Each kind of data syncs through `createSync` (`src/data/sync.ts`);

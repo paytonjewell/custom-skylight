@@ -31,13 +31,13 @@
 }
 
 .time { font-size: 136px; font-weight: 800; line-height: .8; letter-spacing: -.03em; display: flex; align-items: flex-start; }
-.ampm { font-size: 24px; font-weight: 400; letter-spacing: .04em; color: var(--mute); margin: 6px 0 0 10px; }
+.ampm { font-size: var(--fs-xl); font-weight: 400; letter-spacing: .04em; color: var(--mute); margin: 6px 0 0 10px; }
 .date {
-  font-size: 26px; font-weight: 400; color: var(--ink-2);
+  font-size: var(--fs-xl); font-weight: 400; color: var(--ink-2);
   font-family: var(--serif);
 }
 .date b { font-weight: 700; color: var(--ink); margin-right: 4px; }
-:global(.phone) .date b { display: block; font-size: 34px; margin: 0; }
+:global(.phone) .date b { display: block; font-size: var(--fs-5xl); margin: 0; }
 .dateComma {
   :global(.phone) & { display: none; }
 }
@@ -49,7 +49,7 @@
   :global(.phone) & { display: contents; }
 }
 .mid .date { align-self: center; }
-:global(.phone) .mid .date { grid-area: date; align-self: center; font-size: 22px; line-height: 1.15; }
+:global(.phone) .mid .date { grid-area: date; align-self: center; font-size: var(--fs-xl); line-height: 1.15; }
 
 /* scrolls sideways; useEdgeFade (src/ui/hooks.ts) sets --fade-l / --fade-r only on edges with hidden chips */
 .cds {
@@ -90,16 +90,16 @@
 }
 /* high over low, in a narrow column beside the temperature */
 .wxMeta {
-  display: flex; flex-direction: column; gap: 2px; margin-left: 2px; font-size: 17px; line-height: 1.2; text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap;
+  display: flex; flex-direction: column; gap: 2px; margin-left: 2px; font-size: var(--fs-md); line-height: 1.2; text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap;
 
-  :global(.phone) & { font-size: 14px; }
+  :global(.phone) & { font-size: var(--fs-sm); }
 }
 .wxMeta span:first-child { color: var(--ink-2); font-weight: 500; }
 .wxMeta span:last-child { color: var(--mute); }
 .wxSay {
-  display: flex; align-items: center; gap: 6px; font-size: 17px; line-height: 1.3; color: var(--ink-2);
+  display: flex; align-items: center; gap: 6px; font-size: var(--fs-md); line-height: 1.3; color: var(--ink-2);
 
-  :global(.phone) & { flex: 1; min-width: 0; justify-content: flex-end; text-align: right; font-size: 14px; }
+  :global(.phone) & { flex: 1; min-width: 0; justify-content: flex-end; text-align: right; font-size: var(--fs-sm); }
 }
 .wxSay b { font-weight: 500; color: var(--ink); }
 /* the arrow hangs outside so the two lines center under the temperature */
@@ -126,29 +126,27 @@
   font-family: var(--serif); font-size: 80px; font-weight: 700; line-height: 1; color: var(--t1); opacity: .35;
 }
 .verseText {
-  position: relative; z-index: 1; margin: auto 0; font-size: 21px; font-weight: 500; line-height: 1.3;
+  position: relative; z-index: 1; margin: auto 0; font-size: var(--fs-lg); font-weight: 500; line-height: 1.3;
   /* Too long for the card: it fades out above the reference (tap for the whole verse) */
   /* (the fade sits over empty padding when the verse fits) */
   min-height: 0; overflow: hidden; padding-bottom: 12px;
   -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent); mask-image: linear-gradient(#000 calc(100% - 16px), transparent);
-
-  :global(.phone) & { font-size: 19px; }
 }
 .verseText.isLong {
-  font-size: 18px;
+  font-size: var(--fs-md);
 
-  :global(.phone) & { font-size: 18px; }
+  :global(.phone) & { font-size: var(--fs-lg); }
 }
 /* the longest verses still fit the card on the frame */
 .verseText.isVeryLong {
-  font-size: 15px; line-height: 1.32;
+  font-size: var(--fs-sm); line-height: 1.32;
 
-  :global(.phone) & { font-size: 17px; }
+  :global(.phone) & { font-size: var(--fs-md); }
 }
-.verseRef { position: relative; z-index: 1; flex: none; font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.verseRef { position: relative; z-index: 1; flex: none; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); }
 .verse:active { filter: brightness(.97); }
-.verseFull { margin: 12px 0 14px; font-size: 26px; font-weight: 500; line-height: 1.35; }
-.verseRef span { margin-left: 6px; font-size: 11px; font-weight: 500; letter-spacing: .12em; color: var(--mute); }
+.verseFull { margin: 12px 0 14px; font-size: var(--fs-xl); font-weight: 500; line-height: 1.35; }
+.verseRef span { margin-left: 6px; font-size: var(--fs-2xs); font-weight: 500; letter-spacing: .12em; color: var(--mute); }
 .sc { font-variant: small-caps; }
 
 .chores { display: flex; flex-direction: column; gap: 12px; }
@@ -172,8 +170,8 @@
 }
 /* Over the ring: as wide as the button (the ring is centred in it, and a long name makes the button
    wider than the ring); 'case' lifts the "–" (nothing today) to the middle of the digits */
-.ring :global(.num) { position: absolute; top: 0; left: 0; right: 0; height: 64px; display: grid; place-items: center; font-size: 18px; font-feature-settings: 'case'; }
-.ring span { font-size: var(--fs-min); color: var(--ink-2); }
+.ring :global(.num) { position: absolute; top: 0; left: 0; right: 0; height: 64px; display: grid; place-items: center; font-size: var(--fs-md); font-feature-settings: 'case'; }
+.ring span { font-size: var(--fs-sm); color: var(--ink-2); }
 .ring.isDone :global(.ring-bg) { fill: var(--c); }
 .ring.isDone :global(.num) { color: var(--c-ink); }
 .ring:active { transform: scale(.94); }
@@ -186,19 +184,19 @@
 }
 .shopHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .shopHead :global(.label) { display: flex; align-items: center; gap: 2px; }
-.count { font-size: 15px; color: var(--mute); white-space: nowrap; }
-.count b { font-size: 22px; font-weight: 600; color: var(--ink); margin-right: 2px; }
+.count { font-size: var(--fs-sm); color: var(--mute); white-space: nowrap; }
+.count b { font-size: var(--fs-lg); font-weight: 600; color: var(--ink); margin-right: 2px; }
 .shopList {
   flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 6px;
   margin: 0 -6px; padding: 0 6px;
 }
 .addRow, .item {
   flex: none; min-height: 48px; width: 100%; padding: 0 14px; border-radius: var(--r-sm);
-  display: flex; align-items: center; gap: 8px; text-align: left; font-size: 17px;
+  display: flex; align-items: center; gap: 8px; text-align: left; font-size: var(--fs-md);
 }
 .addRow { color: var(--ink-2); background: rgb(var(--accent-rgb) / .22); font-weight: 500; }
 .addRow:active { background: rgb(var(--accent-rgb) / .35); }
-.addInput { border: 0; outline: none; color: var(--ink); font: inherit; font-size: 17px; box-shadow: inset 0 0 0 2px var(--accent); }
+.addInput { border: 0; outline: none; color: var(--ink); font: inherit; font-size: var(--fs-md); box-shadow: inset 0 0 0 2px var(--accent); }
 .item { justify-content: space-between; background: var(--paper); }
 /* Nothing to buy: a quiet line in the middle of the space the list would fill */
 .shopEmpty {
@@ -207,7 +205,7 @@
   :global(.phone) & { padding: 16px 0 8px; }
 }
 .item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item small { color: var(--mute); font-size: 15px; }
+.item small { color: var(--mute); font-size: var(--fs-sm); }
 /* the check circle */
 .item i { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 2px var(--line); color: var(--on-ink); }
 .item:active { background: var(--paper-2); }
@@ -223,6 +221,6 @@ button.dinner {
 .dinner:active { filter: brightness(.97); }
 .dinnerArt { width: 56px; height: 56px; flex: none; border-radius: var(--r-sm); display: grid; place-items: center; font-size: 32px; line-height: 1; background: var(--paper); filter: var(--emoji-filter); }
 .dinnerText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.dinnerText b { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dinnerText small { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dinnerGo { display: flex; align-items: center; gap: 2px; font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.dinnerText b { font-size: var(--fs-md); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dinnerText small { font-size: var(--fs-xs); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dinnerGo { display: flex; align-items: center; gap: 2px; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); }

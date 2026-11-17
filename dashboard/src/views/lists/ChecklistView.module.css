@@ -105,12 +105,12 @@
 .text {
   flex: 1;
   min-width: 0;
-  font-size: 21px;
+  font-size: var(--fs-lg);
   line-height: 1.2;
   overflow-wrap: anywhere;
 
   :global(.phone) & {
-    font-size: 17px;
+    font-size: var(--fs-md);
   }
 }
 .isDone .box {
@@ -144,12 +144,8 @@
 .headingText {
   flex: 1;
   min-width: 0;
-  font-size: 26px;
+  font-size: var(--fs-xl);
   line-height: 1.1;
-
-  :global(.phone) & {
-    font-size: 21px;
-  }
 }
 
 /* Editing an item's text in place: the field takes the text's look, minus a checked item's strike */
@@ -257,6 +253,6 @@
 /* An item's reminder on the Tasks screen: 🔔 Tomorrow */
 .reminder {
   flex: none; display: inline-flex; align-items: center; gap: 4px; margin-left: auto;
-  padding: 4px 10px; border-radius: 999px; background: var(--paper-2); color: var(--ink-2); font-size: 14px;
+  padding: 4px 10px; border-radius: 999px; background: var(--paper-2); color: var(--ink-2); font-size: var(--fs-sm);
 }
 .isDone .reminder { opacity: .6; }

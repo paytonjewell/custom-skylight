@@ -5,12 +5,12 @@
 
   :global(.phone) & { overflow: visible; grid-template-columns: 1fr; }
 }
-.empty { padding: 60px 0; text-align: center; font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--mute); }
+.empty { padding: 60px 0; text-align: center; font-family: var(--serif); font-style: italic; font-size: var(--fs-lg); color: var(--mute); }
 
 .group { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: var(--r); background: var(--card); }
 .head { display: flex; align-items: center; gap: 10px; padding: 2px 4px 8px; }
-.head b { flex: 1; font-size: 19px; font-weight: 500; }
-.head span { font-size: 14px; color: var(--mute); }
+.head b { flex: 1; font-size: var(--fs-lg); font-weight: 500; }
+.head span { font-size: var(--fs-sm); color: var(--mute); }
 
 .row {
   display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 8px 14px 8px 8px;
@@ -24,12 +24,11 @@
   :global(.phone) & { width: 42px; height: 42px; font-size: 22px; }
 }
 .text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.text b { font-size: 18px; font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
-:global(.phone) .text b { font-size: 16px; }
-.text small { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 13px; color: var(--mute); }
+.text b { font-size: var(--fs-md); font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
+.text small { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: var(--fs-xs); color: var(--mute); }
 .text small :global(svg) { flex: none; }
-.tag { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--c-tint); color: var(--ink-2); font-size: 12px; }
-.when { flex: none; max-width: 40%; text-align: right; font-size: 15px; color: var(--ink-2); }
+.tag { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--c-tint); color: var(--ink-2); font-size: var(--fs-xs); }
+.when { flex: none; max-width: 40%; text-align: right; font-size: var(--fs-sm); color: var(--ink-2); }
 .late { color: var(--alert); font-weight: 600; }
 .isDone .row { opacity: .55; }
 .isDone .text b { text-decoration: line-through; }

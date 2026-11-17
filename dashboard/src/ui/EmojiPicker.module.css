@@ -13,4 +13,4 @@
   --category-icon-size: 26px;
 }
 .phone :global(em-emoji-picker) { height: 380px; --font-size: 15px; --category-icon-size: 22px; }
-.loading { align-self: center; color: var(--mute); font-size: 16px; }
+.loading { align-self: center; color: var(--mute); font-size: var(--fs-md); }

@@ -23,26 +23,26 @@
 /* Until Google Calendar is connected: a note that these are sample events */
 .sample {
   display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px 16px; flex: none;
-  border-radius: var(--r); background: var(--paper-2); color: var(--ink-2); font-size: 15px; text-align: left;
+  border-radius: var(--r); background: var(--paper-2); color: var(--ink-2); font-size: var(--fs-sm); text-align: left;
 }
 .sample b { color: var(--ink); font-weight: 600; }
-.head :global(.btn) { min-height: 52px; padding: 0 20px; font-size: 15px; }
-:global(.phone) .head :global(.btn) { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.head :global(.btn) { min-height: 52px; padding: 0 20px; font-size: var(--fs-sm); }
+:global(.phone) .head :global(.btn) { min-height: 40px; padding: 0 14px; }
 .head :global(.seg) { padding: 3px; }
 :global(.phone) .head :global(.seg) { flex-basis: 100%; order: 1; }
 /* Phone: settings ends row 1 (beside ›); Today drops out when it's hidden, so the title stays centred */
 :global(.phone) .cog { width: 40px; height: 40px; }
 :global(.phone) .today:global(.is-hidden) { display: none; }
-.head :global(.seg) button { min-height: 46px; padding: 0 18px; font-size: 15px; }
-:global(.phone) .head :global(.seg) button { min-height: 38px; padding: 0 6px; font-size: 14px; }
+.head :global(.seg) button { min-height: 46px; padding: 0 18px; font-size: var(--fs-sm); }
+:global(.phone) .head :global(.seg) button { min-height: 38px; padding: 0 6px; }
 .title {
   display: flex; align-items: baseline; gap: 12px; min-width: 300px; padding: 0 6px;
 
   :global(.phone) & { flex: 1; min-width: 0; flex-direction: column; align-items: center; gap: 2px; padding: 0; }
 }
-.title :global(.serif) { font-size: 32px; line-height: 1; white-space: nowrap; }
-:global(.phone) .title :global(.serif) { font-size: 22px; }
-:global(.phone) .title :global(.label) { font-size: 11px; letter-spacing: .1em; }
+.title :global(.serif) { font-size: var(--fs-3xl); line-height: 1; white-space: nowrap; }
+:global(.phone) .title :global(.serif) { font-size: var(--fs-xl); }
+:global(.phone) .title :global(.label) { font-size: var(--fs-2xs); letter-spacing: .1em; }
 /* Today (hidden, but still taking its space, when already on today) soaks up the free space, so
    the view switcher and + stay pinned to the right whatever the title's width */
 .today { margin-right: auto; }
@@ -59,12 +59,12 @@
   display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 12px 10px; margin: 0 4px;
   border-bottom: 2px solid var(--c, var(--ink));
 }
-.personHead b { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.personHead b { font-size: var(--fs-md); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dayHead { display: flex; align-items: baseline; gap: 10px; padding: 0 14px 8px; margin: 0 4px; border-bottom: 2px solid var(--ink); }
-.dayHead :global(.num) { font-size: 28px; font-weight: 600; line-height: .9; }
-:global(.phone) .dayHead :global(.num) { font-size: 22px; }
-.dayHead b { font-size: 16px; font-weight: 500; }
-:global(.phone) .dayHead b { font-size: 13px; }
+.dayHead :global(.num) { font-size: var(--fs-2xl); font-weight: 600; line-height: .9; }
+:global(.phone) .dayHead :global(.num) { font-size: var(--fs-xl); }
+.dayHead b { font-size: var(--fs-md); font-weight: 500; }
+:global(.phone) .dayHead b { font-size: var(--fs-sm); }
 .dayHead small { margin-left: auto; }
 :global(.phone) .dayHead small { margin-left: 0; }
 .dayHead.isToday { background: var(--ink); color: var(--on-ink); border-radius: var(--r-sm) var(--r-sm) 0 0; padding-top: 8px; }
@@ -76,8 +76,8 @@
 
   :global(.phone) & { padding: 8px 0; }
 }
-.allday .gutter { font-size: 12px; padding-right: 6px; line-height: 1.1; }
-:global(.phone) .allday .gutter { font-size: 10px; letter-spacing: .06em; }
+.allday .gutter { font-size: var(--fs-xs); padding-right: 6px; line-height: 1.1; }
+:global(.phone) .allday .gutter { font-size: var(--fs-2xs); letter-spacing: .06em; }
 .alldayGrid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 8px; padding: 0 4px;
 
@@ -89,11 +89,11 @@
   min-height: 44px; padding: 0 14px; border-radius: 10px;
   display: flex; align-items: center; gap: 6px;
   background: var(--c-fill, var(--c)); color: var(--c-ink);
-  font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--fs-md); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 
-  :global(.phone) & { min-height: 36px; padding: 0 10px; border-radius: 8px; font-size: 14px; }
+  :global(.phone) & { min-height: 36px; padding: 0 10px; border-radius: 8px; font-size: var(--fs-sm); }
 }
-.ad small { font-size: var(--fs-min); opacity: .75; font-weight: 400; margin-left: 4px; }
+.ad small { font-size: var(--fs-sm); opacity: .75; font-weight: 400; margin-left: 4px; }
 /* continues from an earlier day */
 .adCont { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 
@@ -107,9 +107,9 @@
 .hr { position: absolute; left: var(--gutter); right: 0; border-top: 1px solid var(--line); }
 .hr span {
   position: absolute; left: calc(-1 * var(--gutter)); width: calc(var(--gutter) - 8px); top: -9px; text-align: right;
-  font-size: 13px; font-weight: 400; color: var(--mute); white-space: nowrap;
+  font-size: var(--fs-xs); font-weight: 400; color: var(--mute); white-space: nowrap;
 }
-:global(.phone) .hr span { font-size: 11px; }
+:global(.phone) .hr span { font-size: var(--fs-2xs); }
 .lanes { position: absolute; left: var(--gutter); right: 0; top: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
 .lanes3 { grid-template-columns: repeat(3, 1fr); }
 .lane { position: relative; border-left: 1px solid var(--line); }
@@ -128,19 +128,19 @@
 }
 .ev:active { transform: scale(.98); }
 .evTitle {
-  font-size: 17px; font-weight: 500; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 30px;
+  font-size: var(--fs-md); font-weight: 500; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 30px;
 
-  :global(.phone) & { font-size: 14px; padding-right: 0; }
+  :global(.phone) & { font-size: var(--fs-sm); padding-right: 0; }
 }
 .evMeta {
-  font-size: var(--fs-min); font-weight: 400; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--fs-sm); font-weight: 400; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 
-  :global(.phone) & { font-size: 12px; }
+  :global(.phone) & { font-size: var(--fs-xs); }
 }
 .evMeta b { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; vertical-align: bottom; }
 .ev.isShort { flex-direction: row; align-items: center; gap: 8px; padding-top: 0; padding-bottom: 0; }
-.ev.isShort .evTitle { font-size: 16px; padding-right: 0; flex: none; max-width: 60%; }
-:global(.phone) .ev.isShort .evTitle { font-size: 13px; }
+.ev.isShort .evTitle { font-size: var(--fs-md); padding-right: 0; flex: none; max-width: 60%; }
+:global(.phone) .ev.isShort .evTitle { font-size: var(--fs-sm); }
 .ev.isShort .evWith { display: none; }
 .ev.isHalf.isShort .evMeta { display: none; }
 .ev.isHalf.isShort .evTitle { max-width: 100%; flex: 1; min-width: 0; }
@@ -171,11 +171,11 @@
   background: var(--paper); color: var(--ink);
   border: 1px dashed var(--mute);
   align-items: center; justify-content: center; flex-direction: row; gap: 6px;
-  font-size: 22px; font-weight: 500;
+  font-size: var(--fs-lg); font-weight: 500;
 
-  :global(.phone) & { font-size: 16px; }
+  :global(.phone) & { font-size: var(--fs-md); }
 }
-.evMore small { font-size: 13px; color: var(--mute); }
+.evMore small { font-size: var(--fs-xs); color: var(--mute); }
 
 /* the red "now" line; in 3 Day it covers only today's column (nowLine0–2) */
 .nowLine { position: absolute; left: var(--gutter); right: 0; height: 0; border-top: 2px solid var(--alert); z-index: 4; pointer-events: none; }
@@ -183,9 +183,9 @@
 .nowLine span {
   position: absolute; right: calc(100% + 10px); top: -15px;
   background: var(--alert); color: #fff; border-radius: 8px; padding: 3px 7px;
-  font-size: 15px; line-height: 1.2;
+  font-size: var(--fs-sm); line-height: 1.2;
 }
-:global(.phone) .nowLine span { right: calc(100% + 4px); padding: 2px 4px; font-size: 11px; }
+:global(.phone) .nowLine span { right: calc(100% + 4px); padding: 2px 4px; font-size: var(--fs-2xs); }
 .nowLine0 { right: calc((100% - var(--gutter)) * 2 / 3); }
 .nowLine1 { left: calc(var(--gutter) + (100% - var(--gutter)) / 3); right: calc((100% - var(--gutter)) / 3); }
 .nowLine2 { left: calc(var(--gutter) + (100% - var(--gutter)) * 2 / 3); }
@@ -206,15 +206,15 @@
 
   :global(.phone) & { justify-content: flex-start; gap: 10px; padding: 6px 10px; }
 }
-.wkHead b { font-size: 16px; font-weight: 500; }
-.wkHead :global(.num) { font-size: 28px; font-weight: 600; line-height: .9; }
+.wkHead b { font-size: var(--fs-md); font-weight: 500; }
+.wkHead :global(.num) { font-size: var(--fs-2xl); font-weight: 600; line-height: .9; }
 .wkCol.isToday .wkHead { background: var(--ink); color: var(--on-ink); border-radius: var(--r-sm) var(--r-sm) 0 0; }
 .wkAd {
   min-height: 40px; padding: 0 10px; border-radius: 8px;
   background: var(--c-fill, var(--c)); color: var(--c-ink);
-  font-size: var(--fs-min); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;
+  font-size: var(--fs-sm); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;
 
-  :global(.phone) & { min-height: 36px; font-size: 14px; }
+  :global(.phone) & { min-height: 36px; }
 }
 .wkEv {
   min-height: 60px; padding: 6px 10px; border-radius: 10px;
@@ -226,16 +226,14 @@
 .wkEv.isPast { opacity: .45; }
 .wkT::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 6px; vertical-align: 1px; }
 .wkT {
-  font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--ink-2);
+  font-size: var(--fs-xs); font-weight: 400; font-variant-numeric: tabular-nums; color: var(--ink-2);
 
   :global(.phone) & { flex: none; width: 66px; }
 }
 .wkN {
-  font-size: 16px; font-weight: 500; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-
-  :global(.phone) & { font-size: 15px; }
+  font-size: var(--fs-md); font-weight: 500; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
-.wkMore { min-height: 48px; font-size: 15px; font-weight: 500; text-align: left; padding: 0 10px; color: var(--ink-2); }
+.wkMore { min-height: 48px; font-size: var(--fs-sm); font-weight: 500; text-align: left; padding: 0 10px; color: var(--ink-2); }
 .wkFree { padding: 8px 10px; }
 
 /* ---------------------------------------------------------------- month (MonthGrid.module.css) */
@@ -246,7 +244,7 @@
 /* The copy under the finger, with where it would land */
 .dragEv {
   display: flex; flex-direction: column; gap: 2px; padding: 8px 14px; border-radius: var(--r-sm); min-width: 180px;
-  background: var(--c-fill, var(--c)); color: var(--c-ink); font-size: 16px;
+  background: var(--c-fill, var(--c)); color: var(--c-ink); font-size: var(--fs-md);
 }
 .dragEv b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dragEv small { font-size: 14px; font-weight: 600; opacity: .9; }
+.dragEv small { font-size: var(--fs-sm); font-weight: 600; opacity: .9; }

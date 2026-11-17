@@ -3,7 +3,7 @@
 .grid { height: 100%; min-height: 0; display: flex; flex-direction: column; }
 .dow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding-bottom: 6px; }
 .dow :global(.label) { padding: 0 10px; }
-.isPhone .dow :global(.label) { padding: 0; text-align: center; font-size: 11px; letter-spacing: .06em; }
+.isPhone .dow :global(.label) { padding: 0; text-align: center; font-size: var(--fs-2xs); letter-spacing: .06em; }
 
 .weeks { flex: 1; min-height: 0; display: grid; border-top: 1px solid var(--line); }
 .week { position: relative; min-height: 0; overflow: hidden; border-bottom: 1px solid var(--line); }
@@ -32,9 +32,9 @@
 }
 .num {
   min-width: 26px; height: 26px; padding: 0 6px; border-radius: 13px; display: grid; place-items: center;
-  font-size: 17px; font-weight: 600; color: var(--ink); white-space: nowrap;
+  font-size: var(--fs-md); font-weight: 600; color: var(--ink); white-space: nowrap;
 
-  .isPhone & { min-width: 24px; height: 24px; font-size: 14px; padding: 0 4px; }
+  .isPhone & { min-width: 24px; height: 24px; font-size: var(--fs-sm); padding: 0 4px; }
 }
 .day.isPast .num { color: var(--mute); font-weight: 500; }
 .num.isToday { background: var(--ink); color: var(--on-ink); }
@@ -42,12 +42,12 @@
 .chip {
   min-width: 0; height: 21px; margin: 0 3px; padding: 0 7px; border-radius: 6px;
   display: flex; align-items: center; gap: 5px;
-  background: var(--c-tint-fill, var(--c-tint)); color: var(--ink); font-size: 13px; font-weight: 500; line-height: 1; text-align: left;
+  background: var(--c-tint-fill, var(--c-tint)); color: var(--ink); font-size: var(--fs-xs); font-weight: 500; line-height: 1; text-align: left;
 
   .isPhone & { height: 14px; margin: 0 1px; padding: 0 3px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: -.01em; }
 }
 .chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chip small { flex: none; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+.chip small { flex: none; font-size: var(--fs-xs); font-weight: 500; color: var(--ink-2); }
 /* All-day and multi-day: solid in the event's colour */
 .chip.isAllDay { background: var(--c-fill, var(--c)); color: var(--c-ink); }
 .chip.isPast { opacity: .5; }
@@ -55,7 +55,7 @@
 
 .more {
   height: 21px; margin: 0 3px; padding: 0 7px; border-radius: 6px; text-align: left;
-  font-size: 13px; font-weight: 600; color: var(--ink-2);
+  font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2);
 
   .isPhone & { height: 14px; margin: 0 1px; padding: 0; font-size: 9px; line-height: 1; text-align: center; color: var(--mute); }
 }

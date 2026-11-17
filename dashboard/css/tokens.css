@@ -15,7 +15,7 @@
 
    People don't carry colours: each has a palette slot (tone 0–4, 0 = Family), and each theme
    defines --t<slot>, --t<slot>-rgb and --t<slot>-ink. Inter for UI text, Fraunces for accents
-   and big numbers. */
+   and big numbers; sizes from the type scale (--fs-*). */
 
 /* ---------------------------------------------------------------- shared (all themes) */
 :root {
@@ -30,10 +30,22 @@
   /* Fraunces optical size: low values give the sturdy, soft-serifed look of the Google Fonts specimen;
      "auto" would pick the high-contrast display cut (hairline serifs) at our large sizes. */
   --serif-opsz: 24;
-  --fs-clock: 120px;
-  --fs-body: 19px;
-  --fs-label: 13px;
-  --fs-min: 14px;
+  /* Type scale: every font-size in the app is one of these (phones get their own values, below).
+     Steps are about 1.15× apart, so neighbours look clearly different. The roles:
+     2xs rail labels and badges · xs caps labels, tags, timestamps · sm meta and secondary lines ·
+     md body (rows, buttons, chips) · lg emphasised rows and card titles · xl small headings ·
+     2xl section headings · 3xl sheet titles and headlines · 4xl big empty states · 5xl page titles.
+     Bigger display numbers (the clock, temperatures) and emoji sized to their tile stay in px. */
+  --fs-2xs: 11px;
+  --fs-xs: 13px;
+  --fs-sm: 15px;
+  --fs-md: 17px;
+  --fs-lg: 20px;
+  --fs-xl: 24px;
+  --fs-2xl: 28px;
+  --fs-3xl: 34px;
+  --fs-4xl: 44px;
+  --fs-5xl: 56px;
 
   /* shape + space: --r for cards and panels; --r-sm for what sits inside one (rows, tiles, emoji
      boxes, inputs). Pills use 999px, or half their height. */
@@ -247,7 +259,17 @@
   --pad: 16px;
   --tap: 48px;
   --r: 14px;
-  --fs-body: 16px;
+  /* phone type scale: a touch smaller, and much smaller at the top (narrow screens) */
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 26px;
+  --fs-4xl: 30px;
+  --fs-5xl: 34px;
   --tabbar-h: 64px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

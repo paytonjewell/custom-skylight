@@ -7,9 +7,9 @@
 /* The tabs, set as the page title: the open one in ink, the others quieter. Smaller than a one-word
    title so all three fit beside the tab's controls. */
 .tabs {
-  display: flex; align-items: baseline; gap: 28px; font-size: 44px;
+  display: flex; align-items: baseline; gap: 28px; font-size: var(--fs-4xl);
 
-  :global(.phone) & { gap: 14px; font-size: 24px; }
+  :global(.phone) & { gap: 14px; font-size: var(--fs-2xl); }
 }
 .tabs button { color: var(--mute); opacity: .6; white-space: nowrap; }
 .tabs button:active { opacity: .4; }

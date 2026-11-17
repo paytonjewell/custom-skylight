@@ -1,11 +1,11 @@
 /* Quiet empty-state line: "Free the rest of the day", "All stocked up. Nothing left to buy." */
 .note {
-  font-size: 19px; font-weight: 500; line-height: 1.1; color: var(--mute);
+  font-size: var(--fs-lg); font-weight: 500; line-height: 1.1; color: var(--mute);
 
-  :global(.phone) & { font-size: 16px; }
+  :global(.phone) & { font-size: var(--fs-md); }
 }
 .large {
-  font-size: 40px;
+  font-size: var(--fs-4xl);
 
-  :global(.phone) & { font-size: 26px; }
+  :global(.phone) & { font-size: var(--fs-3xl); }
 }

@@ -12,12 +12,12 @@
   :global(.phone) & { font-size: 60px; }
 }
 .meta { display: flex; flex-direction: column; gap: 4px; margin-left: 4px; }
-.meta b { font-size: 22px; font-weight: 600; }
-.meta span { font-size: 16px; color: var(--mute); }
+.meta b { font-size: var(--fs-lg); font-weight: 600; }
+.meta span { font-size: var(--fs-md); color: var(--mute); }
 .say {
-  font-size: 19px; color: var(--ink-2); margin: 14px 0 0;
+  font-size: var(--fs-lg); color: var(--ink-2); margin: 14px 0 0;
 
-  :global(.phone) & { font-size: 16px; }
+  :global(.phone) & { font-size: var(--fs-md); }
 }
 .say b { font-weight: 600; color: var(--ink); }
 
@@ -35,11 +35,11 @@
 
   :global(.phone) & { flex: none; width: 46px; }
 }
-.hrLabel { font-size: 13px; color: var(--mute); }
+.hrLabel { font-size: var(--fs-xs); color: var(--mute); }
 .hrIcon { height: 34px; display: grid; place-items: center; color: var(--mute); }
 .hr.isWet .hrIcon { color: var(--accent); }
-.hr b { font-size: 17px; font-weight: 600; }
-.hr small { height: 15px; font-size: 12px; font-weight: 500; color: var(--accent-deep); }
+.hr b { font-size: var(--fs-md); font-weight: 600; }
+.hr small { height: 15px; font-size: var(--fs-xs); font-weight: 500; color: var(--accent-deep); }
 
 /* ---------------------------------------------------------------- today + next days, plus detail tiles */
 .cols {
@@ -56,24 +56,24 @@
   :global(.phone) & { grid-template-columns: 86px 24px 34px 28px 1fr 28px; gap: 6px; }
 }
 .day:last-child { border-bottom: 0; }
-.dayName { font-size: 17px; font-weight: 600; }
+.dayName { font-size: var(--fs-md); font-weight: 600; }
 .dayIcon { color: var(--mute); display: grid; place-items: center; }
 .dayIcon.isWet { color: var(--accent); }
-.dayRain { font-size: 13px; font-weight: 500; color: var(--accent-deep); }
-.dayLo { font-size: 16px; color: var(--mute); text-align: right; }
-.dayHi { font-size: 16px; font-weight: 600; }
+.dayRain { font-size: var(--fs-xs); font-weight: 500; color: var(--accent-deep); }
+.dayLo { font-size: var(--fs-md); color: var(--mute); text-align: right; }
+.dayHi { font-size: var(--fs-md); font-weight: 600; }
 .bar { position: relative; height: 6px; border-radius: 3px; background: var(--paper-2); }
 .bar i { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, var(--t3), var(--t0)); }
 
 .tiles { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tile { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: var(--r); min-width: 0; }
-.tileSub { font-size: 13px; color: var(--mute); margin-top: auto; }
+.tileSub { font-size: var(--fs-xs); color: var(--mute); margin-top: auto; }
 .stat { display: flex; align-items: baseline; gap: 4px; }
 .stat b {
   font-family: var(--serif);
-  font-size: 40px; font-weight: 600; line-height: 1;
+  font-size: var(--fs-4xl); font-weight: 600; line-height: 1;
 }
-.stat small { font-size: 15px; color: var(--mute); }
+.stat small { font-size: var(--fs-sm); color: var(--mute); }
 
 /* ---------------------------------------------------------------- sun arc */
 .arc { width: 100%; height: 52px; overflow: visible; }
@@ -85,8 +85,8 @@
 .sunTimes { display: flex; justify-content: space-between; }
 .sunTimes span { display: flex; flex-direction: column; }
 .sunTimes span:last-child { text-align: right; }
-.sunTimes small { font-size: 12px; color: var(--mute); }
-.sunTimes b { font-size: 15px; font-weight: 600; }
+.sunTimes small { font-size: var(--fs-xs); color: var(--mute); }
+.sunTimes b { font-size: var(--fs-sm); font-weight: 600; }
 
 /* ---------------------------------------------------------------- moon */
 .moonRow { display: flex; align-items: center; gap: 12px; flex: 1; }
@@ -94,5 +94,5 @@
 .moonDark { fill: var(--paper-2); }
 .moonLit { fill: #EFE4C6; }
 .moonRow span { display: flex; flex-direction: column; min-width: 0; }
-.moonRow b { font-size: 16px; font-weight: 600; line-height: 1.2; }
-.moonRow small { font-size: 13px; color: var(--mute); }
+.moonRow b { font-size: var(--fs-md); font-weight: 600; line-height: 1.2; }
+.moonRow small { font-size: var(--fs-xs); color: var(--mute); }

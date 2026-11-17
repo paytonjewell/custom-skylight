@@ -1,41 +1,41 @@
 /* Google Calendar settings: an account per section, its calendars as rows */
-.note { margin: 8px 0 0; font-size: 16px; color: var(--ink-2); }
+.note { margin: 8px 0 0; font-size: var(--fs-md); color: var(--ink-2); }
 .account { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
 .accountHead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.accountHead b { font-size: 18px; font-weight: 600; }
-.error { font-size: 14px; color: var(--alert); }
+.accountHead b { font-size: var(--fs-md); font-weight: 600; }
+.error { font-size: var(--fs-sm); color: var(--alert); }
 .disconnect { margin-left: auto; color: var(--mute); }
 
 .calendars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .cal { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: var(--r); background: var(--paper-2); }
-.calName { display: flex; align-items: center; gap: 12px; min-height: 36px; font-size: 17px; }
+.calName { display: flex; align-items: center; gap: 12px; min-height: 36px; font-size: var(--fs-md); }
 .calName input { width: 26px; height: 26px; flex: none; }
 .calName i { width: 14px; height: 14px; border-radius: 50%; flex: none; }
 .calName span { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
-.calName small { font-size: 13px; color: var(--mute); }
+.calName small { font-size: var(--fs-xs); color: var(--mute); }
 
 .settings { display: flex; flex-direction: column; gap: 10px; padding-left: 38px; }
-.ask { font-size: 14px; color: var(--mute); }
+.ask { font-size: var(--fs-sm); color: var(--mute); }
 .owners { display: flex; gap: 6px; flex-wrap: wrap; }
 .swatch { width: 30px; height: 30px; border-radius: 50%; flex: none; }
 .colors { display: flex; gap: 10px; flex-wrap: wrap; }
 .color { width: 40px; height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12); }
 .color.isOn { box-shadow: 0 0 0 3px var(--paper-2), 0 0 0 5px var(--ink); }
-.toggle { display: flex; align-items: center; gap: 12px; min-height: 40px; font-size: 16px; }
+.toggle { display: flex; align-items: center; gap: 12px; min-height: 40px; font-size: var(--fs-md); }
 .toggle input { width: 24px; height: 24px; flex: none; }
 .toggle span { display: flex; flex-direction: column; }
-.toggle small { font-size: 13px; color: var(--mute); }
+.toggle small { font-size: var(--fs-xs); color: var(--mute); }
 .owner {
   display: flex; align-items: center; gap: 6px; height: 42px; padding: 0 12px 0 6px; border-radius: 21px;
-  font-size: 15px; color: var(--ink-2); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line);
+  font-size: var(--fs-sm); color: var(--ink-2); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line);
 }
 .owner.isOn { background: var(--c-tint); color: var(--ink); box-shadow: inset 0 0 0 2px var(--c); font-weight: 600; }
 
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
 
-.emojiRow { display: flex; align-items: center; gap: 12px; font-size: 16px; }
+.emojiRow { display: flex; align-items: center; gap: 12px; font-size: var(--fs-md); }
 .emojiRow span { display: flex; flex-direction: column; }
-.emojiRow small { font-size: 13px; color: var(--mute); }
+.emojiRow small { font-size: var(--fs-xs); color: var(--mute); }
 .emojiBtn {
   flex: none; width: 48px; height: 48px; border-radius: var(--r-sm); display: grid; place-items: center;
   font-size: 26px; color: var(--mute); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line);

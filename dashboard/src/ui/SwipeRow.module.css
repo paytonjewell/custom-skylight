@@ -12,7 +12,7 @@
 .action {
   position: absolute; top: 0; bottom: 0; width: 88px; /* = REVEAL in useSwipeReveal */
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  font-size: 13px; font-weight: 600; color: #fff;
+  font-size: var(--fs-xs); font-weight: 600; color: #fff;
   visibility: hidden; transition: visibility 0s .22s;
 }
 .action:active { filter: brightness(.9); }

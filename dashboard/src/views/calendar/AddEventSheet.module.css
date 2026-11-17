@@ -1,7 +1,7 @@
 /* Add or edit an event */
 .add :global(.label) { margin: 22px 0 10px; }
 :global(.phone) .add :global(.label) { margin: 16px 0 8px; }
-.note { margin: 12px 0 0; font-size: 16px; color: var(--ink-2); }
+.note { margin: 12px 0 0; font-size: var(--fs-md); color: var(--ink-2); }
 
 .calChip { gap: 8px; }
 .mark { display: inline-flex; align-items: center; gap: 6px; }
@@ -15,16 +15,16 @@
 .more :global(.chip) { background: var(--paper); }
 .more :global(.chip.is-on) { background: var(--ink); }
 .times { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.times label { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--ink-2); }
+.times label { display: flex; align-items: center; gap: 10px; font-size: var(--fs-md); color: var(--ink-2); }
 .times input {
   height: 52px; padding: 0 14px; border: 0; border-radius: var(--r-sm); background: var(--paper);
-  font: inherit; font-size: 20px; color: var(--ink);
+  font: inherit; font-size: var(--fs-lg); color: var(--ink);
 }
-.times small { font-size: 14px; color: var(--mute); }
+.times small { font-size: var(--fs-sm); color: var(--mute); }
 
 .field {
   width: 100%; padding: 14px 16px; border: 0; border-radius: var(--r-sm); background: var(--paper-2);
-  font: inherit; font-size: 18px; color: var(--ink); resize: vertical;
+  font: inherit; font-size: var(--fs-md); color: var(--ink); resize: vertical;
 }
 .delete { margin-right: auto; color: var(--alert); }
 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--mute); }

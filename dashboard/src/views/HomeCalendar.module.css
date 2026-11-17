@@ -15,7 +15,7 @@
   :global(.phone) & { display: none; }
 }
 .title {
-  flex: 1; min-width: 0; margin-left: 8px; font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0; margin-left: 8px; font-size: var(--fs-md); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 
   :global(.phone) & { display: none; }
 }
@@ -26,7 +26,7 @@
 }
 .viewBtn {
   height: 40px; padding: 0 12px 0 16px; border-radius: 20px; display: flex; align-items: center; gap: 4px;
-  font-size: 16px; font-weight: 500; background: var(--paper-2);
+  font-size: var(--fs-md); font-weight: 500; background: var(--paper-2);
 }
 .scrim { position: fixed; inset: 0; z-index: 20; }
 .menu {
@@ -39,7 +39,7 @@
 }
 .item {
   height: 52px; padding: 0 14px 0 16px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: space-between;
-  font-size: 17px; text-align: left;
+  font-size: var(--fs-md); text-align: left;
 }
 .item:active { background: var(--paper-2); }
 /* a radio dot on the right */
@@ -47,7 +47,7 @@
 .item.isOn { background: var(--paper-2); font-weight: 600; }
 .item.isOn i { box-shadow: inset 0 0 0 6px var(--ink); }
 .today {
-  height: 40px; padding: 0 12px; border-radius: 20px; font-size: 15px; font-weight: 500; color: var(--ink-2);
+  height: 40px; padding: 0 12px; border-radius: 20px; font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2);
 }
 .today.isAtToday { opacity: .35; }
 
@@ -66,32 +66,32 @@
 .cell.isToday { box-shadow: inset 0 0 0 2px var(--ink); }
 /* Phone: a day with nothing on it is one slim row (name, "No events", weather) */
 :global(.phone) .cell.isEmpty .dayHead { grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: 10px; }
-:global(.phone) .cell.isEmpty .dayName { font-size: 20px; }
+:global(.phone) .cell.isEmpty .dayName { font-size: var(--fs-xl); }
 :global(.phone) .cell.isEmpty .dayHead small { grid-column: 2; grid-row: 1; }
 :global(.phone) .cell.isEmpty .dayHead :global(.i) { grid-column: 3; grid-row: 1; align-self: center; }
 .dayHead {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; padding: 2px 4px 4px; text-align: left; color: var(--mute);
 }
-.dayHead small { grid-column: 1 / -1; font-size: 14px; color: var(--mute); }
-.dayName { font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.1; color: var(--ink); white-space: nowrap; }
+.dayHead small { grid-column: 1 / -1; font-size: var(--fs-sm); color: var(--mute); }
+.dayName { font-family: var(--serif); font-size: var(--fs-xl); font-weight: 600; line-height: 1.1; color: var(--ink); white-space: nowrap; }
 .dayNum { font-family: var(--serif); }
 .isToday .dayNum {
   display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 17px;
-  background: var(--ink); color: var(--on-ink); font-size: 20px; vertical-align: 3px;
+  background: var(--ink); color: var(--on-ink); font-size: var(--fs-lg); vertical-align: 3px;
 }
 .ev {
   flex: none; min-width: 0; padding: 6px 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 1px; text-align: left;
   background: var(--c-tint-fill, var(--c-tint)); color: var(--ink);
 }
-.ev b { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ev small { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev b { font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev small { font-size: var(--fs-xs); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ev.isAllDay { background: var(--c-fill, var(--c)); color: var(--c-ink); }
 .ev.isAllDay small { color: inherit; opacity: .8; }
 .ev.isPast { opacity: .5; }
 .ev:active { filter: brightness(.95); }
-.more { flex: none; padding: 4px 10px; text-align: left; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.more { flex: none; padding: 4px 10px; text-align: left; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); }
 .next { justify-content: flex-start; padding: 10px 12px; gap: 6px; }
-.next small { font-size: 15px; color: var(--ink-2); }
+.next small { font-size: var(--fs-sm); color: var(--ink-2); }
 .next small + small { color: var(--mute); }
 .next:active { opacity: .6; }
 .cell { cursor: pointer; }
@@ -105,11 +105,11 @@
 }
 .row.isPast { opacity: .5; }
 .row.isNow { box-shadow: inset 0 0 0 2px var(--c); }
-.when { width: 84px; flex: none; display: flex; flex-direction: column; font-size: 15px; color: var(--ink-2); }
-.when b { font-size: 17px; font-weight: 600; color: var(--ink); }
-.when small { font-size: 13px; color: var(--mute); }
+.when { width: 84px; flex: none; display: flex; flex-direction: column; font-size: var(--fs-sm); color: var(--ink-2); }
+.when b { font-size: var(--fs-md); font-weight: 600; color: var(--ink); }
+.when small { font-size: var(--fs-xs); color: var(--mute); }
 .bar { width: 6px; align-self: stretch; flex: none; border-radius: 3px; background: var(--c-fill, var(--c)); }
 .what { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.what b { font-size: 19px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.what small { font-size: 14px; color: var(--ink-2); }
-.empty { padding: 24px 8px; font-size: 22px; }
+.what b { font-size: var(--fs-lg); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.what small { font-size: var(--fs-sm); color: var(--ink-2); }
+.empty { padding: 24px 8px; font-size: var(--fs-lg); }

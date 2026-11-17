@@ -65,9 +65,8 @@
   :global(.phone) & { flex-wrap: wrap; gap: 12px; padding: 14px 18px 18px; }
 }
 .sheetMeta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.sheetMeta b { font-family: var(--serif); font-size: 26px; font-weight: 500; }
-:global(.phone) .sheetMeta b { font-size: 20px; }
-.sheetMeta span { color: var(--ink-2); font-size: 16px; }
+.sheetMeta b { font-family: var(--serif); font-size: var(--fs-xl); font-weight: 500; }
+.sheetMeta span { color: var(--ink-2); font-size: var(--fs-md); }
 
 /* ---------------------------------------------------------------- slideshow preview: the photo frame with controls on top */
 .preview { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: #000; color: #fff; overflow: hidden; }
@@ -80,6 +79,6 @@
   height: var(--tap); min-width: var(--tap); padding: 0 17px; border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   background: rgba(0, 0, 0, .38);
-  font-size: 16px; font-weight: 500;
+  font-size: var(--fs-md); font-weight: 500;
 }
 .btn:active { transform: scale(.92); }

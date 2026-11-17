@@ -16,7 +16,7 @@ html.frame-preview #root {
 }
 body {
   font-family: var(--sans);
-  font-size: var(--fs-body);
+  font-size: var(--fs-lg);
   font-weight: 400;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -34,6 +34,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
      spills out (event titles, theme previews). */
   align-items: normal;
 }
+/* Phones read body text a size down */
+.phone body { font-size: var(--fs-md); }
 input { font: inherit; color: inherit; -webkit-user-select: text; user-select: text; }
 /* Checkboxes drawn from the theme (the browser's own box stays white in Dark); size set where used */
 input[type="checkbox"] {
@@ -69,7 +71,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .serif { font-family: var(--serif); font-weight: 600; letter-spacing: -.015em; }
 .serif i, i.serif { font-style: italic; font-weight: 400; color: var(--mute); }
 .label {
-  font-size: var(--fs-label);
+  font-size: var(--fs-xs);
   font-weight: 500;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -77,6 +79,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   line-height: 1.2;
   display: flex; align-items: center; gap: 6px;
 }
-.label--sm { display: block; font-size: 12px; letter-spacing: .12em; }
+.label--sm { display: block; font-size: var(--fs-xs); letter-spacing: .12em; }
 .label--light { color: rgba(255, 255, 255, .7); }
 .label--on { color: var(--c-ink); opacity: .75; }

@@ -40,7 +40,7 @@
 .item {
   width: 68px; height: 68px; border-radius: var(--r-sm);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  font-size: 11px; font-weight: 500;
+  font-size: var(--fs-2xs); font-weight: 500;
   color: var(--mute);
   position: relative;
 }
@@ -51,8 +51,8 @@
 .theme { margin-top: auto; height: 60px; }
 .theme :global(.i) { width: 22px; height: 22px; }
 .clock { padding: 10px 0; width: 100%; text-align: center; line-height: 1; position: relative; overflow: hidden; border-radius: var(--r-sm); }
-.clock b { display: block; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.clock span { font-size: 11px; font-weight: 500; letter-spacing: .12em; color: var(--mute); }
+.clock b { display: block; font-size: var(--fs-lg); font-weight: 500; font-variant-numeric: tabular-nums; }
+.clock span { font-size: var(--fs-2xs); font-weight: 500; letter-spacing: .12em; color: var(--mute); }
 
 /* ---------------------------------------------------------------- screens: one soft panel, like a document page */
 .views {
@@ -102,7 +102,7 @@
 .tab {
   flex: 1; min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  font-size: 12px; font-weight: 500; color: var(--mute);
+  font-size: var(--fs-xs); font-weight: 500; color: var(--mute);
 }
 .tabInd { width: 56px; height: 30px; border-radius: 15px; display: grid; place-items: center; color: var(--ink-2); }
 .tab :global(.i) { stroke-width: 1.8; }
@@ -123,7 +123,7 @@
 .menuItem {
   width: 100%; min-height: 52px; padding: 0 14px;
   display: flex; align-items: center; gap: 14px;
-  border-radius: var(--r-sm); font-size: 16px; font-weight: 500;
+  border-radius: var(--r-sm); font-size: var(--fs-md); font-weight: 500;
 }
 .menuItem :global(.i) { color: var(--ink-2); }
 .menuItem.isActive { background: var(--paper-2); }

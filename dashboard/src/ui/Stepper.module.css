@@ -1,10 +1,10 @@
-.stepper { display: flex; align-items: center; gap: 12px; font-size: 18px; }
+.stepper { display: flex; align-items: center; gap: 12px; font-size: var(--fs-md); }
 .stepper :global(.icon-btn) { width: 52px; height: 52px; border-radius: 50%; background: var(--paper); }
 .stepper :global(.icon-btn):disabled { opacity: .4; }
-.stepper b { min-width: 2ch; text-align: center; font-size: 26px; font-weight: 600; }
+.stepper b { min-width: 2ch; text-align: center; font-size: var(--fs-xl); font-weight: 600; }
 .stepper span { color: var(--ink-2); }
 
-.compact { gap: 4px; font-size: 14px; }
+.compact { gap: 4px; font-size: var(--fs-sm); }
 .compact :global(.icon-btn) { width: 40px; height: 40px; background: var(--card); }
-.compact b { min-width: 28px; font-size: 19px; font-weight: 500; }
+.compact b { min-width: 28px; font-size: var(--fs-lg); font-weight: 500; }
 .compact span { color: var(--mute); margin-left: 2px; }
