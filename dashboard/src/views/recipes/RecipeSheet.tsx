@@ -15,7 +15,7 @@ import {
   removeInventory,
   teachMatch,
   toggleFavorite,
-} from '../../data/recipeStore';
+} from '../../data/kitchenActions';
 import { dayOf, shiftDay } from '../../lib/repeat';
 import { useNow } from '../../lib/clock';
 import { closeSheet, openSheet, toast } from '../../app/ui';

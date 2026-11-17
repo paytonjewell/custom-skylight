@@ -11,6 +11,8 @@ import { categorize } from './select';
 import { guessPlace, type Place } from './kitchen';
 import { core, foodKey, setTaught } from './names';
 
+import { patch } from '../lib/list';
+
 const set = dataStore.set;
 
 /** A new recipe, last in the list */
@@ -23,7 +25,7 @@ export function toggleFavorite(id: string): void {
   const r = dataStore.get().recipes.find((x) => x.id === id);
   if (!r) return;
   const favorite = !r.favorite;
-  set((d) => ({ ...d, recipes: d.recipes.map((x) => (x.id === id ? { ...x, favorite } : x)) }));
+  set((d) => ({ ...d, recipes: patch(d.recipes, id, { favorite }) }));
   saveKitchen(() => api.editRecipe(id, { favorite }));
 }
 
@@ -39,7 +41,7 @@ export function planDinner(day: string, id: string | null): void {
 }
 
 export function markMade(id: string, day: string): void {
-  set((d) => ({ ...d, recipes: d.recipes.map((r) => (r.id === id ? { ...r, made: day } : r)) }));
+  set((d) => ({ ...d, recipes: patch(d.recipes, id, { made: day }) }));
   saveKitchen(() => api.editRecipe(id, { made: day }));
 }
 
@@ -88,7 +90,7 @@ export function addInventory(raw: string, place?: string): { item: InventoryItem
   const had = d.inventory.find((i) => i.name.toLowerCase() === name.toLowerCase());
   if (had) {
     const qty = had.qty + 1;
-    set((x) => ({ ...x, inventory: x.inventory.map((i) => (i.id === had.id ? { ...i, qty } : i)) }));
+    set((x) => ({ ...x, inventory: patch(x.inventory, had.id, { qty }) }));
     saveKitchen(() => api.editInventory(had.id, { qty }));
     return { item: { ...had, qty }, added: false };
   }
@@ -102,7 +104,7 @@ export function addInventory(raw: string, place?: string): { item: InventoryItem
 export function editInventory(id: string, p: Partial<Omit<InventoryItem, 'id'>>): void {
   const before = dataStore.get().inventory.find((i) => i.id === id);
   if (!before) return;
-  set((d) => ({ ...d, inventory: d.inventory.map((i) => (i.id === id ? { ...i, ...p } : i)) }));
+  set((d) => ({ ...d, inventory: patch<InventoryItem>(d.inventory, id, p) }));
   if (p.place || p.name) learn(p.name ?? before.name, p.place ?? before.place);
   saveKitchen(() => api.editInventory(id, p));
 }

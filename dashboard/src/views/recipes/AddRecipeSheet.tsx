@@ -10,7 +10,7 @@ import type { Ingredient } from '../../data/types';
 import { useData, newId } from '../../data/store';
 import { amount, guessEmoji, parseIngredient, parseRecipeText, parseSteps } from '../../data/recipes';
 import { api, type ImportedRecipe } from '../../data/api';
-import { addRecipe } from '../../data/recipeStore';
+import { addRecipe } from '../../data/kitchenActions';
 import { closeSheet, go, openSheet, toast } from '../../app/ui';
 import { store } from '../../lib/store';
 import { EmojiPicker } from '../../ui/EmojiPicker';

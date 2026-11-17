@@ -16,7 +16,7 @@ import {
   removeInventory,
   restoreInventory,
   unteachMatch,
-} from '../../data/recipeStore';
+} from '../../data/kitchenActions';
 import { foodKey } from '../../data/names';
 import { onList } from '../../data/recipes';
 import { closeSheet, openSheet, toast } from '../../app/ui';

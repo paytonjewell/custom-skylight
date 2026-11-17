@@ -16,9 +16,9 @@ import type { Calendar, Checklist, Data, EventRecord, Grocery, ListItem, Task, T
 import { refreshEvents, saveEvent } from './calendarSync';
 import { withEvents } from './calendar';
 
+import { insertAt, orderBy, patch } from '../lib/list';
+
 const set = dataStore.set;
-const patch = <T extends { id: string }>(list: T[], id: string, p: Partial<T>): T[] =>
-  list.map((x) => (x.id === id ? { ...x, ...p } : x));
 
 // ------------------------------------------------------------ calendar
 // Google Calendar events: the local copy changes at once, then the change is sent to Google through
@@ -131,10 +131,7 @@ const UNDO_MS = 6000;
 
 /** Save a new photo order (the grid order, which the slideshow follows) */
 export function reorderPhotos(ids: string[]): void {
-  set((d) => {
-    const byId = new Map(d.photos.map((p) => [p.id, p]));
-    return { ...d, photos: ids.flatMap((id) => byId.get(id) ?? []) };
-  });
+  set((d) => ({ ...d, photos: orderBy(d.photos, ids) }));
   trackSave(api.reorderPhotos(ids)).catch(() => {
     toast('Couldn’t save the new order', { icon: 'x' });
     void refreshPhotos();
@@ -197,11 +194,7 @@ export function deletePhoto(id: string): void {
       clearTimeout(timer);
       deleteTimers.delete(id);
       pendingDeletes.delete(id);
-      set((d) => {
-        const photos = d.photos.filter((p) => p.id !== id);
-        photos.splice(Math.min(at, photos.length), 0, photo);
-        return { ...d, photos };
-      });
+      set((d) => ({ ...d, photos: insertAt(d.photos, photo, at) }));
     },
   });
 }
@@ -359,11 +352,7 @@ export function removeGrocery(id: string): { item: Grocery; at: number } | null 
 }
 /** Undo a removal: the item comes back where it was */
 export function restoreGrocery(item: Grocery, at: number): void {
-  set((d) => {
-    const groceries = d.groceries.filter((g) => g.id !== item.id);
-    groceries.splice(Math.min(at, groceries.length), 0, item);
-    return { ...d, groceries };
-  });
+  set((d) => ({ ...d, groceries: insertAt(d.groceries, item, at) }));
   const order = groceryIds();
   saveGrocery(() => api.addGrocery(item, true));
   saveGrocery(() => api.orderGroceries(order));
@@ -429,10 +418,7 @@ export function setListEmoji(id: string, emoji: string): void {
 }
 /** Save a new order for the lists (from dragging their cards; the grocery list always stays first) */
 export function reorderLists(ids: string[]): void {
-  set((d) => {
-    const byId = new Map(d.lists.map((l) => [l.id, l]));
-    return { ...d, lists: ids.flatMap((id) => byId.get(id) ?? []) };
-  });
+  set((d) => ({ ...d, lists: orderBy(d.lists, ids) }));
   saveList(() => api.orderLists(ids));
 }
 
@@ -448,11 +434,7 @@ export function deleteList(id: string): { list: Checklist; at: number } | null {
 }
 /** Undo a delete: the list comes back, with its items, where it was */
 export function restoreList(list: Checklist, at: number): void {
-  set((d) => {
-    const lists = d.lists.filter((l) => l.id !== list.id);
-    lists.splice(Math.min(at, lists.length), 0, list);
-    return { ...d, lists };
-  });
+  set((d) => ({ ...d, lists: insertAt(d.lists, list, at) }));
   const order = listIds();
   saveList(() => api.addList(list));
   saveList(() => api.orderLists(order));
@@ -472,7 +454,7 @@ export function editListItem(listId: string, itemId: string, text: string): void
     .get()
     .lists.find((l) => l.id === listId)
     ?.items.find((i) => i.id === itemId)?.text;
-  patchList(listId, (l) => ({ ...l, items: l.items.map((i) => (i.id === itemId ? { ...i, text: value } : i)) }));
+  patchList(listId, (l) => ({ ...l, items: patch(l.items, itemId, { text: value }) }));
   saveList(() => api.editItem(listId, itemId, { text: value }));
   // Reminders still named after the item follow its new text
   for (const t of linkedTasks(listId, itemId)) if (t.title === old) editTask(t.id, { title: value });
@@ -499,7 +481,7 @@ function writeItemDone(listId: string, itemId: string, done: boolean): void {
     .lists.find((l) => l.id === listId)
     ?.items.find((i) => i.id === itemId);
   if (!item || item.done === done) return;
-  patchList(listId, (l) => ({ ...l, items: l.items.map((i) => (i.id === itemId ? { ...i, done } : i)) }));
+  patchList(listId, (l) => ({ ...l, items: patch(l.items, itemId, { done }) }));
   saveList(() => api.editItem(listId, itemId, { done }));
 }
 /** Tasks made as reminders for a list's items (or one item) */
@@ -526,11 +508,7 @@ export function removeListItem(listId: string, itemId: string): { item: ListItem
 }
 /** Undo a removal: the item comes back where it was */
 export function restoreListItem(listId: string, item: ListItem, at: number): void {
-  patchList(listId, (l) => {
-    const items = l.items.filter((i) => i.id !== item.id);
-    items.splice(Math.min(at, items.length), 0, item);
-    return { ...l, items };
-  });
+  patchList(listId, (l) => ({ ...l, items: insertAt(l.items, item, at) }));
   const order = itemIds(listId);
   saveList(() => api.addItem(listId, item));
   saveList(() => api.orderItems(listId, order));
@@ -538,9 +516,6 @@ export function restoreListItem(listId: string, item: ListItem, at: number): voi
 
 /** Save a new item order (from dragging) */
 export function reorderListItems(listId: string, ids: string[]): void {
-  patchList(listId, (l) => {
-    const byId = new Map(l.items.map((i) => [i.id, i]));
-    return { ...l, items: ids.flatMap((id) => byId.get(id) ?? []) };
-  });
+  patchList(listId, (l) => ({ ...l, items: orderBy(l.items, ids) }));
   saveList(() => api.orderItems(listId, ids));
 }
