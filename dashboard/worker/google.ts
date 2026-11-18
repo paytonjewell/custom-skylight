@@ -28,8 +28,12 @@ const STATE_COOKIE = 'hq_gstate';
 /** Events kept: this many days back and ahead */
 const BACK_DAYS = 90;
 const AHEAD_DAYS = 400;
-/** Loading events refreshes calendars whose copy is older than this */
-const STALE_MS = 3 * 60 * 1000;
+/**
+ * Loading events refreshes calendars whose copy is older than this. Each sync reads the calendar's
+ * stored events to compare, so not too often: changes made on the dashboard show at once anyway, and
+ * this only delays ones made in Google Calendar itself.
+ */
+const STALE_MS = 10 * 60 * 1000;
 /** Google accounts' ids are digits (calendars have ids of our own: ID) */
 const ACCOUNT_ID = /^[0-9]{1,64}$/;
 /** Google event ids: ours are base32hex (a–v, 0–9); an occurrence of a repeating event adds _<time> */

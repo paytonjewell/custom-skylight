@@ -131,21 +131,31 @@ async function refreshFeed(env: Env, feed: Feed, state: FeedState | null, now: n
        OR (excluded.image IS NOT NULL AND news.image IS NOT excluded.image)`,
   );
   const at = new Date(now).toISOString();
+  const published = (s: ParsedStory) => new Date(Math.min(s.published, now)).toISOString();
+  // A topic that's full keeps only its newest PER_TOPIC: a story older than all of those would be
+  // trimmed straight away, then stored again at the feed's next check, hour after hour
+  const cutoff = await env.DB.prepare(
+    'SELECT published_at FROM news WHERE topic = ? ORDER BY published_at DESC LIMIT 1 OFFSET ?',
+  )
+    .bind(feed.topic, PER_TOPIC - 1)
+    .first<string>('published_at');
   const stmts = await Promise.all(
-    fresh.map(async (s) =>
-      upsert.bind(
-        await idFor(s.link),
-        feed.url,
-        feed.topic,
-        s.source,
-        s.title,
-        s.summary,
-        s.link,
-        s.image,
-        new Date(Math.min(s.published, now)).toISOString(),
-        at,
+    fresh
+      .filter((s) => !cutoff || published(s) > cutoff)
+      .map(async (s) =>
+        upsert.bind(
+          await idFor(s.link),
+          feed.url,
+          feed.topic,
+          s.source,
+          s.title,
+          s.summary,
+          s.link,
+          s.image,
+          published(s),
+          at,
+        ),
       ),
-    ),
   );
 
   await env.DB.batch([
@@ -161,7 +171,7 @@ async function refreshFeed(env: Env, feed: Feed, state: FeedState | null, now: n
     ).bind(feed.topic, feed.topic, PER_TOPIC),
   ]);
   await setState({ checked_at: now, etag: res.headers.get('ETag'), last_modified: res.headers.get('Last-Modified') });
-  return fresh.length;
+  return stmts.length;
 }
 
 /** Refresh up to `max` due feeds. Also clears out stories from feeds no longer in the list. */
@@ -178,8 +188,12 @@ export async function refreshNews(env: Env, max = PER_RUN): Promise<{ checked: n
   let stored = 0;
   for (const { feed, state } of due) stored += await refreshFeed(env, feed, state, now);
 
-  // The list goes in as one JSON parameter: D1 allows at most 100 bound parameters per query, and
-  // LOCAL_NEWS can make the list any length
+  // Stories from feeds no longer in the list. Each pass reads both tables in full, and the list only
+  // changes with a deploy or a setting, so only on runs that checked a feed (a new feed is checked at
+  // once; otherwise every few minutes, as feeds come due hourly). The list goes in as one JSON
+  // parameter: D1 allows at most 100 bound parameters per query, and LOCAL_NEWS can make the list any
+  // length.
+  if (!due.length) return { checked: 0, stored };
   const urls = JSON.stringify(feedsFor(env).map((f) => f.url));
   await env.DB.batch([
     env.DB.prepare('DELETE FROM news WHERE feed NOT IN (SELECT value FROM json_each(?))').bind(urls),
