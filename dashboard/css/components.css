@@ -237,7 +237,8 @@ a.btn--solid { color: var(--on-ink); }
 /* Drag and drop (src/ui/useDragDrop.tsx): the copy under the finger, and the target it's over */
 .drag-ghost {
   position: fixed; z-index: 100; pointer-events: none;
-  transform: scale(1.04) rotate(-1deg); box-shadow: 0 16px 40px rgba(0, 0, 0, .28); border-radius: var(--r-sm); opacity: .95;
+  /* Not scaled or tilted: on the frame's GPU, a soft shadow on a transformed layer leaves black specks */
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .28); border-radius: var(--r-sm); opacity: .95;
 }
 .drag-ghost--compact { width: max-content; max-width: 240px; }
 [data-drop] { transition: box-shadow .12s, background-color .12s; }

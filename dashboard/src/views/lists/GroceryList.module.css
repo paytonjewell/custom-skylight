@@ -59,7 +59,7 @@
 .ghost {
   position: absolute; z-index: 5; pointer-events: none;
   padding: 0 8px; border-radius: var(--r-sm); background: var(--paper);
-  transform: scale(1.03); box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
 }
 .ghost > .row { height: 100%; max-height: none; border-bottom: 0; }
 .ghost .slide { height: 100%; }

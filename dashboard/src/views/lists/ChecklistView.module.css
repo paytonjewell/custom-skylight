@@ -176,7 +176,6 @@
   position: absolute;
   z-index: 5;
   pointer-events: none;
-  transform: scale(1.03);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
 }
 .ghost > .slide {
