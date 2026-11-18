@@ -44,7 +44,9 @@
 .body {
   height: 100%; display: grid; grid-template-columns: 1.25fr 1fr; gap: 28px;
 
-  :global(.phone) & { display: flex; flex-direction: column; gap: 14px; }
+  /* Phone: as tall as its stories. Not the page's height: a topic sliding in has none (.peek), and
+     its lead story would shrink away to nothing until it landed. */
+  :global(.phone) & { height: auto; display: flex; flex-direction: column; gap: 14px; }
 }
 
 .kicker b { font-weight: 600; color: var(--ink-2); }

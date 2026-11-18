@@ -36,13 +36,14 @@ function ago(iso: string, now: Date): string {
  * new src keeps showing the old picture until the new one arrives (another topic's, on a slow first
  * load of the day).
  */
-function Img({ src }: { src: string }) {
+function Img({ src, eager }: { src: string; eager?: boolean }) {
   const [state, setState] = useState<'loading' | 'shown' | 'failed'>('loading');
   return (
     <img
       src={src}
       alt=""
-      loading="lazy"
+      // A lead picture loads at once, so it's there when its topic slides in; the rest as they near view
+      loading={eager ? 'eager' : 'lazy'}
       referrerPolicy="no-referrer"
       className={state === 'loading' ? css.imgLoading : state === 'failed' ? css.imgFailed : undefined}
       // Already in the browser's cache: it may have loaded before React was listening
@@ -193,7 +194,7 @@ function TopicPage({
       <button className={css.lead + ' surface' + (lead.img ? '' : ' ' + css.leadTextOnly)} onClick={() => show(lead)}>
         {lead.img && (
           <span className={css.leadImg + ' ' + css.media}>
-            <Img key={lead.img} src={lead.img} />
+            <Img key={lead.img} src={lead.img} eager />
           </span>
         )}
         <span className={css.leadText}>
