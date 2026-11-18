@@ -211,7 +211,7 @@ test('an event on two calendars shows once: the organizer’s copy', () => {
   assert.equal(events[0].color, '#fad165');
 });
 
-test('countdowns: the next all-day events in date order, the soonest of each title', async () => {
+test('countdowns: the next events in date order, the soonest of each title', async () => {
   const { countdowns } = await import('../src/data/select.ts');
   const day = (m: number, d: number, title: string, y = 2026) => ({
     id: title + y,
@@ -228,11 +228,24 @@ test('countdowns: the next all-day events in date order, the soonest of each tit
     day(11, 26, 'Thanksgiving'),
     day(12, 1, "Ann's birthday"),
     day(11, 10, 'Past'),
+    // At a time of day: counts too, from tomorrow on (one later today is on the agenda already)
+    {
+      ...day(11, 20, 'Leo doctor'),
+      start: new Date(2026, 10, 20, 15, 30),
+      end: new Date(2026, 10, 20, 16),
+      allDay: false,
+    },
+    {
+      ...day(11, 16, 'Later today'),
+      start: new Date(2026, 10, 16, 17),
+      end: new Date(2026, 10, 16, 18),
+      allDay: false,
+    },
   ];
   const list = countdowns(events, new Date(2026, 10, 16, 9), 6);
   assert.deepEqual(
     list.map((e) => e.title + ' ' + e.start.getFullYear()),
-    ['Thanksgiving 2026', "Ann's birthday 2026", 'Christmas 2026'],
+    ['Leo doctor 2026', 'Thanksgiving 2026', "Ann's birthday 2026", 'Christmas 2026'],
   );
 });
 

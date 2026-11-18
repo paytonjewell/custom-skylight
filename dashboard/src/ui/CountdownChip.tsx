@@ -11,7 +11,8 @@ import css from './CountdownChip.module.css';
 const EMOJI = /\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*/u;
 
 /**
- * "Jacob's birthday · 12 days" chip for an upcoming all-day event. The event's emoji becomes the icon.
+ * "Jacob's birthday · 12 days" chip for an upcoming event. The event's emoji becomes the icon; one at a
+ * time of day also shows when it starts ("Leo doctor · Tue, Nov 25 · 3:30 PM").
  * glass: compact two-line version for over photos (ambient mode shares the width six ways).
  */
 export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: boolean; className?: string }) {
@@ -23,6 +24,7 @@ export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: bo
   const title = !e.emoji && emoji ? e.title.replace(emoji, '').replace(/\s+/g, ' ').trim() : e.title;
   const d = e.start;
   const unit = pluralize(days, 'day');
+  const at = e.allDay ? '' : ` · ${fmt.hour(d)}`;
   const icon = (
     <span className={css.icon}>
       {emoji ? <span className={css.emoji}>{emoji}</span> : <Icon name="calendar" size={22} />}
@@ -41,6 +43,7 @@ export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: bo
           <b>{title}</b>
           <small>
             <em className={css.n}>{days}</em> {unit} · {fmt.monthShort(d)} {d.getDate()}
+            {at}
           </small>
         </span>
       ) : (
@@ -49,6 +52,7 @@ export function CountdownChip({ e, glass, className }: { e: CalEvent; glass?: bo
             <b>{title}</b>
             <small>
               {fmt.dayShort(d)}, {fmt.monthShort(d)} {d.getDate()}
+              {at}
             </small>
           </span>
           <span className={css.days}>

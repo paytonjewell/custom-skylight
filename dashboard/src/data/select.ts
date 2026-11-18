@@ -74,14 +74,14 @@ export function nextEvent(events: CalEvent[], now: Date): CalEvent | null {
   return list[0] ?? null;
 }
 
-/** Countdown chips: the next few all-day events (starting tomorrow or later), one per title. */
+/** Countdown chips: the next few events (starting tomorrow or later), one per title. */
 export function countdowns(events: CalEvent[], now: Date, limit = 6): CalEvent[] {
   const today = dayStart(now),
     seen = new Set<string>();
   // Sorted before keeping one per title, so it's the soonest of a repeating one (this year's birthday,
   // not next year's)
   return events
-    .filter((e) => e.allDay && dayStart(e.start) > today)
+    .filter((e) => dayStart(e.start) > today)
     .sort((a, b) => +a.start - +b.start)
     .filter((e) => !seen.has(e.title) && !!seen.add(e.title))
     .slice(0, limit);
