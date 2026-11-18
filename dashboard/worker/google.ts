@@ -408,30 +408,57 @@ async function syncCalendar(env: Env, c: Pick<CalendarRow, 'id' | 'google_id'>, 
     page = r.nextPageToken;
     if (!page) break;
   }
-  // Replace the calendar's copy in one go (a batch is a transaction). The events go in as JSON lists
-  // of about a megabyte each: a few statements rather than one per event, and each value well inside
-  // D1's 2 MB limit.
+  // Write only what changed since the last sync. Calendars sync every few minutes and D1 counts every
+  // row written (index entries too) against a daily limit, so rewriting each calendar's whole copy
+  // every time used it up within a day and then every query failed.
+  const have = new Map<string, { position: number; data: string }>();
+  for (const r of (
+    await env.DB.prepare('SELECT id, position, data FROM events WHERE calendar_id = ?')
+      .bind(c.id)
+      .all<{ id: string; position: number; data: string }>()
+  ).results)
+    have.set(r.id, r);
+  // An event keeps its place and a new one goes after the rest (as one added on the dashboard does):
+  // numbering them afresh would move every event each time one ages out of the window. The app sorts
+  // events by time itself.
+  let next = Math.max(-1, ...[...have.values()].map((r) => r.position)) + 1;
+  const changed: [number, string][] = [];
+  for (const rec of out) {
+    const data = JSON.stringify(rec);
+    const old = have.get(rec.id);
+    if (!old) changed.push([next++, data]);
+    else if (old.data !== data) changed.push([old.position, data]);
+  }
+  const keep = new Set(out.map((rec) => rec.id));
+  const gone = [...have.keys()].filter((id) => !keep.has(id));
+
+  // In one batch (a transaction). Lists go in as JSON parameters of about a megabyte each: a few
+  // statements rather than one per event, and each value well inside D1's 2 MB limit. Each changed
+  // event is [position, its JSON as text], so `data` keeps exactly the text compared above.
+  const stmts: D1PreparedStatement[] = [];
+  const del = env.DB.prepare('DELETE FROM events WHERE calendar_id = ? AND id IN (SELECT value FROM json_each(?))');
   const insert = env.DB.prepare(
     `INSERT OR REPLACE INTO events (calendar_id, id, position, data)
-     SELECT ?, json_extract(value, '$.id'), ? + key, value FROM json_each(?)`,
+     SELECT ?, json_extract(json_extract(value, '$[1]'), '$.id'), json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?)`,
   );
-  const stmts = [env.DB.prepare('DELETE FROM events WHERE calendar_id = ?').bind(c.id)];
-  let chunk: string[] = [],
-    size = 0,
-    from = 0;
-  const flush = () => {
-    if (chunk.length) stmts.push(insert.bind(c.id, from, '[' + chunk.join(',') + ']'));
-    from += chunk.length;
-    chunk = [];
-    size = 0;
+  const chunks = <T>(items: T[], push: (json: string) => void) => {
+    let chunk: string[] = [],
+      size = 0;
+    const flush = () => {
+      if (chunk.length) push('[' + chunk.join(',') + ']');
+      chunk = [];
+      size = 0;
+    };
+    for (const item of items) {
+      const text = JSON.stringify(item);
+      if (size + text.length > 1_000_000) flush();
+      chunk.push(text);
+      size += text.length + 1;
+    }
+    flush();
   };
-  for (const rec of out) {
-    const text = JSON.stringify(rec);
-    if (size + text.length > 1_000_000) flush();
-    chunk.push(text);
-    size += text.length + 1;
-  }
-  flush();
+  chunks(gone, (json) => stmts.push(del.bind(c.id, json)));
+  chunks(changed, (json) => stmts.push(insert.bind(c.id, json)));
   stmts.push(env.DB.prepare('UPDATE calendars SET synced_at = ? WHERE id = ?').bind(new Date().toISOString(), c.id));
   await env.DB.batch(stmts);
 }

@@ -157,3 +157,38 @@ test('a sync replaces the calendar’s rows, in Google’s order, even when they
   expect(new Set(rows.results.map((r) => r.position)).size).toBe(2500);
   expect(await env.DB.prepare("SELECT synced_at FROM calendars WHERE id = 'calsync1'").first('synced_at')).toBeTruthy();
 });
+
+test('a sync writes only the events that changed', async () => {
+  await account();
+  await calendar('caldiff1', 7);
+  const item = (id: string, summary = `Event ${id}`) => ({
+    id,
+    summary,
+    start: { dateTime: '2026-11-21T15:00:00Z' },
+    end: { dateTime: '2026-11-21T16:00:00Z' },
+  });
+  const sync = async (items: Record<string, unknown>[]) => {
+    await env.DB.prepare("UPDATE calendars SET synced_at = NULL WHERE id = 'caldiff1'").run();
+    vi.stubGlobal('fetch', async () => Response.json({ items }));
+    await syncCalendars({ ...env, GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: 'secret' });
+    const rows = await env.DB.prepare(
+      "SELECT rowid, id, position, json_extract(data, '$.title') AS title FROM events WHERE calendar_id = 'caldiff1' ORDER BY position",
+    ).all<{ rowid: number; id: string; position: number; title: string }>();
+    return rows.results;
+  };
+
+  const first = await sync([item('a'), item('b'), item('c'), item('d')]);
+  expect(first.map((r) => r.id)).toEqual(['a', 'b', 'c', 'd']);
+
+  // Nothing changed at Google: every row is left as it was (a rewritten row would get a new rowid)
+  expect(await sync([item('a'), item('b'), item('c'), item('d')])).toEqual(first);
+
+  // "a" ages out of the window, "c" is renamed, "e" is new: "b" and "d" aren't touched or renumbered
+  const third = await sync([item('b'), item('c', 'Renamed'), item('d'), item('e')]);
+  const by = Object.fromEntries(third.map((r) => [r.id, r]));
+  expect(Object.keys(by).sort()).toEqual(['b', 'c', 'd', 'e']);
+  expect(by.b).toEqual(first[1]);
+  expect(by.d).toEqual(first[3]);
+  expect(by.c).toMatchObject({ position: first[2].position, title: 'Renamed' });
+  expect(by.e.position).toBeGreaterThan(first[3].position);
+});
