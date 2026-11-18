@@ -10,10 +10,7 @@ import { useLayout } from './layout';
 
 export const THEMES = {
   pastel: { label: 'Pastel', icon: 'palette', blurb: 'Soft purple, pink, blue and green on white' },
-  earth: { label: 'Earth', icon: 'leaf', blurb: 'Sage, moss, brown and sand on cream' },
-  nordic: { label: 'Nordic', icon: 'snow', blurb: 'Dusty blue, slate and teal with a mustard accent' },
   dark: { label: 'Dark', icon: 'moon', blurb: 'Charcoal with muted colours, easy on the eyes at night' },
-  glass: { label: 'Glass', icon: 'sparkle', blurb: 'Pink-to-lavender gradient with frosted glass' },
 } satisfies Record<string, { label: string; icon: IconName; blurb: string }>;
 export type ThemeName = keyof typeof THEMES;
 
@@ -52,10 +49,9 @@ export function useApplyTheme(): ThemeName {
     store('themeApplied', theme);
     // Phone browsers tint their status bar with theme-color (and Android its gesture bar below an
     // installed app); the frame's kiosk ignores it. On a phone both bars border the screen's panel and
-    // the tab bar, which are --paper, unless that's see-through (Glass).
+    // the tab bar, which are --paper.
     const css = getComputedStyle(document.documentElement);
-    const paper = css.getPropertyValue('--paper').trim();
-    const bar = phone && !paper.startsWith('rgba') ? paper : css.getPropertyValue('--shell').trim();
+    const bar = css.getPropertyValue(phone ? '--paper' : '--shell').trim();
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bar);
   }, [theme, phone]);
   return theme;

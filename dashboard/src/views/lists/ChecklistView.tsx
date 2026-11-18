@@ -295,7 +295,7 @@ function Row({
 
 /** A row's classes (shared with the copy drawn under the finger while dragging, so it looks the same) */
 const rowClass = (i: ListItem) => css.row + (i.heading ? ' ' + css.heading : '') + (i.done ? ' ' + css.isDone : '');
-/** Items are cards (`surface`: Glass's frosted edge); headings sit flat on the page with their underline */
+/** Items are cards (`surface`); headings sit flat on the page with their underline */
 const slideClass = (i: ListItem) => css.slide + (i.heading ? '' : ' surface');
 
 /** What a row shows (also drawn under the finger while dragging); while editing, its text is a field */

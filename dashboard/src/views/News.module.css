@@ -139,8 +139,6 @@
   & :global(.sheet-x) { background: var(--paper); }
   & :global(.sheet-h) { font-size: var(--fs-3xl); line-height: 1.1; margin-bottom: 14px; }
   :global(.phone) & :global(.sheet-h) { font-size: var(--fs-3xl); }
-
-  :global([data-theme="glass"]) & :global(.sheet-x) { background: rgba(255, 255, 255, .92); }
 }
 .sheetImg {
   height: 210px;

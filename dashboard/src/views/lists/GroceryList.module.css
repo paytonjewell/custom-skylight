@@ -139,11 +139,6 @@
   color: var(--ink); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 14px;
 
   :global(.phone) & { order: 1; position: sticky; top: 0; z-index: 3; padding: 8px; border-radius: 16px; }
-  /* Glass surfaces are see-through; the pinned box needs frosting so the list doesn't show through */
-  :global(.phone[data-theme="glass"]) & {
-    background: rgba(255, 255, 255, .72);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
-  }
 }
 .suggest {
   flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px;

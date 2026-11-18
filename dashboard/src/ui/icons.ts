@@ -30,7 +30,6 @@ import {
   FoldVertical,
   House,
   Image,
-  Leaf,
   ListChecks,
   MapPin,
   Minus,
@@ -46,7 +45,6 @@ import {
   Smile,
   ShoppingCart,
   Snowflake,
-  Sparkles,
   SquareCheckBig,
   Star,
   Sun,
@@ -62,9 +60,7 @@ import {
 export const ICONS = {
   // people and themes
   paw: PawPrint,
-  sparkle: Sparkles,
   snow: Snowflake,
-  leaf: Leaf,
   palette: Palette,
   person: User,
   asterisk: Asterisk,

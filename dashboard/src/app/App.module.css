@@ -8,7 +8,7 @@
   width: var(--stage-w, 1280px); height: 800px;
   margin: -400px 0 0 calc(var(--stage-w, 1280px) / -2);
   transform-origin: 50% 50%;
-  background-color: var(--shell); background-image: var(--bg);
+  background: var(--shell);
   overflow: hidden;
   display: grid;
   grid-template-columns: 84px 1fr;
@@ -26,8 +26,6 @@
   padding: 14px 0 12px;
   background: var(--shell);
   z-index: 5;
-
-  [data-theme="glass"] & { background: transparent; }
 }
 /* The lotus is a mask filled with the theme's ink, so it follows every theme like the text does;
    its cut-outs show the rail behind. -webkit- prefix for older Android WebViews on the frames. */
@@ -61,11 +59,7 @@
   background: var(--paper);
   border-radius: 22px;
 
-  [data-theme="glass"] & {
-    background: rgba(255, 255, 255, .26);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .7), 0 20px 50px rgba(110, 60, 140, .12);
-  }
-  :global(.phone) & { flex: 1; min-height: 0; margin: 0; border-radius: 0; background: var(--paper); box-shadow: none; }
+  :global(.phone) & { flex: 1; min-height: 0; margin: 0; border-radius: 0; }
 }
 /* Every screen stays mounted; inactive ones skip rendering (content-visibility) */
 .view {
@@ -96,8 +90,6 @@
      which is this same --paper (theme.ts), so the two read as one surface. A hairline marks the top. */
   background: var(--paper); border-top: 1px solid var(--line);
   position: relative; z-index: 5;
-
-  :global(.phone[data-theme="glass"]) & { background: transparent; border-top-color: rgba(255, 255, 255, .6); }
 }
 .tab {
   flex: 1; min-width: 0;
@@ -117,8 +109,6 @@
   min-width: 200px; padding: 6px; border-radius: 18px;
   background: var(--paper); box-shadow: 0 12px 36px rgba(0, 0, 0, .22), 0 0 0 1px var(--line);
   animation: rise .16s ease-out;
-
-  :global(.phone[data-theme="glass"]) & { background: rgba(255, 255, 255, .86); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
 }
 .menuItem {
   width: 100%; min-height: 52px; padding: 0 14px;

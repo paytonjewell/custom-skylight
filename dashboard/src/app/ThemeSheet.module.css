@@ -1,8 +1,8 @@
 /* Theme picker: a live mini-preview of each theme, plus the "dark after sunset" switch and the frame's sleep hours */
 .grid {
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
 
-  :global(.phone) & { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  :global(.phone) & { gap: 10px; }
 }
 .card {
   display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 14px; min-width: 0;
@@ -13,7 +13,7 @@
 .card.isOn { box-shadow: inset 0 0 0 2px var(--ink); }
 /* The preview carries data-theme, so the theme's tokens apply inside it */
 .prev {
-  display: block; height: 118px; padding: 10px; border-radius: var(--r-sm); background-color: var(--shell); background-image: var(--bg); margin-bottom: 6px;
+  display: block; height: 118px; padding: 10px; border-radius: var(--r-sm); background: var(--shell); margin-bottom: 6px;
 
   :global(.phone) & { height: 84px; }
 }

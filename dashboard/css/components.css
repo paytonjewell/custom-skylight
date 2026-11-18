@@ -1,19 +1,14 @@
 /* Shared building blocks: used by many components, or restyled by them from outside (e.g. the
    calendar header's smaller buttons), so their class names stay global. Each rule carries its own
-   Glass and phone versions. Anything owned by a single component lives in its *.module.css.
+   phone version. Anything owned by a single component lives in its *.module.css.
    Nesting is flattened at build time for the frame's WebView (vite.config.ts). */
 
 /* ---------------------------------------------------------------- surfaces */
-/* .surface: the card background; Glass gives every surface a bright hairline edge */
+/* .surface: the card background */
 .surface, .card { background: var(--card); }
 .card { border-radius: var(--r); padding: 18px 20px; position: relative; }
 button.card { display: block; width: 100%; }
 button.card:active { transform: scale(.99); }
-[data-theme="glass"] .card,
-[data-theme="glass"] .surface,
-[data-theme="glass"] .seg {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .75);
-}
 
 /* ---------------------------------------------------------------- page header (src/ui/headers.tsx)
    Chores, Shopping, News, Photos: small label + big serif title, controls on the right */
@@ -142,11 +137,7 @@ a.btn--solid { color: var(--on-ink); }
    cls) to restyle the parts below. */
 .sheet-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; pointer-events: none; }
 .sheet-layer.is-open { pointer-events: auto; }
-.sheet-scrim {
-  position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0, 0, 0, .5); opacity: 0;
-
-  [data-theme="glass"] & { background: rgba(70, 30, 100, .4); }
-}
+.sheet-scrim { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0, 0, 0, .5); opacity: 0; }
 .sheet-layer.is-open .sheet-scrim { opacity: 1; }
 .sheet {
   position: absolute; left: 50%; top: 50%;
@@ -155,13 +146,6 @@ a.btn--solid { color: var(--on-ink); }
   transform: translate(-50%, -44%) scale(.97); opacity: 0;
   box-shadow: 0 24px 64px rgba(0, 0, 0, .2);
 
-  /* Glass: frosted with real blur, since sheets sit over busy content */
-  [data-theme="glass"] & {
-    background: rgba(255, 255, 255, .78);
-    -webkit-backdrop-filter: blur(28px) saturate(1.4);
-    backdrop-filter: blur(28px) saturate(1.4);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 30px 70px rgba(90, 40, 120, .25);
-  }
   /* Phone: a bottom sheet */
   .phone & {
     left: 0; right: 0; top: auto; bottom: 0;
@@ -221,7 +205,6 @@ a.btn--solid { color: var(--on-ink); }
   margin: 26px -36px -32px; padding: 16px 36px 24px;
   background: var(--paper); border-top: 1px solid var(--line);
 
-  [data-theme="glass"] & { background: rgba(255, 255, 255, .92); }
   .phone & {
     flex-wrap: wrap;
     margin: 20px -18px -20px; padding: 12px 18px 16px;
