@@ -28,8 +28,21 @@
   }
 }
 
+/* Sideways paging between topics (src/ui/Pager.tsx); each page is one topic's .body */
+.pager {
+  flex: 1; min-height: 0;
+
+  :global(.phone) & { flex: none; }
+}
+/* One topic in the pager; .peek: one beside a phone's page while it slides in, which takes no
+   height (see News.tsx) */
+.page { height: 100%; }
+.peek {
+  :global(.phone) & { height: 0; }
+}
+
 .body {
-  flex: 1; min-height: 0; display: grid; grid-template-columns: 1.25fr 1fr; gap: 28px;
+  height: 100%; display: grid; grid-template-columns: 1.25fr 1fr; gap: 28px;
 
   :global(.phone) & { display: flex; flex-direction: column; gap: 14px; }
 }
@@ -40,7 +53,19 @@
 .media {
   position: relative; overflow: hidden; background: var(--paper-2);
 
-  & img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+  & img {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    transition: opacity .25s;
+  }
+  /* Until the picture arrives the box pulses, so nothing stale or half-drawn shows */
+  &:has(.imgLoading) { animation: imgPulse 1.4s ease-in-out infinite; }
+}
+.imgLoading, .imgFailed { opacity: 0; }
+@keyframes imgPulse {
+  50% { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .media:has(.imgLoading) { animation: none; }
 }
 
 /* ---------------------------------------------------------------- lead story */

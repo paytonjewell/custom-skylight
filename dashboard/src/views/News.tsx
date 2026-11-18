@@ -1,8 +1,9 @@
-// News: a lead s plus a scrollable list of headlines, by topic. Stories come from the news feeds
-// the Worker collects (worker/news/feeds.ts). Tap a s for its summary; "Read full s" opens
-// the article, and on the frame layout a QR code takes it to your phone.
+// News: a lead story plus a scrollable list of headlines, by topic. Stories come from the news feeds
+// the Worker collects (worker/news/feeds.ts). Tap a story for its summary; "Read full story" opens
+// the article, and on the frame layout a QR code takes it to your phone. Swipe sideways for the next
+// or previous topic, in the tabs' order (src/ui/Pager.tsx), with that topic sliding in.
 import { inSavedOrder, savedIds } from '../lib/saved';
-import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../lib/store';
 import { useHoldReorder } from '../ui/useHoldReorder';
 import type { NewsStory } from '../data/types';
@@ -16,6 +17,7 @@ import { Icon } from '../ui/Icon';
 import { Segmented } from '../ui/Segmented';
 import { PageHeader, SheetHeader } from '../ui/headers';
 import { EmptyNote } from '../ui/EmptyNote';
+import { Pager } from '../ui/Pager';
 import css from './News.module.css';
 
 function ago(iso: string, now: Date): string {
@@ -28,18 +30,30 @@ function ago(iso: string, now: Date): string {
   return d === 1 ? 'yesterday' : d + ' days ago';
 }
 
-/** News images come from the outlets' sites; one that fails to load just disappears */
-const Img = ({ src }: { src: string }) => (
-  <img
-    src={src}
-    alt=""
-    loading="lazy"
-    referrerPolicy="no-referrer"
-    onError={(e: SyntheticEvent<HTMLImageElement>) => {
-      e.currentTarget.style.visibility = 'hidden';
-    }}
-  />
-);
+/**
+ * News images come from the outlets' sites. The box pulses until the picture has loaded, then it
+ * fades in; one that fails to load just leaves the box empty. Use with key={src}: an <img> given a
+ * new src keeps showing the old picture until the new one arrives (another topic's, on a slow first
+ * load of the day).
+ */
+function Img({ src }: { src: string }) {
+  const [state, setState] = useState<'loading' | 'shown' | 'failed'>('loading');
+  return (
+    <img
+      src={src}
+      alt=""
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      className={state === 'loading' ? css.imgLoading : state === 'failed' ? css.imgFailed : undefined}
+      // Already in the browser's cache: it may have loaded before React was listening
+      ref={(el) => {
+        if (el?.complete && el.naturalWidth && state === 'loading') setState('shown');
+      }}
+      onLoad={() => setState('shown')}
+      onError={() => setState('failed')}
+    />
+  );
+}
 
 /** The topic tabs' order, saved on this device (ids; null: the server's order) */
 const topicOrder = savedIds('news.order');
@@ -66,24 +80,31 @@ export function News() {
   const topic = topics.some((t) => t[0] === picked) ? picked : (topics[0]?.[0] ?? 'top');
   const topicName = (id: string) => topics.find((t) => t[0] === id)?.[1] ?? id;
 
-  const list = data.news.filter((s) => s.topic === topic); // newest first, from the server
-  // Lead: the newest s with a picture (else the newest)
-  const lead = list.find((s) => s.img) ?? list[0];
-  const rest = list.filter((s) => s !== lead);
+  const count = data.news.filter((s) => s.topic === topic).length;
+  // Swiping steps through the tabs as they're shown
+  const at = shownTopics.findIndex((t) => t[0] === topic);
+  const near = (off: number) => shownTopics[at + off]?.[0];
 
-  const kicker = (s: NewsStory) => (
-    <span className={css.kicker + ' label label--sm'}>
-      <b>{s.source}</b> · {ago(s.published, now)}
-    </span>
-  );
-  const show = (s: NewsStory) => openStory(s, topicName(s.topic));
+  // Keep the picked tab in view in the tab row (phones scroll it sideways). Not scrollIntoView: that
+  // would also scroll the page up to the tabs.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the picked topic changes
+  useEffect(() => {
+    const box = tabs.current,
+      on = box?.querySelector<HTMLElement>('.is-on');
+    if (!box || !on) return;
+    const left = on.offsetLeft - box.offsetLeft,
+      right = left + on.offsetWidth;
+    if (left < box.scrollLeft) box.scrollTo({ left: left - 24, behavior: 'smooth' });
+    else if (right > box.scrollLeft + box.clientWidth)
+      box.scrollTo({ left: right - box.clientWidth + 24, behavior: 'smooth' });
+  }, [topic]);
 
   const head =
     status === 'loading'
       ? 'Loading the news…'
       : status === 'error' && !data.news.length
         ? 'Couldn’t load the news'
-        : `Updated ${updated ? fmt.time(updated) : '–'} · ${list.length} stories`;
+        : `Updated ${updated ? fmt.time(updated) : '–'} · ${count} stories`;
 
   return (
     <div className={css.news} ref={root}>
@@ -105,48 +126,97 @@ export function News() {
           {topicName(reorder.ghost.id)}
         </div>
       )}
-      {!lead ? (
-        status !== 'loading' && (
-          <EmptyNote large className={css.empty}>
-            No {topicName(topic)} stories right now.
-            <br />
-            <i>Check back in a bit.</i>
-          </EmptyNote>
-        )
-      ) : (
-        <div className={css.body}>
-          <button
-            className={css.lead + ' surface' + (lead.img ? '' : ' ' + css.leadTextOnly)}
-            onClick={() => show(lead)}
-          >
-            {lead.img && (
-              <span className={css.leadImg + ' ' + css.media}>
-                <Img src={lead.img} />
+      <Pager
+        className={css.pager}
+        index={at}
+        has={(dir) => !!near(dir)}
+        onStep={(dir) => {
+          setPicked(near(dir) ?? topic);
+          // A swipe lands at the top of the new topic (phones scroll the whole screen)
+          for (const el of document.querySelectorAll<HTMLElement>('#view-news, #view-news [data-scroll-top]'))
+            el.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        render={(off) => {
+          const id = near(off);
+          if (!id) return null;
+          const page = (
+            <TopicPage news={data.news} topic={id} name={topicName(id)} loading={status === 'loading'} now={now} />
+          );
+          // A topic sliding in beside a phone's page is cut to that page's height rather than
+          // stretching it: the page scrolls as a whole there, and would get the longer topic's length.
+          // The same element either way, so the page that slid in isn't built again (and its pictures
+          // loaded again) as it becomes the current one.
+          return <div className={css.page + (off ? ' ' + css.peek : '')}>{page}</div>;
+        }}
+      />
+    </div>
+  );
+}
+
+function TopicPage({
+  news,
+  topic,
+  name,
+  loading,
+  now,
+}: {
+  news: NewsStory[];
+  topic: string;
+  name: string;
+  loading: boolean;
+  now: Date;
+}) {
+  const list = news.filter((s) => s.topic === topic); // newest first, from the server
+  // Lead: the newest story with a picture (else the newest)
+  const lead = list.find((s) => s.img) ?? list[0];
+  const rest = list.filter((s) => s !== lead);
+
+  const kicker = (s: NewsStory) => (
+    <span className={css.kicker + ' label label--sm'}>
+      <b>{s.source}</b> · {ago(s.published, now)}
+    </span>
+  );
+  const show = (s: NewsStory) => openStory(s, name);
+
+  if (!lead)
+    return (
+      !loading && (
+        <EmptyNote large className={css.empty}>
+          No {name} stories right now.
+          <br />
+          <i>Check back in a bit.</i>
+        </EmptyNote>
+      )
+    );
+  return (
+    <div className={css.body}>
+      <button className={css.lead + ' surface' + (lead.img ? '' : ' ' + css.leadTextOnly)} onClick={() => show(lead)}>
+        {lead.img && (
+          <span className={css.leadImg + ' ' + css.media}>
+            <Img key={lead.img} src={lead.img} />
+          </span>
+        )}
+        <span className={css.leadText}>
+          {kicker(lead)}
+          <span className={css.leadTitle + ' serif'}>{lead.title}</span>
+          {lead.summary && <span className={css.leadSum}>{lead.summary}</span>}
+        </span>
+      </button>
+      <div className={css.list} data-scroll-top>
+        {rest.map((s) => (
+          <button key={s.id} className={css.row} onClick={() => show(s)}>
+            <span className={css.rowText}>
+              {kicker(s)}
+              <b className={css.rowTitle}>{s.title}</b>
+            </span>
+            {s.img && (
+              <span className={css.rowThumb + ' ' + css.media}>
+                <Img key={s.img} src={s.img} />
               </span>
             )}
-            <span className={css.leadText}>
-              {kicker(lead)}
-              <span className={css.leadTitle + ' serif'}>{lead.title}</span>
-              {lead.summary && <span className={css.leadSum}>{lead.summary}</span>}
-            </span>
           </button>
-          <div className={css.list} data-scroll-top>
-            {rest.map((s) => (
-              <button key={s.id} className={css.row} onClick={() => show(s)}>
-                <span className={css.rowText}>
-                  {kicker(s)}
-                  <b className={css.rowTitle}>{s.title}</b>
-                </span>
-                {s.img && (
-                  <span className={css.rowThumb + ' ' + css.media}>
-                    <Img src={s.img} />
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
@@ -159,14 +229,14 @@ function openStory(s: NewsStory, topic: string) {
 
 function StorySheet({ s, topic }: { s: NewsStory; topic: string }) {
   const now = useNow();
-  // The frame layout (the wall frame, or a computer) offers a QR code to carry the s to a phone;
+  // The frame layout (the wall frame, or a computer) offers a QR code to carry the story to a phone;
   // on a phone you're already holding it. The kiosk can't leave the dashboard, so it gets no link.
   const phone = useLayout() === 'phone';
   return (
     <div>
       {s.img && (
         <div className={css.sheetImg + ' ' + css.media}>
-          <Img src={s.img} />
+          <Img key={s.img} src={s.img} />
         </div>
       )}
       <div className="sheet-pad">

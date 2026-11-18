@@ -6,6 +6,9 @@
 // Pages are keyed by their absolute position (index + offset), so when the strip settles the page
 // that slid in keeps its state (e.g. its scroll) as it becomes the current one. Vertical scrolling
 // inside pages is left to the browser (touch-action: pan-y), and a swipe is never also a tap.
+//
+// With `has`, the pages run out (News topics): past the first or last one the strip only gives a
+// little under the finger, then springs back.
 import { useImperativeHandle, useLayoutEffect, useRef, type ReactNode, type Ref } from 'react';
 
 export interface PagerHandle {
@@ -30,6 +33,7 @@ export function Pager({
   handle,
   className,
   pageClass,
+  has = () => true,
 }: {
   /** The current page's position; changes by ±1 as onStep is applied */
   index: number;
@@ -39,6 +43,8 @@ export function Pager({
   handle?: Ref<PagerHandle>;
   className?: string;
   pageClass?: string;
+  /** Whether there's a page that way (default: always) */
+  has?: (dir: 1 | -1) => boolean;
 }) {
   const strip = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; t: number; dx: number; horiz: boolean | null } | null>(null);
@@ -72,7 +78,7 @@ export function Pager({
   };
 
   const go = (dir: 1 | -1) => {
-    if (busy.current) return;
+    if (busy.current || !has(dir)) return;
     if (reduced()) return onStep(dir);
     settle(dir, MS);
   };
@@ -106,9 +112,10 @@ export function Pager({
           if (d.horiz) e.currentTarget.setPointerCapture?.(e.pointerId);
         }
         if (!d.horiz) return;
-        d.dx = dx;
+        // No page that way: resist, a third of the finger's distance
+        d.dx = has(dx < 0 ? 1 : -1) ? dx : dx / 3;
         swiped.current = true;
-        place(dx, 0, 0);
+        place(d.dx, 0, 0);
       }}
       onPointerUp={() => {
         const d = drag.current;
@@ -118,6 +125,7 @@ export function Pager({
         const fast = Math.abs(d.dx) / Math.max(1, Date.now() - d.t) > FLICK && Math.abs(d.dx) > 30;
         if (Math.abs(d.dx) < TURN && !fast) return place(0, 0, MS); // spring back
         const dir: 1 | -1 = d.dx < 0 ? 1 : -1;
+        if (!has(dir)) return place(0, 0, MS);
         if (reduced()) {
           place(0, 0, 0);
           return onStep(dir);
