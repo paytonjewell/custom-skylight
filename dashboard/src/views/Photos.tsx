@@ -165,14 +165,19 @@ async function receiveInbox(): Promise<void> {
       }),
     );
   }
+  await addSharedPhotos(files);
+  // Only cleared once added: if the app closes midway they're tried again (duplicates are skipped)
+  await Promise.all(keys.map((k) => inbox.delete(k)));
+}
+
+/** Photos shared to the app from another app: open Photos and add them (here, and src/app/share.ts) */
+export async function addSharedPhotos(files: File[]): Promise<void> {
   go('photos');
   toast(`Adding ${files.length} shared ${pluralize(files.length, 'photo')}…`, {
     icon: 'photo',
     ms: 3000,
   });
   await importPhotos(files);
-  // Only cleared once added: if the app closes midway they're tried again (duplicates are skipped)
-  await Promise.all(keys.map((k) => inbox.delete(k)));
 }
 
 function AddButton({ primary }: { primary?: boolean }) {

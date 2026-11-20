@@ -16,7 +16,8 @@ import { startWeatherSync } from '../data/weatherSync';
 import { checkGoogleReturn } from '../views/calendar/CalendarSettings';
 import { receiveSharedPhotos } from '../views/Photos';
 import { checkSharedRecipe } from '../views/recipes/AddRecipeSheet';
-import { IS_KIOSK } from './layout';
+import { IS_APP, IS_KIOSK } from './layout';
+import { startAppShare } from './share';
 
 export function startApp(): void {
   startFamilySync();
@@ -33,6 +34,8 @@ export function startApp(): void {
   void startAppUpdate();
   checkGoogleReturn();
   checkSharedRecipe();
-  // Photos shared to the installed app from another app (public/sw.js)
-  if (!IS_KIOSK) void receiveSharedPhotos();
+  // Photos and links shared from another app: to the phone app (src/app/share.ts), or to the
+  // installed web app (public/sw.js)
+  if (IS_APP) void startAppShare();
+  else if (!IS_KIOSK) void receiveSharedPhotos();
 }

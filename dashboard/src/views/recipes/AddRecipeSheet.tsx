@@ -37,6 +37,11 @@ export function checkSharedRecipe(): void {
   if (!link) return;
   q.delete('recipe');
   history.replaceState(null, '', location.pathname + (q.size ? '?' + q : '') + '#kitchen');
+  openSharedRecipe(link);
+}
+
+/** A link shared to the app (a recipe page from the browser): Kitchen, with New recipe importing it */
+export function openSharedRecipe(link: string): void {
   store('kitchen.tab', 'recipes');
   go('kitchen');
   openAddRecipe(link);
