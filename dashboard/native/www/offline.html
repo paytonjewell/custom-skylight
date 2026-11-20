@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>White Lotus HQ</title>
+<!-- Shown by the phone app when the dashboard can't be reached (server.errorPath) -->
+<style>
+  :root { color-scheme: light dark; --bg: #fafafa; --fg: #1f1f1f; --muted: #6b6b6b; --accent: #2f6f5e; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151515; --fg: #f2f2f2; --muted: #a0a0a0; --accent: #7cc4ad; } }
+  html, body { height: 100%; margin: 0; }
+  body { display: grid; place-items: center; background: var(--bg); color: var(--fg);
+         font: 16px/1.4 system-ui, sans-serif; text-align: center; padding: 24px; box-sizing: border-box; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  p { color: var(--muted); margin: 0 0 24px; }
+  button { font: inherit; font-weight: 600; color: #fff; background: var(--accent); border: 0;
+           border-radius: 999px; padding: 12px 28px; }
+</style>
+<main>
+  <h1>Can’t reach White Lotus HQ</h1>
+  <p>Check your connection, then try again.</p>
+  <button onclick="location.href='https://home-dashboard.piercefam.workers.dev/'">Try again</button>
+</main>
+</html>

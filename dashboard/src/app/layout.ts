@@ -8,8 +8,12 @@ import { createStore, useStore } from '../lib/store';
 
 export type Layout = 'frame' | 'phone';
 
-/** The frame's kiosk app is an Android WebView; its user agent says "wv" */
-export const IS_KIOSK = /; wv\)/.test(navigator.userAgent);
+/**
+ * The frame's kiosk app is an Android WebView; its user agent says "wv". The phone app (Capacitor,
+ * dashboard/android) is a WebView too, so it marks itself with "WhiteLotusApp/" (appendUserAgent in
+ * capacitor.config.json) and gets the usual phone treatment.
+ */
+export const IS_KIOSK = /; wv\)/.test(navigator.userAgent) && !/WhiteLotusApp\//.test(navigator.userAgent);
 
 /**
  * The frame's screen in CSS pixels: the Skylight Calendar 2 is 1920×1080 at density 240, and the

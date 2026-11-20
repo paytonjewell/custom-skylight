@@ -30,6 +30,19 @@ hide layout bugs the frame has (e.g. Chrome 124 gives `<button>` `align-items: f
   with JDK 17 (`/opt/homebrew/opt/openjdk@17`) and `ANDROID_HOME=~/Library/Android/sdk`, then
   `bash kiosk/build.sh` and `adb install -r kiosk/build/homehq.apk`.
 
+## The phone app (Capacitor)
+
+`android/` is a Capacitor shell that loads the live site (`server.url` in `capacitor.config.json`), so
+web changes reach it with `npm run deploy`; only changes to `android/` or the config need a new APK.
+Its WebView adds `WhiteLotusApp/` to the user agent, which keeps it out of `IS_KIOSK` (the frame is a
+WebView too). `native/www/offline.html` shows when the site can't be reached.
+
+- `npm run app` builds `android/app/build/outputs/apk/debug/app-debug.apk`; `npm run app:install`
+  also installs it over adb (set `ANDROID_SERIAL` when the frame is connected too). Uses Android
+  Studio's bundled Java; Gradle is pinned to 9.5.x for it (see `scripts/app.sh`).
+- The phone has two displays: `adb exec-out screencap -p -d <id>` (ids from
+  `adb shell dumpsys SurfaceFlinger --display-id`).
+
 ## Data and settings
 
 - Household settings are Worker secrets (`worker/home.ts`; local copies in `.dev.vars`). Profiles

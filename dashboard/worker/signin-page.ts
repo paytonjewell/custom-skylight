@@ -4,6 +4,8 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 /** A starting name for the device, from its user agent; editable on the form */
 function guessName(ua: string): string {
+  // The phone app is a WebView too ("wv"), so check its own marker first (capacitor.config.json)
+  if (/WhiteLotusApp\//.test(ua)) return 'Phone app';
   if (/; wv\)/.test(ua)) return 'Frame';
   if (/Android|iPhone|iPad/.test(ua)) return 'Phone';
   return 'Computer';

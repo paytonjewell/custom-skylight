@@ -1,0 +1,13 @@
+{
+  "appId": "com.piercefam.whitelotushq",
+  "appName": "White Lotus HQ",
+  "webDir": "native/www",
+  "server": {
+    "url": "https://home-dashboard.piercefam.workers.dev",
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "appendUserAgent": "WhiteLotusApp/1",
+    "allowMixedContent": false
+  }
+}

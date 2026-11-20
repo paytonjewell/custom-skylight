@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">White Lotus HQ</string>
+    <string name="title_activity_main">White Lotus HQ</string>
+    <string name="package_name">com.piercefam.whitelotushq</string>
+    <string name="custom_url_scheme">com.piercefam.whitelotushq</string>
+</resources>
