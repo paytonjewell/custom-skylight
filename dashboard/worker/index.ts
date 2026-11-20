@@ -45,6 +45,7 @@ import { getVerse, getWeather, refreshWeather } from './weather';
 import { getFamily } from './home';
 import { kitchenRoute } from './kitchen';
 import { isDay } from '../src/lib/repeat';
+import { getAppRelease, serveApk, uploadApk } from './app';
 import { addPhoto, deletePhoto, knownPhotos, listPhotos, reorderPhotos, servePhoto } from './photos';
 import { json, pathParts } from './http';
 import { UUID, isId } from './validate';
@@ -117,6 +118,8 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, path: strin
   // (e.g. the app hadn't been opened since install). A link opens Kitchen importing it (as
   // public/sw.js does); photos just open the app (they'd need the service worker).
   if (path === '/share' && req.method === 'POST') return shareFallback(req);
+  // New phone app builds from GitHub Actions, which has a token instead of a device cookie (worker/app.ts)
+  if (path === '/api/app/upload' && req.method === 'PUT') return uploadApk(req, env);
 
   // Changes must come from the app's own pages. The device cookie is SameSite=Lax, which already keeps
   // it off most cross-site requests; this also refuses any that slip through. Browsers send Origin on
@@ -188,6 +191,9 @@ async function route(
   if (photo && m === 'DELETE') return deletePhoto(env, photo);
   const [id, size] = pathParts(path, '/media/*/*', (p, i) => (i ? p === 'full' || p === 'thumb' : UUID.test(p))) ?? [];
   if (id && (m === 'GET' || m === 'HEAD')) return servePhoto(req, env, id, size as 'full' | 'thumb');
+  // The phone app's own updates (worker/app.ts)
+  if (path === '/api/app' && m === 'GET') return getAppRelease(env);
+  if (path === '/api/app/apk' && m === 'GET') return serveApk(env);
   if (path === '/api/signout' && m === 'POST') return signOut(req, env, device);
   return null;
 }

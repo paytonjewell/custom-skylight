@@ -7,5 +7,5 @@
     "interface": true,
     "type": true
   },
-  "ignoreDependencies": ["@capacitor/android", "@capacitor/core"]
+  "ignoreDependencies": ["@capacitor/cli"]
 }

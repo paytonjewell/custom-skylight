@@ -37,9 +37,15 @@ web changes reach it with `npm run deploy`; only changes to `android/` or the co
 Its WebView adds `WhiteLotusApp/` to the user agent, which keeps it out of `IS_KIOSK` (the frame is a
 WebView too). `native/www/offline.html` shows when the site can't be reached.
 
-- `npm run app` builds `android/app/build/outputs/apk/debug/app-debug.apk`; `npm run app:install`
-  also installs it over adb (set `ANDROID_SERIAL` when the frame is connected too). Uses Android
-  Studio's bundled Java; Gradle is pinned to 9.5.x for it (see `scripts/app.sh`).
+- `npm run app` builds the signed `android/app/build/outputs/apk/release/app-release.apk`;
+  `npm run app:install` also installs it over adb (set `ANDROID_SERIAL` when the frame is connected
+  too). Uses Android Studio's bundled Java; Gradle is pinned to 9.5.x for it (see `scripts/app.sh`).
+- Updates: pushing changes to `android/`, `native/` or the config runs `.github/workflows/android.yml`,
+  which builds, signs and uploads the APK to the Worker (`worker/app.ts`, token `APP_UPLOAD_TOKEN`).
+  The app compares its version (the git commit count) with `/api/app` and shows `UpdateBanner`.
+- Every build must be signed with the one release key (`~/.android/white-lotus-release.jks`, password
+  in the git-ignored `android/keystore.properties`; backed up in Proton Pass; GitHub secrets
+  `ANDROID_KEYSTORE_*`). A build signed with any other key can't update installed apps.
 - The phone has two displays: `adb exec-out screencap -p -d <id>` (ids from
   `adb shell dumpsys SurfaceFlinger --display-id`).
 

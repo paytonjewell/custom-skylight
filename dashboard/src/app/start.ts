@@ -2,6 +2,7 @@
 // the Worker, and the checks for what the app was opened with (a Google sign-in coming back, a recipe
 // link or photos shared to it). Called from main.tsx, not from an effect, so it runs exactly once
 // (StrictMode runs effects twice in development).
+import { startAppUpdate } from '../data/appUpdate';
 import { startCalendarSync } from '../data/calendarSync';
 import { startFamilySync } from '../data/familySync';
 import { startGrocerySync } from '../data/grocerySync';
@@ -28,6 +29,8 @@ export function startApp(): void {
   startPush();
   startCalendarSync();
   startKitchenSync();
+  // The phone app's own updates (only does anything in the app)
+  void startAppUpdate();
   checkGoogleReturn();
   checkSharedRecipe();
   // Photos shared to the installed app from another app (public/sw.js)

@@ -21,6 +21,7 @@ export default defineProject(async () => ({
             { id: 'mary', name: 'Mary' },
           ]),
           HOME_TZ: 'America/Chicago',
+          APP_UPLOAD_TOKEN: 'test-upload-token-0123456789abcdef0123456789',
         },
         // The app's built files (dist/) aren't needed: this stands in for them, so a test can see
         // which requests reach the static files and which the Worker answers itself

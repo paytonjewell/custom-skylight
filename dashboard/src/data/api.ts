@@ -16,6 +16,7 @@ import type {
   Person,
   Photo,
   PushInfo,
+  AppRelease,
   Recipe,
   Task,
   TaskDone,
@@ -123,6 +124,8 @@ export const api = {
   savePush: (sub: PushSubscriptionJSON, person: string, tz: string) => send('PUT', '/api/push', { ...sub, person, tz }),
   deletePush: (endpoint: string) => send('DELETE', '/api/push', { endpoint }),
   testPush: (endpoint: string) => send('POST', '/api/push/test', { endpoint }),
+  /** The newest phone app build (worker/app.ts) */
+  appRelease: async (): Promise<AppRelease | null> => (await call('/api/app')).json(),
   // Google Calendar (worker/google.ts)
   calendars: async (): Promise<CalendarInfo> => (await call('/api/calendars')).json(),
   refreshCalendars: async (): Promise<CalendarInfo> => (await send('POST', '/api/calendars/refresh')).json(),

@@ -407,3 +407,14 @@ export interface PushInfo {
   people: string[];
   mine: { endpoint: string; person: string }[];
 }
+
+/** GET /api/app: the newest build of the phone app (worker/app.ts), or null before the first */
+export interface AppRelease {
+  /** Android's versionCode: higher is newer (the git commit count it was built from) */
+  versionCode: number;
+  versionName: string;
+  /** Bytes */
+  size: number;
+  /** ISO time it was published */
+  uploaded: string;
+}

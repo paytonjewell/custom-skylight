@@ -1,5 +1,22 @@
 apply plugin: 'com.android.application'
 
+// Version: the git commit count, so every build from a later commit is newer (Android only installs an
+// update with a higher versionCode). CI passes APP_VERSION_CODE (.github/workflows/android.yml).
+def commitCount = providers.exec {
+    commandLine 'git', 'rev-list', '--count', 'HEAD'
+    ignoreExitValue = true
+}.standardOutput.asText.map { it.trim() }.getOrElse('')
+def appVersionCode = (System.getenv('APP_VERSION_CODE') ?: commitCount ?: '1').toInteger()
+
+// Release signing: every build must use the same key, or phones refuse it as an update. CI takes it
+// from Actions secrets (ANDROID_KEYSTORE_*); a laptop from android/keystore.properties (not in git):
+//   KEYSTORE_FILE=/path/to/white-lotus-release.jks
+//   KEYSTORE_PASSWORD=...
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
+def keystore = { String k -> System.getenv('ANDROID_' + k) ?: keystoreProps.getProperty(k) }
+
 android {
     namespace = "com.piercefam.whitelotushq"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +24,8 @@ android {
         applicationId "com.piercefam.whitelotushq"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName "1.0." + appVersionCode
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +33,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystore('KEYSTORE_FILE')) {
+                storeFile file(keystore('KEYSTORE_FILE'))
+                storePassword keystore('KEYSTORE_PASSWORD')
+                keyAlias 'white-lotus'
+                keyPassword keystore('KEYSTORE_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

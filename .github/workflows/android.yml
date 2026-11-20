@@ -1,0 +1,73 @@
+name: Phone app
+
+# Builds the signed phone app (dashboard/android) and publishes it to the dashboard, which offers it to
+# installed apps as an update (dashboard/worker/app.ts). Only changes to the app itself need a build:
+# the web app reaches it with a normal deploy.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/android/**'
+      - 'dashboard/capacitor.config.json'
+      - 'dashboard/native/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: android
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: dashboard
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The version is the commit count (android/app/build.gradle), so it needs the whole history
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      # Gradle's daemon asks for Java 25 (android/gradle/gradle-daemon-jvm.properties)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - name: Version
+        id: version
+        run: echo "code=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+      - name: Build
+        env:
+          APP_VERSION_CODE: ${{ steps.version.outputs.code }}
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          npx cap sync android
+          cd android && ./gradlew assembleRelease --console=plain
+      - name: Publish to the dashboard
+        env:
+          TOKEN: ${{ secrets.APP_UPLOAD_TOKEN }}
+          CODE: ${{ steps.version.outputs.code }}
+        run: |
+          curl --fail-with-body -sS -X PUT \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/vnd.android.package-archive" \
+            --data-binary @android/app/build/outputs/apk/release/app-release.apk \
+            "https://home-dashboard.piercefam.workers.dev/api/app/upload?versionCode=$CODE&versionName=1.0.$CODE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: white-lotus-hq-1.0.${{ steps.version.outputs.code }}
+          path: dashboard/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30

@@ -13,11 +13,12 @@ import { Lists } from '../views/lists/Lists';
 import { News } from '../views/News';
 import { Photos } from '../views/Photos';
 import { Ambient, SheetHost, Sleep, Toasts } from './Overlays';
+import { UpdateBanner } from './UpdateBanner';
 import { isSleepTime, setBacklight } from './sleep';
 import { Diag, diagEnabled } from './Diag';
 import { openThemeSheet } from './ThemeSheet';
 import { THEMES, useApplyTheme, useTheme } from './theme';
-import { isPhone, useLayout, viewportSize } from './layout';
+import { IS_APP, isPhone, useLayout, viewportSize } from './layout';
 import { VIEWS, closeSheet, go, goFromHash, idleTick, resetIdle, setMode, toast, ui, useUI, type ViewName } from './ui';
 import { store, stored } from '../lib/store';
 import css from './App.module.css';
@@ -86,6 +87,7 @@ export function App() {
         </div>
       )}
       <Toasts />
+      {IS_APP && <UpdateBanner />}
       <SheetHost />
       <Ambient active={mode === 'ambient'} />
       <Sleep />

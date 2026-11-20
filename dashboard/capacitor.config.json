@@ -8,6 +8,7 @@
   },
   "android": {
     "appendUserAgent": "WhiteLotusApp/1",
-    "allowMixedContent": false
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": true
   }
 }
