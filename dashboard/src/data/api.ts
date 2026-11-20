@@ -122,6 +122,9 @@ export const api = {
   // phone reminders (worker/push.ts)
   push: async (): Promise<PushInfo> => (await call('/api/push')).json(),
   savePush: (sub: PushSubscriptionJSON, person: string, tz: string) => send('PUT', '/api/push', { ...sub, person, tz }),
+  /** The phone app turns reminders on with its FCM token (worker/fcm.ts) */
+  saveAppPush: (token: string, person: string, tz: string) =>
+    send('PUT', '/api/push', { kind: 'app', token, person, tz }),
   deletePush: (endpoint: string) => send('DELETE', '/api/push', { endpoint }),
   testPush: (endpoint: string) => send('POST', '/api/push/test', { endpoint }),
   /** The newest phone app build (worker/app.ts) */

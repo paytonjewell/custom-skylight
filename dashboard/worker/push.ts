@@ -2,10 +2,13 @@
 // with the person it belongs to. Every minute the cron sends each task's reminder, at its local
 // time on the days it's due and not done yet, only to phones whose person the task notifies: John's
 // phone never gets Mary's reminders. "Done" on the notification ticks the task (public/sw.js).
+// Browsers get Web Push (worker/webpush.ts); the phone app gets FCM (worker/fcm.ts) and draws its own
+// notification (ReminderMessagingService.java).
 import type { Device } from './auth';
 import type { PushInfo, Task, TaskDone } from '../src/data/types';
 import { doneByTask, dueItem } from '../src/data/tasks';
 import { describeRepeat, shiftDay } from '../src/lib/repeat';
+import { sendFcm } from './fcm';
 import { sendPush, vapid, type Subscription } from './webpush';
 import { bad, done, json, notFound, readJson } from './http';
 import { PERSON, validTz } from './validate';
@@ -17,6 +20,8 @@ const WINDOW_MIN = 15;
 const MAX_SUBS = 50;
 
 interface SubRow extends Subscription {
+  /** 'web': a browser's push subscription; 'app': the phone app, with its FCM token as the endpoint */
+  kind: 'web' | 'app';
   device_id: string;
   person: string;
   tz: string;
@@ -46,6 +51,22 @@ export function isPushService(endpoint: string): boolean {
   return url.protocol === 'https:' && !url.port && !url.username && PUSH_HOSTS.some((h) => h.test(url.hostname));
 }
 
+/** An FCM registration token, as the phone app gets it from Firebase */
+const FCM_TOKEN = /^[A-Za-z0-9_:-]{100,400}$/;
+
+interface Reminder {
+  title: string;
+  body: string;
+  tag: string;
+  task?: string;
+  day?: string;
+  by?: string | null;
+}
+
+/** Send to one phone, by Web Push or FCM. 404/410: the subscription is gone. */
+const deliver = (env: Env, s: SubRow, m: Reminder, subject: string, ttl?: number) =>
+  s.kind === 'app' ? sendFcm(env, s.endpoint, { ...m }, ttl) : sendPush(env, s, m, subject, ttl);
+
 /** The app's address, for the VAPID "sub" claim (push services want a way to reach the sender) */
 async function subject(env: Env): Promise<string> {
   const row = await env.DB.prepare("SELECT value FROM config WHERE key = 'origin'").first<{ value: string }>();
@@ -69,31 +90,42 @@ export async function getPush(env: Env, device: Device): Promise<Response> {
   });
 }
 
-/** PUT /api/push ({ endpoint, keys: { p256dh, auth }, person, tz }): turn reminders on for this phone */
+/**
+ * PUT /api/push: turn reminders on for this phone. A browser sends its push subscription
+ * ({ endpoint, keys: { p256dh, auth }, person, tz }); the phone app its FCM token
+ * ({ kind: 'app', token, person, tz }).
+ */
 export async function savePush(req: Request, env: Env, device: Device): Promise<Response> {
   const b = await readJson<{
+    kind?: unknown;
+    token?: unknown;
     endpoint?: unknown;
     keys?: { p256dh?: unknown; auth?: unknown };
     person?: unknown;
     tz?: unknown;
   }>(req);
-  const endpoint = b?.endpoint,
-    p256dh = b?.keys?.p256dh,
-    auth = b?.keys?.auth,
+  const app = b?.kind === 'app';
+  const endpoint = app ? b?.token : b?.endpoint,
+    p256dh = app ? '' : b?.keys?.p256dh,
+    auth = app ? '' : b?.keys?.auth,
     person = b?.person;
-  if (typeof endpoint !== 'string' || endpoint.length > 1000 || !isPushService(endpoint)) return bad('Bad endpoint');
-  if (typeof p256dh !== 'string' || !/^[A-Za-z0-9_-]{80,100}$/.test(p256dh)) return bad('Bad key');
-  if (typeof auth !== 'string' || !/^[A-Za-z0-9_-]{16,32}$/.test(auth)) return bad('Bad key');
+  if (app) {
+    if (typeof endpoint !== 'string' || !FCM_TOKEN.test(endpoint)) return bad('Bad token');
+  } else {
+    if (typeof endpoint !== 'string' || endpoint.length > 1000 || !isPushService(endpoint)) return bad('Bad endpoint');
+    if (typeof p256dh !== 'string' || !/^[A-Za-z0-9_-]{80,100}$/.test(p256dh)) return bad('Bad key');
+    if (typeof auth !== 'string' || !/^[A-Za-z0-9_-]{16,32}$/.test(auth)) return bad('Bad key');
+  }
   if (typeof person !== 'string' || !PERSON.test(person) || person === 'any') return bad('Bad person');
   if (!validTz(b?.tz)) return bad('Bad time zone');
   const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM push_subs').first<number>('n');
   if ((count ?? 0) >= MAX_SUBS) return bad('Too many phones');
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO push_subs (endpoint, device_id, person, p256dh, auth, tz, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (endpoint) DO UPDATE SET device_id = excluded.device_id, person = excluded.person,
-         p256dh = excluded.p256dh, auth = excluded.auth, tz = excluded.tz`,
-    ).bind(endpoint, device.id, person, p256dh, auth, b!.tz, new Date().toISOString()),
+      `INSERT INTO push_subs (endpoint, kind, device_id, person, p256dh, auth, tz, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (endpoint) DO UPDATE SET kind = excluded.kind, device_id = excluded.device_id,
+         person = excluded.person, p256dh = excluded.p256dh, auth = excluded.auth, tz = excluded.tz`,
+    ).bind(endpoint, app ? 'app' : 'web', device.id, person, p256dh, auth, b!.tz, new Date().toISOString()),
     env.DB.prepare("INSERT OR REPLACE INTO config (key, value) VALUES ('origin', ?)").bind(new URL(req.url).origin),
   ]);
   return json({ ok: true });
@@ -114,7 +146,7 @@ export async function testPush(req: Request, env: Env, device: Device): Promise<
     .bind(b?.endpoint ?? '', device.id)
     .first<SubRow>();
   if (!sub) return notFound('Reminders are off on this phone');
-  const status = await sendPush(
+  const status = await deliver(
     env,
     sub,
     { title: 'Reminders are on 🎉', body: 'Task reminders for you will show up here.', tag: 'test' },
@@ -122,6 +154,7 @@ export async function testPush(req: Request, env: Env, device: Device): Promise<
     600,
   );
   if (status === 404 || status === 410) await forget(env, sub.endpoint);
+  if (status === 503 && sub.kind === 'app') return bad('App reminders aren’t set up on the server yet', 503);
   return status < 300 ? json({ ok: true }) : bad('The push service said ' + status, 502);
 }
 
@@ -223,7 +256,7 @@ export async function sendReminders(env: Env, at = new Date()): Promise<void> {
         .run();
       if (!meta.changes) continue;
       const list = t.listId ? lists.get(t.listId) : undefined;
-      const status = await sendPush(
+      const status = await deliver(
         env,
         s,
         {

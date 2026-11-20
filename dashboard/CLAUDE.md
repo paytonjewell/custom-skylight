@@ -46,6 +46,10 @@ WebView too). `native/www/offline.html` shows when the site can't be reached.
 - Every build must be signed with the one release key (`~/.android/white-lotus-release.jks`, password
   in the git-ignored `android/keystore.properties`; backed up in Proton Pass; GitHub secrets
   `ANDROID_KEYSTORE_*`). A build signed with any other key can't update installed apps.
+- Reminders in the app come through Firebase Cloud Messaging, not Web Push: the app saves its FCM
+  token in `push_subs` (`kind = 'app'`), `worker/fcm.ts` sends data-only messages (secret
+  `FCM_SERVICE_ACCOUNT`), and `Reminders.java` draws them on a high-importance channel with Done.
+  `android/app/google-services.json` is git-ignored (Actions secret `GOOGLE_SERVICES_JSON` on CI).
 - The phone has two displays: `adb exec-out screencap -p -d <id>` (ids from
   `adb shell dumpsys SurfaceFlinger --display-id`).
 
