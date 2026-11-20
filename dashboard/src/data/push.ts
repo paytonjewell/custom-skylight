@@ -38,15 +38,19 @@ interface RemindersPlugin {
   takeLaunchView(): Promise<{ view: string | null }>;
   addListener(event: 'open', fn: (e: { view: string }) => void): Promise<PluginListenerHandle>;
 }
-let native: Promise<RemindersPlugin> | null = null;
+// Wrapped in an object: a Capacitor plugin answers to any method name, `then` included, so a promise
+// resolved with the plugin itself would take it for another promise and never settle.
+let native: Promise<{ reminders: RemindersPlugin }> | null = null;
 // Loaded only in the app, so the frame and browsers never download it
 const plugin = () =>
-  (native ??= import('@capacitor/core').then(({ registerPlugin }) => registerPlugin<RemindersPlugin>('Reminders')));
+  (native ??= import('@capacitor/core').then(({ registerPlugin }) => ({
+    reminders: registerPlugin<RemindersPlugin>('Reminders'),
+  })));
 
 /** This app's FCM token, or null when Firebase can't be reached */
 const appToken = () =>
   plugin()
-    .then((p) => p.token())
+    .then(({ reminders }) => reminders.token())
     .then((r) => r.token)
     .catch((e) => {
       console.warn('No FCM token', e);
@@ -78,7 +82,7 @@ async function loadPush(): Promise<void> {
 /** Turn reminders on here, for `person`. Throws a message to show if it can't. */
 export async function turnOnPush(person: string): Promise<void> {
   if (IS_APP) {
-    const p = await plugin();
+    const { reminders: p } = await plugin();
     if (!(await p.requestPermission()).granted) throw new Error(BLOCKED);
     const { token } = await p.token();
     await api.saveAppPush(token, person, timeZone());
@@ -122,7 +126,7 @@ export function startPush(): void {
     if (typeof view === 'string') go(view);
   };
   if (IS_APP) {
-    void plugin().then(async (p) => {
+    void plugin().then(async ({ reminders: p }) => {
       void p.addListener('open', (e) => open(e.view));
       open((await p.takeLaunchView()).view);
     });
