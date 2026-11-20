@@ -50,6 +50,14 @@ WebView too). `native/www/offline.html` shows when the site can't be reached.
   token in `push_subs` (`kind = 'app'`), `worker/fcm.ts` sends data-only messages (secret
   `FCM_SERVICE_ACCOUNT`), and `Reminders.java` draws them on a high-importance channel with Done.
   `android/app/google-services.json` is git-ignored (Actions secret `GOOGLE_SERVICES_JSON` on CI).
+- The Tasks home screen widget (`TasksWidget.java`, set up in `TasksWidgetConfigure`) draws
+  `GET /api/widget/tasks?person=` (`worker/widget.ts`, which works out the list with
+  `src/data/tasks.ts`). Its colours mirror `css/tokens.css` (`res/values*/widget_colors.xml`, person
+  tones in `TasksWidget.java`): keep them in step when the themes change. Fetches run as WorkManager
+  jobs (`TasksWidgetWorker`): Android blocks a background app's network (and Battery Saver does too).
+- Shares to the app (photos, links) arrive through `SharePlugin` → `src/app/share.ts`.
+- Capacitor plugin objects answer to any method name, `then` included: never resolve a promise with
+  one (wrap it in an object), or the promise never settles.
 - The phone has two displays: `adb exec-out screencap -p -d <id>` (ids from
   `adb shell dumpsys SurfaceFlinger --display-id`).
 

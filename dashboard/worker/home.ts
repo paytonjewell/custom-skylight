@@ -40,7 +40,7 @@ const SAMPLE_FAMILY: Person[] = [
  * off the task screens (calendar only); "calendar": false makes a tasks-only profile, such as a
  * project's to-do list, that isn't on the calendar or part of "everyone".
  */
-function family(env: Env): Person[] {
+export function family(env: Env): Person[] {
   if (!env.FAMILY) return SAMPLE_FAMILY;
   try {
     const list = JSON.parse(env.FAMILY) as Partial<Person>[];

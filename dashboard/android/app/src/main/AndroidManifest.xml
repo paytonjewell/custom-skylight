@@ -45,6 +45,29 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <!-- The Tasks home screen widget, and its setup screen -->
+        <receiver
+            android:name=".TasksWidget"
+            android:exported="false"
+            android:label="@string/tasks_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tasks_widget_info" />
+        </receiver>
+        <activity
+            android:name=".TasksWidgetConfigure"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/tasks_widget_label"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- "Done" on a reminder -->
         <receiver android:name=".ReminderDoneReceiver" android:exported="false" />
 

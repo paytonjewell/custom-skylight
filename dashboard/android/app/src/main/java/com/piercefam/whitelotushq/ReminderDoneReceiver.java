@@ -34,8 +34,12 @@ public class ReminderDoneReceiver extends BroadcastReceiver {
         PendingResult pending = goAsync();
         new Thread(() -> {
             try {
-                if (markDone(ctx, task, day, by)) NotificationManagerCompat.from(ctx).cancel(tag, 0);
-                else Reminders.showNote(ctx, tag, "Couldn’t mark it done", "Tap to open Tasks and tick it there.");
+                if (markDone(ctx, task, day, by)) {
+                    NotificationManagerCompat.from(ctx).cancel(tag, 0);
+                    TasksWidget.refreshAll(ctx);
+                } else {
+                    Reminders.showNote(ctx, tag, "Couldn’t mark it done", "Tap to open Tasks and tick it there.");
+                }
             } finally {
                 pending.finish();
             }

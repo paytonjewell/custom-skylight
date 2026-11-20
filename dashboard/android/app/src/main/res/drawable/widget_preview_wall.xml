@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A stand-in wallpaper behind the setup screen's preview, so the background setting shows -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="45" android:startColor="#9EC5EC" android:centerColor="#B9A6E8" android:endColor="#EFA9C3" />
+    <corners android:radius="16dp" />
+</shape>

@@ -64,7 +64,7 @@ const loaded = (tasks: D1Result, rows: D1Result) => ({
 });
 
 /** Tasks and their completions from about the last year */
-async function loadTasks(env: Env): Promise<TasksInfo> {
+export async function loadTasks(env: Env): Promise<TasksInfo> {
   const since = new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString().slice(0, 10);
   const [tasks, rows] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM tasks ORDER BY created_at'),

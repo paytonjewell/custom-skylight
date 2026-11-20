@@ -46,6 +46,7 @@ import { getFamily } from './home';
 import { kitchenRoute } from './kitchen';
 import { isDay } from '../src/lib/repeat';
 import { getAppRelease, serveApk, uploadApk } from './app';
+import { getWidgetTasks } from './widget';
 import { addPhoto, deletePhoto, knownPhotos, listPhotos, reorderPhotos, servePhoto } from './photos';
 import { json, pathParts } from './http';
 import { UUID, isId } from './validate';
@@ -191,6 +192,8 @@ async function route(
   if (photo && m === 'DELETE') return deletePhoto(env, photo);
   const [id, size] = pathParts(path, '/media/*/*', (p, i) => (i ? p === 'full' || p === 'thumb' : UUID.test(p))) ?? [];
   if (id && (m === 'GET' || m === 'HEAD')) return servePhoto(req, env, id, size as 'full' | 'thumb');
+  // The phone app's home screen widget (worker/widget.ts)
+  if (path === '/api/widget/tasks' && m === 'GET') return getWidgetTasks(env, new URL(req.url));
   // The phone app's own updates (worker/app.ts)
   if (path === '/api/app' && m === 'GET') return getAppRelease(env);
   if (path === '/api/app/apk' && m === 'GET') return serveApk(env);

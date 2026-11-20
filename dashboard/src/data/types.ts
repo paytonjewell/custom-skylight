@@ -418,3 +418,23 @@ export interface AppRelease {
   /** ISO time it was published */
   uploaded: string;
 }
+
+/** GET /api/widget/tasks?person=…: one person's tasks for today, ready to draw (the phone app's widget) */
+export interface WidgetTasks {
+  person: { id: string; name: string; tone: number };
+  /** Today, in the household's time zone ('YYYY-MM-DD') */
+  day: string;
+  done: number;
+  total: number;
+  /** Habits first, then the parts of the day, as on the Tasks screen; empty ones left out */
+  groups: { label: string; items: WidgetTask[] }[];
+}
+export interface WidgetTask {
+  id: string;
+  title: string;
+  emoji: string;
+  done: boolean;
+  overdue: boolean;
+  /** The small line under the title ("Every day", "Overdue · Mon", "🛒 Groceries"), or '' */
+  note: string;
+}

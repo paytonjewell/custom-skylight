@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Tasks widget (TasksWidget.java). Resizable both ways; set up (and later changed, by holding it
+     and choosing reconfigure) in TasksWidgetConfigure. Refreshes every 30 minutes, and whenever tasks
+     change in the app. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="com.piercefam.whitelotushq.TasksWidgetConfigure"
+    android:description="@string/tasks_widget_description"
+    android:initialLayout="@layout/widget_tasks"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="150dp"
+    android:minResizeHeight="80dp"
+    android:previewLayout="@layout/widget_tasks"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="3"
+    android:targetCellHeight="3"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable" />

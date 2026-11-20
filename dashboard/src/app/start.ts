@@ -18,6 +18,7 @@ import { receiveSharedPhotos } from '../views/Photos';
 import { checkSharedRecipe } from '../views/recipes/AddRecipeSheet';
 import { IS_APP, IS_KIOSK } from './layout';
 import { startAppShare } from './share';
+import { startWidgetRefresh } from './widgets';
 
 export function startApp(): void {
   startFamilySync();
@@ -38,4 +39,6 @@ export function startApp(): void {
   // installed web app (public/sw.js)
   if (IS_APP) void startAppShare();
   else if (!IS_KIOSK) void receiveSharedPhotos();
+  // The phone app's home screen widgets: refresh when tasks change here (src/app/widgets.ts)
+  if (IS_APP) void startWidgetRefresh();
 }

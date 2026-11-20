@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The dashboard's Dark theme (css/tokens.css) -->
+<resources>
+    <color name="hq_paper">#1C1C21</color>
+    <color name="hq_card">#25252B</color>
+    <color name="hq_paper_2">#2C2C33</color>
+    <color name="hq_ink">#ECEAE6</color>
+    <color name="hq_ink_2">#C4C2BE</color>
+    <color name="hq_mute">#8E8C93</color>
+    <color name="hq_line">#33333A</color>
+    <color name="hq_on_ink">#16161A</color>
+    <color name="hq_alert">#E0839F</color>
+</resources>

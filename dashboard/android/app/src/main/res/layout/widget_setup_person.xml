@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One person to pick on the widget's setup screen -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/widget_card"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingEnd="16dp">
+
+    <TextView
+        android:id="@+id/person_avatar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/widget_mark_round"
+        android:fontFamily="@font/inter_semibold"
+        android:gravity="center"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/person_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:fontFamily="@font/inter_medium"
+        android:textColor="@color/hq_ink"
+        android:textSize="16sp" />
+
+    <ImageView
+        android:id="@+id/person_check"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/widget_check"
+        android:visibility="invisible"
+        android:importantForAccessibility="no"
+        android:tint="@color/hq_ink" />
+</LinearLayout>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The dashboard's Pastel theme (css/tokens.css), for the Tasks widget and its setup screen.
+     values-night has the Dark theme. Person colours (t0 to t4) are in TasksWidget.java. -->
+<resources>
+    <color name="hq_paper">#FAFAFA</color>
+    <color name="hq_card">#F3F3F3</color>
+    <color name="hq_paper_2">#EDEDED</color>
+    <color name="hq_ink">#1F1E24</color>
+    <color name="hq_ink_2">#4A4952</color>
+    <color name="hq_mute">#8A8992</color>
+    <color name="hq_line">#E3E3E6</color>
+    <color name="hq_on_ink">#FFFFFF</color>
+    <color name="hq_alert">#D9708F</color>
+</resources>
